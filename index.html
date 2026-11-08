@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06080c">
+<title>Lumevale</title>
+<meta name="description" content="RPG idle de criaturas de luz: capture, evolua e desça pelas profundezas.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone-192.png">
+<link rel="apple-touch-icon" href="icones/apple-180.png">
+<link rel="stylesheet" href="jogo/fontes/fontes.css">
+<style>
+  :root { color-scheme: dark; --ouro: #f0cf86; --texto: #e9edf2; --apagado: #9aa5b3; --linha: rgba(255, 255, 255, 0.1);
+    --disp: "IM Fell English SC", Georgia, serif; --corpo: "Alegreya Sans", "Segoe UI", system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #06080c; color: var(--texto); font: 16px/1.5 var(--corpo); }
+  .capa { position: relative; height: 210px; background: url("jogo/img/fundos/raizes.webp") center 40% / cover; }
+  .capa::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(6, 8, 12, 0.1), #06080c); }
+  main { position: relative; max-width: 560px; margin: -90px auto 0; padding: 0 16px 40px; }
+  .topo { display: flex; gap: 16px; align-items: flex-end; }
+  .topo img { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6); flex: none; }
+  h1 { margin: 0; font: 40px/1 var(--disp); letter-spacing: 0.02em; }
+  .sub { margin: 4px 0 0; color: var(--apagado); font-size: 15px; }
+  .fatos { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0; padding: 0; list-style: none; font-size: 13px; color: var(--apagado); }
+  .fatos li { border: 1px solid var(--linha); border-radius: 999px; padding: 3px 10px; }
+  .acoes { display: grid; gap: 10px; }
+  .btn { display: block; width: 100%; padding: 14px 18px; border-radius: 10px; border: 1px solid rgba(240, 207, 134, 0.5); background: transparent;
+    color: var(--texto); font: 700 16px var(--corpo); letter-spacing: 0.04em; text-align: center; text-decoration: none; cursor: pointer; }
+  .btn.pri { background: linear-gradient(#f5d995, #d7ad5c); color: #1a1206; border-color: transparent; }
+  .btn[hidden] { display: none; }
+  .caixa { margin-top: 22px; padding: 14px 16px; border: 1px solid var(--linha); border-radius: 12px; background: rgba(255, 255, 255, 0.02); }
+  .caixa h2 { margin: 0 0 6px; font: 20px var(--disp); color: var(--ouro); }
+  .caixa p, .caixa ol { margin: 6px 0 0; color: #c9d1db; font-size: 15px; }
+  .caixa ol { padding-left: 20px; }
+  .ok { color: #9be3a8; }
+  footer { margin-top: 26px; color: var(--apagado); font-size: 12px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="capa" role="img" aria-label="Raízes Murmurantes"></div>
+<main>
+  <div class="topo"><img src="icones/icone-192.png" alt=""><div><h1>Lumevale</h1><p class="sub" data-t="sub"></p></div></div>
+  <ul class="fatos"><li data-t="versao"></li><li data-t="tamanho"></li><li data-t="offline"></li><li data-t="sozinho"></li></ul>
+  <div class="acoes">
+    <button class="btn pri" id="instalar" hidden data-t="instalar"></button>
+    <p class="ok" id="instalado" hidden data-t="instalado"></p>
+    <a class="btn" id="jogar" href="jogo/" data-t="jogar"></a>
+  </div>
+  <section class="caixa" id="como">
+    <h2 data-t="comoT"></h2>
+    <p data-t="android"></p>
+    <p data-t="iphone"></p>
+    <p data-t="pc"></p>
+  </section>
+  <section class="caixa">
+    <h2 data-t="atuT"></h2>
+    <p data-t="atu"></p>
+  </section>
+  <section class="caixa">
+    <h2 data-t="saveT"></h2>
+    <p data-t="save"></p>
+  </section>
+  <footer>Lumevale v1.7.4</footer>
+</main>
+<script>
+  var T = {
+    pt: {
+      sub: 'Um RPG idle de criaturas de luz. Capture, evolua e desça pelas profundezas.',
+      versao: 'Versão 1.7.4', tamanho: 'Cerca de 4 MB', offline: 'Funciona sem internet', sozinho: 'Atualiza sozinho',
+      instalar: 'Instalar', instalado: 'Instalado! Abra o Lumevale pela tela inicial do aparelho.', jogar: 'Jogar no navegador',
+      comoT: 'Como instalar',
+      android: 'Android (Chrome): toque em Instalar acima. Se o botão não aparecer, toque no menu ⋮ do Chrome e em "Instalar app" ou "Adicionar à tela inicial".',
+      iphone: 'iPhone (Safari): toque em Compartilhar e depois em "Adicionar à Tela de Início".',
+      pc: 'PC (Chrome ou Edge): clique no ícone de instalar na barra de endereço.',
+      atuT: 'Atualizações', atu: 'Não precisa reinstalar. Quando sair uma versão nova, o jogo baixa sozinho; no menu ela entra na hora e, durante o jogo, aparece o botão "Atualizar".',
+      saveT: 'Já jogava em outro aparelho?', save: 'No jogo antigo, abra Configurações › Levar o progresso e copie o código. No app instalado, cole em Opções › Levar o progresso, no menu inicial.'
+    },
+    en: {
+      sub: 'An idle RPG of creatures of light. Catch, evolve and descend into the depths.',
+      versao: 'Version 1.7.4', tamanho: 'About 4 MB', offline: 'Works offline', sozinho: 'Updates itself',
+      instalar: 'Install', instalado: 'Installed! Open Lumevale from your home screen.', jogar: 'Play in the browser',
+      comoT: 'How to install',
+      android: 'Android (Chrome): tap Install above. If the button does not show up, open the Chrome menu ⋮ and tap "Install app" or "Add to Home screen".',
+      iphone: 'iPhone (Safari): tap Share, then "Add to Home Screen".',
+      pc: 'PC (Chrome or Edge): click the install icon in the address bar.',
+      atuT: 'Updates', atu: 'No need to reinstall. When a new version comes out, the game downloads it by itself; on the main menu it applies right away and, during play, an "Update" button appears.',
+      saveT: 'Played on another device?', save: 'In the old game, open Settings › Transfer progress and copy the code. In the installed app, paste it in Options › Transfer progress on the main menu.'
+    }
+  };
+  var cfg = {}; try { cfg = JSON.parse(localStorage.getItem('lumevale.config') || '{}') || {}; } catch (e) {}
+  var idioma = cfg.idioma || ((navigator.language || 'pt').toLowerCase().indexOf('pt') === 0 ? 'pt' : 'en');
+  var t = T[idioma] || T.pt;
+  document.documentElement.lang = idioma === 'en' ? 'en' : 'pt-BR';
+  document.querySelectorAll('[data-t]').forEach(function (el) { el.textContent = t[el.dataset.t]; });
+
+  var botao = document.getElementById('instalar'), pedido = null;
+  var jaInstalado = window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches || navigator.standalone;
+  if (jaInstalado) location.replace('jogo/');
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); pedido = e; botao.hidden = false; });
+  botao.addEventListener('click', function () {
+    if (!pedido) return;
+    pedido.prompt();
+    pedido.userChoice.then(function () { pedido = null; botao.hidden = true; });
+  });
+  window.addEventListener('appinstalled', function () { botao.hidden = true; document.getElementById('instalado').hidden = false; });
+  // guarda o jogo no aparelho já nesta visita (o app instalado abre sem internet)
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function () {});
+</script>
+</body>
+</html>
