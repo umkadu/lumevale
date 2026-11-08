@@ -9,15 +9,19 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icones/icone-192.png">
 <link rel="apple-touch-icon" href="icones/apple-180.png">
+<meta name="apple-mobile-web-app-title" content="Lumevale">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="stylesheet" href="jogo/fontes/fontes.css">
 <style>
   :root { color-scheme: dark; --ouro: #f0cf86; --texto: #e9edf2; --apagado: #9aa5b3; --linha: rgba(255, 255, 255, 0.1);
     --disp: "IM Fell English SC", Georgia, serif; --corpo: "Alegreya Sans", "Segoe UI", system-ui, sans-serif; }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: #06080c; color: var(--texto); font: 16px/1.5 var(--corpo); }
+  [hidden] { display: none !important; }
   .capa { position: relative; height: 210px; background: url("jogo/img/fundos/raizes.webp") center 40% / cover; }
   .capa::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(6, 8, 12, 0.1), #06080c); }
-  main { position: relative; max-width: 560px; margin: -90px auto 0; padding: 0 16px 40px; }
+  main { position: relative; max-width: 560px; margin: -90px auto 0; padding: 0 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
   .topo { display: flex; gap: 16px; align-items: flex-end; }
   .topo img { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6); flex: none; }
   h1 { margin: 0; font: 40px/1 var(--disp); letter-spacing: 0.02em; }
@@ -28,12 +32,22 @@
   .btn { display: block; width: 100%; padding: 14px 18px; border-radius: 10px; border: 1px solid rgba(240, 207, 134, 0.5); background: transparent;
     color: var(--texto); font: 700 16px var(--corpo); letter-spacing: 0.04em; text-align: center; text-decoration: none; cursor: pointer; }
   .btn.pri { background: linear-gradient(#f5d995, #d7ad5c); color: #1a1206; border-color: transparent; }
-  .btn[hidden] { display: none; }
   .caixa { margin-top: 22px; padding: 14px 16px; border: 1px solid var(--linha); border-radius: 12px; background: rgba(255, 255, 255, 0.02); }
-  .caixa h2 { margin: 0 0 6px; font: 20px var(--disp); color: var(--ouro); }
-  .caixa p, .caixa ol { margin: 6px 0 0; color: #c9d1db; font-size: 15px; }
-  .caixa ol { padding-left: 20px; }
-  .ok { color: #9be3a8; }
+  .caixa.destaque { border-color: rgba(240, 207, 134, 0.55); background: rgba(240, 207, 134, 0.05); }
+  .caixa h2 { margin: 0 0 6px; font: 21px var(--disp); color: var(--ouro); }
+  .caixa p { margin: 6px 0 0; color: #c9d1db; font-size: 15px; }
+  .passos { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 14px; }
+  .passos li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; }
+  .passos .n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--ouro); color: #1a1206; font: 800 15px var(--corpo); }
+  .passos b { display: block; font-size: 17px; line-height: 1.3; }
+  .passos small { display: block; margin-top: 3px; color: var(--apagado); font-size: 14px; line-height: 1.4; }
+  .ic { width: 1.25em; height: 1.25em; vertical-align: -0.28em; margin: 0 1px; color: #6fb6ff; }
+  .passos b .ic { color: #8cc6ff; }
+  .copia { margin-top: 12px; }
+  .ok { color: #9be3a8; margin: 8px 0 0; }
+  details { margin-top: 22px; color: #c9d1db; font-size: 15px; }
+  summary { cursor: pointer; color: var(--apagado); }
+  details p { margin: 6px 0 0; }
   footer { margin-top: 26px; color: var(--apagado); font-size: 12px; text-align: center; }
 </style>
 </head>
@@ -45,14 +59,42 @@
   <div class="acoes">
     <button class="btn pri" id="instalar" hidden data-t="instalar"></button>
     <p class="ok" id="instalado" hidden data-t="instalado"></p>
-    <a class="btn" id="jogar" href="jogo/" data-t="jogar"></a>
   </div>
-  <section class="caixa" id="como">
-    <h2 data-t="comoT"></h2>
-    <p data-t="android"></p>
-    <p data-t="iphone"></p>
+
+  <section class="caixa destaque" data-so="ios" hidden>
+    <h2 id="iosTitulo" data-t="iosT"></h2>
+    <ol class="passos">
+      <li><span class="n">1</span><div><b data-t="ios1"></b><small data-t="ios1s"></small></div></li>
+      <li><span class="n">2</span><div><b id="ios2" data-t="ios2"></b><small id="ios2s" data-t="ios2s"></small></div></li>
+      <li><span class="n">3</span><div><b data-t="ios3"></b><small data-t="ios3s"></small></div></li>
+      <li><span class="n">4</span><div><b data-t="ios4"></b><small data-t="ios4s"></small></div></li>
+      <li><span class="n">5</span><div><b data-t="ios5"></b><small data-t="ios5s"></small></div></li>
+    </ol>
+  </section>
+
+  <section class="caixa destaque" data-so="ios-outro" hidden>
+    <h2 data-t="outroT"></h2>
+    <p data-t="outro"></p>
+    <button class="btn pri copia" id="copiar" data-t="copiar"></button>
+    <p class="ok" id="copiado" hidden data-t="copiado"></p>
+  </section>
+
+  <section class="caixa destaque" data-so="android" hidden>
+    <h2 data-t="andT"></h2>
+    <ol class="passos"><li><span class="n">1</span><div><b data-t="and1"></b><small data-t="and1s"></small></div></li><li><span class="n">2</span><div><b data-t="and2"></b><small data-t="and2s"></small></div></li><li><span class="n">3</span><div><b data-t="and3"></b><small data-t="and3s"></small></div></li></ol>
+  </section>
+
+  <section class="caixa" data-so="pc" hidden>
+    <h2 data-t="pcT"></h2>
     <p data-t="pc"></p>
   </section>
+
+  <div class="acoes" style="margin-top:18px"><a class="btn" id="jogar" href="jogo/" data-t="jogar"></a></div>
+
+  <details>
+    <summary data-t="outrosT"></summary>
+    <p data-t="outroAnd"></p><p data-t="outroIos"></p><p data-t="outroPc"></p>
+  </details>
   <section class="caixa">
     <h2 data-t="atuT"></h2>
     <p data-t="atu"></p>
@@ -64,35 +106,26 @@
   <footer>Lumevale v1.7.4</footer>
 </main>
 <script>
-  var T = {
-    pt: {
-      sub: 'Um RPG idle de criaturas de luz. Capture, evolua e desça pelas profundezas.',
-      versao: 'Versão 1.7.4', tamanho: 'Cerca de 4 MB', offline: 'Funciona sem internet', sozinho: 'Atualiza sozinho',
-      instalar: 'Instalar', instalado: 'Instalado! Abra o Lumevale pela tela inicial do aparelho.', jogar: 'Jogar no navegador',
-      comoT: 'Como instalar',
-      android: 'Android (Chrome): toque em Instalar acima. Se o botão não aparecer, toque no menu ⋮ do Chrome e em "Instalar app" ou "Adicionar à tela inicial".',
-      iphone: 'iPhone (Safari): toque em Compartilhar e depois em "Adicionar à Tela de Início".',
-      pc: 'PC (Chrome ou Edge): clique no ícone de instalar na barra de endereço.',
-      atuT: 'Atualizações', atu: 'Não precisa reinstalar. Quando sair uma versão nova, o jogo baixa sozinho; no menu ela entra na hora e, durante o jogo, aparece o botão "Atualizar".',
-      saveT: 'Já jogava em outro aparelho?', save: 'No jogo antigo, abra Configurações › Levar o progresso e copie o código. No app instalado, cole em Opções › Levar o progresso, no menu inicial.'
-    },
-    en: {
-      sub: 'An idle RPG of creatures of light. Catch, evolve and descend into the depths.',
-      versao: 'Version 1.7.4', tamanho: 'About 4 MB', offline: 'Works offline', sozinho: 'Updates itself',
-      instalar: 'Install', instalado: 'Installed! Open Lumevale from your home screen.', jogar: 'Play in the browser',
-      comoT: 'How to install',
-      android: 'Android (Chrome): tap Install above. If the button does not show up, open the Chrome menu ⋮ and tap "Install app" or "Add to Home screen".',
-      iphone: 'iPhone (Safari): tap Share, then "Add to Home Screen".',
-      pc: 'PC (Chrome or Edge): click the install icon in the address bar.',
-      atuT: 'Updates', atu: 'No need to reinstall. When a new version comes out, the game downloads it by itself; on the main menu it applies right away and, during play, an "Update" button appears.',
-      saveT: 'Played on another device?', save: 'In the old game, open Settings › Transfer progress and copy the code. In the installed app, paste it in Options › Transfer progress on the main menu.'
-    }
-  };
+  var T = {"pt":{"sub":"Um RPG idle de criaturas de luz. Capture, evolua e desça pelas profundezas.","versao":"Versão 1.7.4","tamanho":"Cerca de 4 MB","offline":"Funciona sem internet","sozinho":"Atualiza sozinho","instalar":"Instalar","instalado":"Instalado! Abra o Lumevale pela tela inicial do aparelho.","jogar":"Jogar no navegador","iosT":"Instalar no iPhone","iosTpad":"Instalar no iPad","ios1":"Abra este link no Safari","ios1s":"Se ele abriu dentro do WhatsApp, Instagram ou outro app, toque em \"Abrir no Safari\" ou no ícone da bússola {bussola}.","ios2":"Toque em Compartilhar {share}","ios2s":"Fica na barra de baixo do Safari. Se você não vê o ícone, toque antes em {mais} no canto de baixo, à direita.","ios2pad":"Toque em Compartilhar {share}","ios2spad":"Fica no alto da tela, à direita da barra de endereço.","ios3":"Toque em \"Adicionar à Tela de Início\" {add}","ios3s":"Role a lista para baixo se ela não aparecer logo.","ios4":"Toque em Adicionar","ios4s":"Se aparecer a opção \"Abrir como App Web\", deixe ligada.","ios5":"Abra o Lumevale pelo ícone novo {casa}","ios5s":"Pela Tela de Início ele abre em tela cheia, funciona sem internet e guarda o progresso. Jogando pelo Safari, o progresso fica separado e pode ser apagado se você passar semanas sem jogar.","outroT":"Abra no Safari para instalar","outro":"No iPhone, o Lumevale se instala pelo Safari. Copie o link e cole na barra de endereço do Safari.","copiar":"Copiar link","copiado":"Link copiado! Agora abra o Safari e cole.","andT":"Instalar no Android","and1":"Toque em Instalar, acima","and1s":"O botão aparece no Chrome depois de alguns segundos.","and2":"Sem botão? Use o menu {pontos} do Chrome","and2s":"Toque em \"Instalar app\" ou \"Adicionar à tela inicial\". Se o link abriu dentro do WhatsApp ou de outro app, toque antes em {pontos} › \"Abrir no Chrome\".","and3":"Abra o Lumevale pelo ícone novo {casa}","and3s":"Ele abre em tela cheia, deitado, e funciona sem internet.","pcT":"Instalar no PC","pc":"No Chrome ou no Edge, clique em Instalar acima ou no ícone de instalar na barra de endereço. Também dá para jogar direto no navegador.","outrosT":"Outros aparelhos","outroAnd":"Android (Chrome): botão Instalar ou menu ⋮ › Instalar app.","outroIos":"iPhone ou iPad (Safari): Compartilhar › Adicionar à Tela de Início › Adicionar.","outroPc":"PC (Chrome ou Edge): ícone de instalar na barra de endereço.","atuT":"Atualizações","atu":"Não precisa reinstalar. Quando sair uma versão nova, o jogo baixa sozinho; no menu ela entra na hora e, durante o jogo, aparece o botão \"Atualizar\".","saveT":"Já jogava em outro aparelho?","save":"No jogo antigo, abra Configurações › Levar o progresso e copie o código. No app instalado, cole em Opções › Levar o progresso, no menu inicial."},"en":{"sub":"An idle RPG of creatures of light. Catch, evolve and descend into the depths.","versao":"Version 1.7.4","tamanho":"About 4 MB","offline":"Works offline","sozinho":"Updates itself","instalar":"Install","instalado":"Installed! Open Lumevale from your home screen.","jogar":"Play in the browser","iosT":"Install on iPhone","iosTpad":"Install on iPad","ios1":"Open this link in Safari","ios1s":"If it opened inside WhatsApp, Instagram or another app, tap \"Open in Safari\" or the compass icon {bussola}.","ios2":"Tap Share {share}","ios2s":"It is on Safari’s bottom bar. If you don’t see it, first tap {mais} in the bottom-right corner.","ios2pad":"Tap Share {share}","ios2spad":"It is at the top of the screen, to the right of the address bar.","ios3":"Tap \"Add to Home Screen\" {add}","ios3s":"Scroll down the list if it doesn’t show up right away.","ios4":"Tap Add","ios4s":"If you see \"Open as Web App\", leave it on.","ios5":"Open Lumevale from the new icon {casa}","ios5s":"From the Home Screen it opens full screen, works offline and keeps your progress. Playing in Safari keeps a separate save that may be erased if you don’t play for weeks.","outroT":"Open in Safari to install","outro":"On iPhone, Lumevale installs through Safari. Copy the link and paste it into Safari’s address bar.","copiar":"Copy link","copiado":"Link copied! Now open Safari and paste it.","andT":"Install on Android","and1":"Tap Install, above","and1s":"The button shows up in Chrome after a few seconds.","and2":"No button? Use the Chrome menu {pontos}","and2s":"Tap \"Install app\" or \"Add to Home screen\". If the link opened inside WhatsApp or another app, first tap {pontos} › \"Open in Chrome\".","and3":"Open Lumevale from the new icon {casa}","and3s":"It opens full screen, in landscape, and works offline.","pcT":"Install on PC","pc":"In Chrome or Edge, click Install above or the install icon in the address bar. You can also play right in the browser.","outrosT":"Other devices","outroAnd":"Android (Chrome): Install button or menu ⋮ › Install app.","outroIos":"iPhone or iPad (Safari): Share › Add to Home Screen › Add.","outroPc":"PC (Chrome or Edge): install icon in the address bar.","atuT":"Updates","atu":"No need to reinstall. When a new version comes out, the game downloads it by itself; on the main menu it applies right away and, during play, an \"Update\" button appears.","saveT":"Played on another device?","save":"In the old game, open Settings › Transfer progress and copy the code. In the installed app, paste it in Options › Transfer progress on the main menu."}};
+  var IC = {"share":"<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3.5v11M8 7.2l4-3.7 4 3.7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M8.5 10.5H6.2v9.8h11.6v-9.8h-2.3\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/></svg>","mais":"<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9.2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/><circle cx=\"7.8\" cy=\"12\" r=\"1.3\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"12\" r=\"1.3\" fill=\"currentColor\"/><circle cx=\"16.2\" cy=\"12\" r=\"1.3\" fill=\"currentColor\"/></svg>","add":"<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/><path d=\"M12 8.5v7M8.5 12h7\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\"/></svg>","bussola":"<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9.2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"/><path d=\"m15.5 8.5-2.2 4.8-4.8 2.2 2.2-4.8Z\" fill=\"currentColor\"/></svg>","pontos":"<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"6\" r=\"1.7\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"12\" r=\"1.7\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"18\" r=\"1.7\" fill=\"currentColor\"/></svg>","casa":"<svg class=\"ic\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 11 12 4l8 7v9h-5v-6H9v6H4Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linejoin=\"round\"/></svg>"};
   var cfg = {}; try { cfg = JSON.parse(localStorage.getItem('lumevale.config') || '{}') || {}; } catch (e) {}
   var idioma = cfg.idioma || ((navigator.language || 'pt').toLowerCase().indexOf('pt') === 0 ? 'pt' : 'en');
   var t = T[idioma] || T.pt;
   document.documentElement.lang = idioma === 'en' ? 'en' : 'pt-BR';
-  document.querySelectorAll('[data-t]').forEach(function (el) { el.textContent = t[el.dataset.t]; });
+
+  // qual aparelho/navegador (dá para forçar com ?so=ios, ?so=ios-outro, ?so=android, ?so=pc)
+  var ua = navigator.userAgent || '';
+  var ipad = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var ios = ipad || /iPhone|iPod/.test(ua);
+  var foraDoSafari = /CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|FBAN|FBAV|FB_IAB|Instagram|Line\/|Twitter|Snapchat|TikTok|musical_ly|LinkedInApp|Pinterest/.test(ua);
+  var forcado = (location.search.match(/[?&]so=([a-z-]+)/) || [])[1];
+  var so = forcado || (ios ? (foraDoSafari ? 'ios-outro' : 'ios') : /Android/.test(ua) ? 'android' : 'pc');
+  if (/ipad/.test(location.search)) ipad = true;
+  if (ipad) { t.iosT = t.iosTpad; t.ios2 = t.ios2pad; t.ios2s = t.ios2spad; }
+
+  var comIcones = function (s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }).replace(/\{(\w+)\}/g, function (m, k) { return IC[k] || ''; }); };
+  document.querySelectorAll('[data-t]').forEach(function (el) { el.innerHTML = comIcones(t[el.dataset.t]); });
+  document.querySelectorAll('[data-so]').forEach(function (el) { el.hidden = el.dataset.so !== so; });
 
   var botao = document.getElementById('instalar'), pedido = null;
   var jaInstalado = window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches || navigator.standalone;
@@ -104,6 +137,14 @@
     pedido.userChoice.then(function () { pedido = null; botao.hidden = true; });
   });
   window.addEventListener('appinstalled', function () { botao.hidden = true; document.getElementById('instalado').hidden = false; });
+
+  // iPhone fora do Safari: copiar o link para colar no Safari
+  document.getElementById('copiar').addEventListener('click', function () {
+    var link = location.href.split('?')[0], feito = function () { document.getElementById('copiado').hidden = false; };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(link).then(feito, function () { prompt('', link); });
+    else prompt('', link);
+  });
+
   // guarda o jogo no aparelho já nesta visita (o app instalado abre sem internet)
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function () {});
 </script>
