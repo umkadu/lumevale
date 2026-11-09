@@ -14,7 +14,7 @@
   const ABAS = [['equipe', LV.t('Equipe')], ['domador', LV.t('Domador')], ['loja', LV.t('Loja')], ['mapas', LV.t('Mapas')], ['santuario', LV.t('Santuário')], ['bolsa', LV.t('Bolsa')], ['ajuda', LV.t('Ajuda')]];
   const S = () => game.S;
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.9';
+  const VERSAO = '1.9.1';
   ui.VERSAO = VERSAO;
   let el = {};
 
