@@ -545,5 +545,23 @@
     "toque num tópico": "tap a topic",
     "(vida cheia, Nv ": "(full health, Lv ",
     "Pausado": "Paused",
+
+    /* ---------- frozen hints (tutorial, minigame, first map) ---------- */
+    "Como capturar": "How to catch",
+    "Você tem <b>5 segundos</b> para fechar a lanterna. ": "You have <b>5 seconds</b> to seal the lantern. ",
+    " quando o ponteiro estiver na <b>faixa clara</b> para capturar. Acertando o <b>centro dourado</b>, o pet ainda pode ganhar um talento bônus.": " while the pointer is in the <b>light zone</b> to catch it. Hit the <b>golden center</b> and the pet may also gain a bonus talent.",
+    "Começar!": "Start!",
+    "Seu objetivo": "Your goal",
+    " criaturas</b> neste mapa para chamar o Guardião. O contador fica no alto, à direita. Quando ele encher, ": " creatures</b> on this map to summon its Guardian. The counter is at the top right. When it fills up, ",
+    " em <b>Desafiar Guardião</b>: vencer abre o caminho para o próximo mapa.": " <b>Challenge Guardian</b>: winning opens the way to the next map.",
+    "Vamos lá!": "Let’s go!",
+    "Quase!": "Almost!",
+    "Ele está fraco!": "It’s weak!",
+    " escapou da lanterna, mas continua fraco. ": " escaped the lantern but is still weak. ",
+    " na lanterna para tentar de novo!": " the lantern to try again!",
+    " está com pouca vida: mais um ataque pode derrotá-lo. ": " is low on health: one more hit could defeat it. ",
+    " na lanterna para capturá-lo!": " the lantern to catch it!",
+    "Chance de captura agora: ": "Capture chance now: ",
+    " · ou aperte Q": " · or press Q",
   });
 })();

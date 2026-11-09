@@ -2009,9 +2009,11 @@
   function tutorialPasso(novo) {
     const tu = game.tutorial;
     if (!tu) return;
-    if (!novo && tu.passo === 'atacar' && tu.alvo.hp <= tu.alvo.hpMax * 0.5) novo = 'lanterna';
+    // vida baixa (mais um golpe poderia derrotá-la): o domador para de atacar e o jogo espera a lanterna
+    if (!novo && tu.passo === 'atacar' && tu.alvo.hp <= tu.alvo.hpMax * 0.3) novo = 'lanterna';
     if (!novo || novo === tu.passo) return;
     if (novo !== 'lanterna') tu.escapou = false;
+    if (novo === 'lanterna' && W) { W.tam.foco = null; W.foco = null; }
     tu.passo = novo;
     emit('tutorial', tu);
   }

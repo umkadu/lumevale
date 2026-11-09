@@ -14,7 +14,7 @@
   const ABAS = [['equipe', LV.t('Equipe')], ['domador', LV.t('Domador')], ['loja', LV.t('Loja')], ['mapas', LV.t('Mapas')], ['santuario', LV.t('Santuário')], ['bolsa', LV.t('Bolsa')], ['ajuda', LV.t('Ajuda')]];
   const S = () => game.S;
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.8';
+  const VERSAO = '1.8.1';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -28,23 +28,66 @@
     el.toasts.prepend(d);
   };
 
+  /* =================== AVISO CONGELADO =================== */
+  /* o jogo para e um cartão explica o próximo passo; sem botão, ele some quando o jogador faz o que foi pedido */
+  ui.avisoPausa = function (o) {
+    const box = document.getElementById('aviso-pausa');
+    game.pausaAviso = true;
+    document.getElementById('ap-olho').textContent = o.olho || '';
+    document.getElementById('ap-txt').innerHTML = o.texto;
+    const ok = document.getElementById('ap-ok');
+    ok.hidden = !o.botao; ok.textContent = o.botao || '';
+    ok.onclick = () => { som('clique'); ui.fecharAvisoPausa(); if (o.aoOk) o.aoOk(); };
+    document.querySelectorAll('.ap-alvo').forEach((x) => x.classList.remove('ap-alvo'));
+    if (o.destaque) { const d = document.querySelector(o.destaque); if (d) d.classList.add('ap-alvo'); }
+    box.classList.toggle('sem-botao', !o.botao);
+    box.hidden = false;
+    if (o.botao) setTimeout(() => { try { ok.focus({ preventScroll: true }); } catch (e) { /* ok */ } }, 40);
+  };
+  ui.fecharAvisoPausa = function () {
+    document.getElementById('aviso-pausa').hidden = true;
+    document.querySelectorAll('.ap-alvo').forEach((x) => x.classList.remove('ap-alvo'));
+    game.pausaAviso = false;
+  };
+  /* primeiro mapa de verdade (depois do tutorial ou ao pular): o objetivo, com o jogo parado */
+  function avisoMeta(depois) {
+    const n = game.metaChefe(), verbo = LV.movel ? LV.t('toque') : LV.t('clique');
+    game.pausaAviso = true;
+    setTimeout(() => ui.avisoPausa({
+      olho: LV.t('Seu objetivo'),
+      texto: LV.t('Derrote ') + '<b>' + n + LV.t(' criaturas</b> neste mapa para chamar o Guardião. O contador fica no alto, à direita. Quando ele encher, ') +
+        verbo + LV.t(' em <b>Desafiar Guardião</b>: vencer abre o caminho para o próximo mapa.'),
+      botao: LV.t('Vamos lá!'), destaque: '.hud-map', aoOk: depois,
+    }), 2600);   // deixa o nome do mapa aparecer e sumir antes
+  }
+
   /* =================== TUTORIAL =================== */
   ui.tutorial = function (tu) {
     const box = document.getElementById('tut'), txt = document.getElementById('tut-txt');
     document.getElementById('b-lant').classList.toggle('tut-alvo', !!tu && tu.passo === 'lanterna');
+    if (!tu || tu.passo !== 'lanterna') { if (game.pausaAviso && !document.getElementById('aviso-pausa').hidden) ui.fecharAvisoPausa(); }
     if (!tu || tu.passo === 'minijogo' || tu.passo === 'fim') {
       box.hidden = true;
       if (tu && tu.passo === 'fim') modalTutorialFim(tu.pet);
+      return;
+    }
+    if (tu.passo === 'lanterna') {
+      box.hidden = true;
+      const nm = '<b>' + esc(tu.alvo.nome) + '</b>', vb = LV.movel ? LV.t('Toque') : LV.t('Clique');
+      ui.avisoPausa({
+        olho: tu.escapou ? LV.t('Quase!') : LV.t('Ele está fraco!'),
+        texto: (tu.escapou
+          ? nm + LV.t(' escapou da lanterna, mas continua fraco. ') + vb + LV.t(' na lanterna para tentar de novo!')
+          : nm + LV.t(' está com pouca vida: mais um ataque pode derrotá-lo. ') + vb + LV.t(' na lanterna para capturá-lo!')) +
+          '<span class="ap-chance">' + LV.t('Chance de captura agora: ') + '<b>' + Math.round(game.chanceTutorial() * 100) + '%</b>' + (LV.movel ? '' : LV.t(' · ou aperte Q')) + '</span>',
+        destaque: '#b-lant',
+      });
       return;
     }
     const nome = '<b>' + esc(tu.alvo.nome) + '</b>', verbo = LV.movel ? LV.t('Toque') : LV.t('Clique');
     let h = '';
     if (tu.passo === 'atacar') {
       h = LV.t('Este é ') + nome + LV.t(', uma criatura selvagem. ') + verbo + LV.t(' nele para atacar com a sua lanterna e baixar a vida dele.');
-    } else if (tu.passo === 'lanterna') {
-      h = (tu.escapou ? LV.t('Quase! ') + nome + LV.t(' escapou da lanterna. ') : LV.t('Muito bem! ')) +
-        LV.t('Com menos vida, a captura fica mais fácil: a chance agora é de ') + '<b id="tut-pct">' + Math.round(game.chanceTutorial() * 100) + '%</b>. ' +
-        verbo + LV.t(' no botão da lanterna, no canto de baixo') + (LV.movel ? '.' : LV.t(' (ou aperte Q).'));
     } else if (tu.passo === 'mirar') {
       h = verbo + LV.t(' na criatura destacada para lançar a lanterna. O jogo fica pausado enquanto você mira.');
     }
@@ -63,6 +106,7 @@
   }
   // fim do tutorial (parabéns ou "Pular"): primeiro mapa de verdade, save gravado e boas-vindas
   function terminarTutorial() {
+    ui.fecharAvisoPausa();
     if (!game.concluirTutorial()) return;
     document.getElementById('tut').hidden = true;
     document.getElementById('b-lant').classList.remove('tut-alvo');
@@ -1082,9 +1126,11 @@
     if (!ui.modalAberto) return;
     const o = ui.modalAberto;
     ui.modalAberto = null;
-    if (o.aoFechar) o.aoFechar();
     el.modal.hidden = true;
     el.mbox.innerHTML = '';
+    // depois de limpar: o aoFechar pode abrir outra janela (ex.: o parabéns do tutorial ao fechar o minijogo)
+    if (o.aoFechar) o.aoFechar();
+    if (ui.modalAberto) return;
     const prox = ui.fila.shift();
     if (prox) ui.modal(prox[0], prox[1]);
   };
@@ -1456,8 +1502,32 @@
       aoAbrir(box) {
         const pont = box.querySelector('#ponteiro'), pista = box.querySelector('#pista'), dica = box.querySelector('#mini-dica'), btn = box.querySelector('#mini-btn');
         const barra = box.querySelector('#mini-barra'), relogio = box.querySelector('#mini-relogio');
-        const t0 = performance.now();
+        let t0 = performance.now();
         let tRes = 0;
+        // explicação congelada antes do relógio: no tutorial e na primeira captura de quem pulou o tutorial
+        const avisados = S().avisados || (S().avisados = []);
+        let comecou = !(game.tutorial || !avisados.includes('minijogo'));
+        if (!comecou) {
+          const intro = document.createElement('div');
+          intro.className = 'mini-intro';
+          intro.innerHTML = '<div class="mini-intro-caixa"><div class="eyebrow">' + LV.t('Como capturar') + '</div><p>' +
+            LV.t('Você tem <b>5 segundos</b> para fechar a lanterna. ') + (LV.movel ? LV.t('Toque') : LV.t('Clique')) +
+            LV.t(' quando o ponteiro estiver na <b>faixa clara</b> para capturar. Acertando o <b>centro dourado</b>, o pet ainda pode ganhar um talento bônus.') +
+            '</p><button class="btn pri" type="button">' + LV.t('Começar!') + '</button></div>';
+          box.querySelector('.mini').appendChild(intro);
+          intro.querySelector('button').addEventListener('click', (ev) => { ev.stopPropagation(); comecar(); });
+          setTimeout(() => { try { intro.querySelector('button').focus({ preventScroll: true }); } catch (err) { /* ok */ } }, 40);
+        }
+        function comecar() {
+          if (comecou) return;
+          comecou = true;
+          if (!avisados.includes('minijogo')) avisados.push('minijogo');
+          const intro = box.querySelector('.mini-intro');
+          if (intro) intro.remove();
+          t0 = performance.now(); ultimo = t0;
+          limite = setTimeout(esgotar, PRAZO * 1000 + 50);
+          btn.focus();
+        }
         // o tempo acabou: a criatura rompe a lanterna antes de ela fechar
         const esgotar = () => {
           if (resultado) return;
@@ -1470,10 +1540,10 @@
           btn.textContent = LV.t('Continuar');
           btn.focus();
         };
-        limite = setTimeout(esgotar, PRAZO * 1000 + 50);       // garante o fim mesmo se a animação parar
+        if (comecou) limite = setTimeout(esgotar, PRAZO * 1000 + 50);       // garante o fim mesmo se a animação parar
         const passo = (now) => {
           const dt = Math.min(0.05, (now - ultimo) / 1000); ultimo = now;
-          if (!resultado) {
+          if (!resultado && comecou) {
             pos += dir * vel * dt;
             if (pos >= 100) { pos = 100; dir = -1; } else if (pos <= 0) { pos = 0; dir = 1; }
             pont.style.left = pos.toFixed(2) + '%';
@@ -1487,6 +1557,7 @@
         };
         raf = requestAnimationFrame(passo);
         const apertar = () => {
+          if (!comecou) { comecar(); return; }
           if (resultado) { if (performance.now() - tRes > 350) ui.fecharModal(); return; }
           tRes = performance.now();
           clearTimeout(limite);
@@ -1513,7 +1584,7 @@
         };
         document.addEventListener('keydown', tecla, true);
         document.addEventListener('keyup', tecla, true);
-        btn.focus();
+        if (comecou) btn.focus();
       },
       aoFechar() {
         cancelAnimationFrame(raf); clearTimeout(limite);
@@ -1696,11 +1767,13 @@
     if (novoJogo === 'tutorial') { ui.tutorial(game.tutorial); return; }
     if (novoJogo) {
       const p = S().pets[0];
-      ui.toast(LV.t('Bem-vindo, ') + S().dom.nome + '. ' + (p ? LV.nomePet(p) + LV.t(' está ao seu lado.') : ''), 'bom');
-      if (LV.movel) {                     // celular: dicas de toque, em duas mensagens curtas
-        setTimeout(() => ui.toast(LV.t('Use ◀ ▶ para andar, ▲ para pular ou subir escadas e ▼ para descer.')), 2000);
-        setTimeout(() => ui.toast(LV.t('Toque numa criatura para atacar. Segure o dedo nela para atacar junto com os pets.')), 6000);
-      } else setTimeout(() => ui.toast(LV.t('A/D para andar, Espaço para pular, W/S para escadas. Esc abre as Configurações.')), 2000);
+      avisoMeta(() => {                   // as dicas de controle vêm depois do objetivo
+        ui.toast(LV.t('Bem-vindo, ') + S().dom.nome + '. ' + (p ? LV.nomePet(p) + LV.t(' está ao seu lado.') : ''), 'bom');
+        if (LV.movel) {                   // celular: dicas de toque, em duas mensagens curtas
+          setTimeout(() => ui.toast(LV.t('Use ◀ ▶ para andar, ▲ para pular ou subir escadas e ▼ para descer.')), 1500);
+          setTimeout(() => ui.toast(LV.t('Toque numa criatura para atacar. Segure o dedo nela para atacar junto com os pets.')), 5500);
+        } else setTimeout(() => ui.toast(LV.t('A/D para andar, Espaço para pular, W/S para escadas. Esc abre as Configurações.')), 1500);
+      });
     }
   };
   function cartaoSlot(n, modo) {

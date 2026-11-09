@@ -289,7 +289,7 @@
     if (game.S && game.W) {
       game.pausaMenu = ui.pausaMenu();
       ui.marcarPausa(game.pausaMenu);
-      if (!game.pausado && !game.pausaMenu) {      // pausaMenu: aba Mapas aberta
+      if (!game.pausado && !game.pausaMenu && !game.pausaAviso) {      // pausaMenu: aba Mapas · pausaAviso: cartão de instrução
         acc += dt * game.S.op.vel;
         let n = 0;
         while (acc >= 1 / 60 && n < 14) { game.step(1 / 60); acc -= 1 / 60; n++; }
@@ -382,7 +382,7 @@
         if (!game.mirarEm(x, y, dedo ? 85 : 50)) ui.toast((dedo ? LV.t('Toque') : LV.t('Clique')) + LV.t(' numa das criaturas selvagens destacadas.'), 'ruim', true);
         return;
       }
-      if (game.pausado) return;
+      if (game.pausado || game.pausaAviso) return;
       cv.focus({ preventScroll: true });
       const alvo = game.inimigoEm(x, y, dedo ? 58 : 34);
       if (e.button === 2) {
