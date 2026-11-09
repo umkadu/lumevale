@@ -28,12 +28,15 @@
       ['Controls', movel ? [
         '<b>◀ ▶</b> walk · <b>▲</b> jump or climb stairs · <b>▼</b> go down stairs or drop through a platform.',
         'Tap the scenery to walk there. <b>Tap a creature</b>: only the tamer attacks. <b>Hold your finger</b> on it: the tamer and the pets attack together.',
+        'Stairs: jump and land on a staircase to climb it. Walking sideways or dropping down, you pass through it.',
         'Lantern (bottom right): capture. Book: Journal. Eye: Bestiary. Trophy: Achievements. Gear: Settings.',
         'The button next to the pets switches the pet mode.',
       ] : [
         '<b>A/D</b> or arrows: walk · <b>Space</b>: jump · <b>W/S</b>: stairs and dropping through platforms.',
         'Click the scenery to walk there. <b>Left-click</b> a creature: only the tamer attacks. <b>Right-click</b>: the tamer and the pets attack together.',
-        '<b>Q</b>: lantern (capture) · <b>1, 2, 3</b>: pet mode · <b>B</b>: Bestiary · <b>C</b>: Achievements · <b>Esc</b>: Settings.',
+        'Stairs: jump and land on a staircase to climb it. Walking sideways or dropping down, you pass through it.',
+        '<b>Q</b>: lantern (capture) · <b>1, 2, 3</b>: pet mode · <b>O</b>: Bestiary · <b>C</b>: Achievements · <b>Esc</b>: Settings.',
+        'Journal tabs: <b>E</b> Team · <b>T</b> Tamer · <b>L</b> Shop · <b>M</b> Maps · <b>R</b> Sanctuary · <b>B</b> Satchel · <b>H</b> Help. Press the same key again to close.',
       ]],
       ['Pets in the field', [
         'Up to 3 pets fight with you (more with <b>Extra Bond</b> in the Shop and <b>Eternal Bond</b> in the Sanctuary). The rest wait in the Collection: drag them to a free slot.',
@@ -45,8 +48,8 @@
       ['Capture', [
         (movel ? 'Tap' : 'Click') + ' the lantern' + (movel ? '' : ' (or press Q)') + ': the game pauses and wild creatures show their chance. Then pick one.',
         'The chance is rolled when the lantern hits. At full health it is about <b>30%</b> in the first areas and lower for high-level creatures. <b>The less health, the higher the chance</b> (up to about 85%).',
-        'If it holds, the minigame starts: close the lantern while the pointer is in the light zone, within 5 s. In the <b>golden center</b> the pet may gain a talent (Fierce, Sturdy or Nimble).',
-        'Docile creatures only fight back; aggressive ones attack whoever comes near their nest. The <b>Murks</b> (total darkness, no light inside) can’t be caught and always attack.',
+        'If it holds, the minigame starts: close the lantern' + (movel ? '' : ' (click or <b>Space</b>)') + ' while the pointer is in the light zone, within 5 s. In the <b>golden center</b> the pet may gain a talent (Fierce, Sturdy or Nimble).',
+        'Docile creatures only fight back; aggressive ones attack whoever comes near their nest. The <b>Murks</b> (total darkness, no light inside) can’t be caught and always attack. Each map has its own Murks, and nests mix several kinds.',
         'Lanterns are bought in the Shop.',
       ]],
       ['Evolution and abilities', [
@@ -64,8 +67,9 @@
       ['Guardians and maps', [
         'Defeat creatures on the map until the goal (' + metas + ') and tap <b>Challenge Guardian</b>.',
         'The fight lasts 60 s and ends if every pet faints. During the challenge the tamer and the pets attack the Guardian on their own.',
-        'Each victory lowers the goal by 2. Past the goal, 10% of kills are saved for the next summon.',
-        'The first victory opens the next map and gives you a new pet. In the Maps tab, tap a map to preview it and travel (the game pauses while the tab is open).',
+        'The goal never changes. Past the goal, 10% of kills are saved for the next summon.',
+        'Each Guardian has a basic attack and two specials from its theme: roots, poison gas, sword and water, light, chains and fire. Specials are announced first: circles and stripes on the ground show where they will hit. Some poison, root or stun the pets.',
+        'The first victory opens the next map and gives you a new pet. In the Maps tab, tap a map to preview it and travel (the game pauses while the preview is open).',
       ]],
       ['Auto-hunt', [
         'Unlocked after beating the first Guardian (or from the start with <b>Trail Memory</b>). The tamer walks to enemies, uses stairs and picks up drops by itself.',
@@ -98,12 +102,15 @@
       ['Controles', movel ? [
         '<b>◀ ▶</b> andar · <b>▲</b> pular ou subir escada · <b>▼</b> descer escada ou atravessar plataforma.',
         'Toque no cenário para ir até lá. <b>Toque numa criatura</b>: só o domador ataca. <b>Segure o dedo</b> nela: o domador e os pets atacam juntos.',
+        'Escadas: pule e caia em cima de uma escada para subir por ela. Andando de lado ou descendo, você passa direto.',
         'Lanterna (canto de baixo): captura. Livro: Diário. Olho: Bestiário. Troféu: Conquistas. Engrenagem: Configurações.',
         'O botão ao lado dos pets troca o modo deles.',
       ] : [
         '<b>A/D</b> ou setas: andar · <b>Espaço</b>: pular · <b>W/S</b>: escadas e atravessar plataformas.',
         'Clique no cenário para ir até lá. <b>Clique esquerdo</b> numa criatura: só o domador ataca. <b>Clique direito</b>: o domador e os pets atacam juntos.',
-        '<b>Q</b>: lanterna (captura) · <b>1, 2, 3</b>: modo dos pets · <b>B</b>: Bestiário · <b>C</b>: Conquistas · <b>Esc</b>: Configurações.',
+        'Escadas: pule e caia em cima de uma escada para subir por ela. Andando de lado ou descendo, você passa direto.',
+        '<b>Q</b>: lanterna (captura) · <b>1, 2, 3</b>: modo dos pets · <b>O</b>: Bestiário · <b>C</b>: Conquistas · <b>Esc</b>: Configurações.',
+        'Abas do Diário: <b>E</b> Equipe · <b>T</b> Domador · <b>L</b> Loja · <b>M</b> Mapas · <b>R</b> Santuário · <b>B</b> Bolsa · <b>H</b> Ajuda. Apertar a mesma tecla de novo fecha.',
       ]],
       ['Pets em campo', [
         'Até 3 pets lutam com você (mais com <b>Laço Extra</b> na Loja e <b>Vínculo Eterno</b> no Santuário). Os outros ficam na Coleção: arraste até uma vaga livre.',
@@ -115,8 +122,8 @@
       ['Captura', [
         (movel ? 'Toque' : 'Clique') + ' na lanterna' + (movel ? '' : ' (ou aperte Q)') + ': o jogo pausa e as criaturas selvagens mostram a chance. Depois escolha uma.',
         'A chance é sorteada quando a lanterna acerta. Com vida cheia é cerca de <b>30%</b> nas primeiras áreas e menor em criaturas de nível alto. <b>Quanto menos vida, maior a chance</b> (até uns 85%).',
-        'Se prender, vem o minijogo: feche a lanterna com o ponteiro na faixa clara, em até 5 s. No <b>centro dourado</b> o pet pode ganhar um talento (Feroz, Robusto ou Ágil).',
-        'Criaturas mansas só revidam; as agressivas atacam quem chega perto do ninho. Os <b>Breus</b> (escuridão completa, sem nenhuma luz dentro) não podem ser capturados e atacam sempre.',
+        'Se prender, vem o minijogo: feche a lanterna' + (movel ? '' : ' (clique ou <b>Espaço</b>)') + ' com o ponteiro na faixa clara, em até 5 s. No <b>centro dourado</b> o pet pode ganhar um talento (Feroz, Robusto ou Ágil).',
+        'Criaturas mansas só revidam; as agressivas atacam quem chega perto do ninho. Os <b>Breus</b> (escuridão completa, sem nenhuma luz dentro) não podem ser capturados e atacam sempre. Cada mapa tem os seus Breus, e os ninhos misturam vários tipos.',
         'Lanternas são compradas na Loja.',
       ]],
       ['Evolução e habilidades', [
@@ -134,8 +141,9 @@
       ['Guardiões e mapas', [
         'Derrote criaturas do mapa até a meta (' + metas + ') e toque em <b>Desafiar Guardião</b>.',
         'A luta dura 60 s e acaba se todos os pets desmaiarem. Durante o desafio, o domador e os pets atacam o Guardião sozinhos.',
-        'Cada vitória baixa a meta em 2. Depois da meta, 10% dos abates ficam guardados para a próxima invocação.',
-        'A primeira vitória abre o próximo mapa e dá um pet novo. Na aba Mapas, toque num mapa para ver a prévia e viajar (o jogo pausa com a aba aberta).',
+        'A meta é sempre a mesma. Depois dela, 10% dos abates ficam guardados para a próxima invocação.',
+        'Cada Guardião tem um ataque básico e dois especiais do seu tema: raízes, gás venenoso, espada e água, luz, correntes e fogo. Os especiais são avisados antes: círculos e faixas no chão mostram onde vão cair. Alguns envenenam, prendem ou atordoam os pets.',
+        'A primeira vitória abre o próximo mapa e dá um pet novo. Na aba Mapas, toque num mapa para ver a prévia e viajar (o jogo pausa enquanto a prévia está aberta).',
       ]],
       ['Caçada automática', [
         'Liberada depois do primeiro Guardião (ou desde o início com <b>Memória da Trilha</b>). O domador anda sozinho até os inimigos, usa escadas e coleta o que cai.',

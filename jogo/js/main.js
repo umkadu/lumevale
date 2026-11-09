@@ -322,7 +322,11 @@
         return;
       }
       if (e.key === 'Escape' && document.documentElement.classList.contains('diario') && !ui.modalAberto) { ui.diario(false); return; }
-      if ((e.key === 'b' || e.key === 'B') && !fora(e) && !ui.modalAberto && !ui.inicioVisivel() && game.slot) { ui.abrirBestiario(); return; }
+      // atalhos: O Bestiário (o olho), C Conquistas e as abas do Diário (E T L M R B H)
+      const livre = !fora(e) && !ui.modalAberto && !ui.inicioVisivel() && game.slot && !e.ctrlKey && !e.metaKey && !e.altKey;
+      if ((e.key === 'o' || e.key === 'O') && livre) { ui.abrirBestiario(); return; }
+      const aba = livre && !e.repeat ? Object.keys(ui.ATALHOS).find((a) => ui.ATALHOS[a] === e.key.toUpperCase()) : null;
+      if (aba) { ui.atalhoAba(aba); e.preventDefault(); return; }
       if ((e.key === 'c' || e.key === 'C') && !fora(e) && !ui.modalAberto && !ui.inicioVisivel() && game.slot) { ui.abrirConquistas(); return; }
       if (e.key === 'Escape' && game.captura && game.captura.fase === 'mira') { game.cancelarMira(); return; }
       if (e.key === 'Escape' && !ui.inicioVisivel() && !ui.modalAberto && game.slot && !game.captura) { ui.abrirConfig(true); return; }

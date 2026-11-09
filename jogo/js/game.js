@@ -107,7 +107,7 @@
     });
     // abates acima da meta (saves antigos contavam sem limite) viram reserva de 10%
     o.mapas.forEach((m, i) => {
-      const base = LV.MAPS[i].killsChefe, meta = Math.max(Math.ceil(base * 0.25), base - 2 * m.vitorias);
+      const base = LV.MAPS[i].killsChefe, meta = base;
       if (m.kills > meta) { m.reserva += (m.kills - meta) * 0.1; m.kills = meta; }
     });
     // saves de antes das moedas: cada Guardião já vencido rende as moedas da primeira vitória
@@ -265,9 +265,11 @@
       const corpo = sp.base.estilo === 'investida';
       e = { tipo: 'selvagem', sp: spId, nome: sp.nome[est], el: sp.el, corpo: sp.corpo, pal: sp.pal, voa: sp.voa, est, alc: corpo ? 42 : 170, estilo: corpo ? 'investida' : 'projetil', hpMul: sp.base.hp / 70, atkMul: sp.base.atk / 13, img: LV.imgPet(spId, est), h: (sp.alt || [44, 60, 78])[est], flip: !!(sp.flipEst && sp.flipEst[est]) };
     } else {
-      const h = LV.HOSTIS[z.hid];
+      // o ninho tem um Breu principal, mas 40% das vezes nasce outro Breu do mesmo mapa
+      const hid = z.hids && z.hids.length > 1 && Math.random() < 0.4 ? z.hids[Math.floor(Math.random() * z.hids.length)] : z.hid;
+      const h = LV.HOSTIS[hid] || LV.HOSTIS[z.hid];
       const est = Math.min(2, W.idx >> 1);
-      e = { tipo: 'hostil', hid: z.hid, nome: h.nome, el: def.elHostil, corpo: h.corpo, pal: def.hostil, voa: h.voa, est, alc: h.alc, estilo: h.estilo, hpMul: 1.1, atkMul: 1.05, img: h.img, flip: !!h.flip, h: (h.alt || 50) * (1 + 0.12 * est) };
+      e = { tipo: 'hostil', hid, nome: h.nome, el: def.elHostil, corpo: h.corpo, pal: def.hostil, voa: h.voa, est, alc: h.alc, estilo: h.estilo, hpMul: h.hp || 1.1, atkMul: h.atk || 1.05, velMul: h.vel, img: h.img, flip: !!h.flip, h: (h.alt || 50) * (1 + 0.12 * est) };
     }
     const sup = W.L.sup[z.sup];
     // nasce no ninho, mas no ponto mais afastado dos vizinhos (melhor de 6 sorteios): grupo, sem amontoar
@@ -320,11 +322,11 @@
   function vencerChefe(e) {
     const m = S.mapas[W.idx], primeira = !m.chefe;
     m.chefe = true; S.st.chefes++;
-    // cada vitória pede 2 abates a menos da próxima vez; a reserva (10% dos abates que passaram da meta) já entra no contador
+    // a meta é fixa; a reserva (10% dos abates que passaram da meta) já entra no contador da próxima invocação
     m.vitorias = (m.vitorias || 0) + 1;
     const novaMeta = metaChefe(W.idx), daReserva = Math.min(novaMeta, Math.floor(m.reserva || 0));
     m.kills = daReserva; m.reserva = Math.max(0, (m.reserva || 0) - daReserva);
-    W.chefe = null; W.shake = 14; W.spawn = 3;
+    W.chefe = null; W.shake = 14; W.spawn = 3; e.dash = null; limparEfeitosChefe();
     // moedas temáticas do Guardião (a única fonte delas)
     const md = LV.MOEDAS[W.idx], qMoeda = Math.max(1, Math.round(LV.moedasChefe(W.idx, primeira) * domStats().moedasMult));
     S.moedas[md.id] = (S.moedas[md.id] || 0) + qMoeda;
@@ -352,7 +354,7 @@
   function falharChefe(motivo) {
     if (!W.chefe) return;
     const e = W.chefe.e;
-    e.fuga = 0.8; W.chefe = null; W.spawn = 2;
+    e.fuga = 0.8; e.dash = null; W.chefe = null; W.spawn = 2; limparEfeitosChefe();
     const txt = motivo === 'pets' ? LV.t('Todos os seus pets caíram. O desafio contra ') + e.nome + LV.t(' terminou.')
       : motivo === 'abandonou' ? LV.t('Você abandonou a batalha contra ') + e.nome + '.'
       : motivo === 'heroi' ? LV.t('Você caiu. ') + e.nome + LV.t(' venceu desta vez.')
@@ -366,7 +368,7 @@
   /* abates para chamar o Guardião: a meta do mapa, menos 2 por vitória nesta jornada (mínimo de 25% da meta) */
   function metaChefe(i) {
     const base = LV.MAPS[i].killsChefe, v = (S && S.mapas[i] && S.mapas[i].vitorias) || 0;
-    return Math.max(Math.ceil(base * 0.25), base - 2 * v);
+    return base;                              // meta fixa (antes caía 2 por vitória)
   }
   game.metaChefe = (i) => metaChefe(i == null ? S.mapa : i);
   /* abates contam até a meta; depois dela, 10% de cada abate vai para a reserva da próxima invocação */
@@ -966,11 +968,13 @@
     const foco = T.foco || (W.foco && alvoValido(W.foco) ? W.foco : null);
     const autoOn = S.op.auto && autoLiberadaEm(S);
     let vx = 0;
+    if (T.preso > 0 || T.atordA > 0) { inp.pular = false; inp.subir = false; inp.descer = false; }   // preso ou atordoado: não pula nem troca de andar
     const manualAgora = inp.dir || inp.subir || inp.descer || inp.pular;
     if (manualAgora) { T.manual = 4; T.alvoX = null; T.destino = null; }
-    if (inp.pular) { N().pular(T); T.arVx = inp.dir * VEL_HEROI; inp.pular = false; }
+    // pulo do jogador: na queda, ele pode pousar numa escada (andando ou descendo, a escada não segura)
+    if (inp.pular) { if (N().pular(T)) T.pegaEscada = true; T.arVx = inp.dir * VEL_HEROI; inp.pular = false; }
     if (inp.subir) {
-      if (!T.esc) { const s = N().escadaPerto(L, T, true); if (s) N().entrarEscada(T, s, true); else if (T.sup >= 0) { N().pular(T); T.arVx = inp.dir * VEL_HEROI; } }
+      if (!T.esc) { const s = N().escadaPerto(L, T, true); if (s) N().entrarEscada(T, s, true); else if (T.sup >= 0) { if (N().pular(T)) T.pegaEscada = true; T.arVx = inp.dir * VEL_HEROI; } }
       inp.subir = false;
     }
     if (inp.descer) {
@@ -1005,13 +1009,14 @@
     } else if (T.esc) vx = 0;
     T.manual = Math.max(0, T.manual - dt);
     if (T.sup >= 0) T.arVx = vx;
+    if (T.preso > 0 || T.atordA > 0) vx = 0;
     N().mover(L, T, vx, dt);
     if (vx) T.face = Math.sign(T.esc ? vx : vx);
     else { const e = foco || maisProximo(T, vivos, 420); if (e) T.face = Math.sign(e.x - T.x) || T.face; }
     T.mov = LV.lerp(T.mov, vx && (T.sup >= 0 || T.esc) ? 1 : 0, Math.min(1, dt * 10));
     const combate = vivos.some((e) => dist2(e, T) < 300);
     T.hp = Math.min(T.hpMax, T.hp + T.hpMax * (combate ? 0.004 : 0.03) * dt);
-    T.cd -= dt;
+    if (!(T.atordA > 0)) T.cd -= dt;
     if (T.cd <= 0) {
       // o herói golpeia o alvo do clique; sozinho, só reage a ameaças (ou caça tudo na caçada automática)
       const e = foco && dist2(foco, T) < alcHeroi(foco) ? foco
@@ -1064,6 +1069,7 @@
         if (p.desm <= 0) { p.hp = Math.round(p.hpMax * 0.5); fx({ tipo: 'anel', x: p.x, y: alvoY(p), r0: 30, r1: 4, cor: p.pal.g, vida: 0.4 }); }
         return;
       }
+      if (p.atordA > 0) { p.mov = 0; if (p.sup < 0 && !p.voa) N().mover(L, p, 0, dt); return; }   // atordoado: parado
       const combate = ini.some((e) => dist2(e, p) < 320);
       p.hp = Math.min(p.hpMax, p.hp + p.hpMax * (combate ? 0.006 : 0.05) * dt);
       if (p.reducao > 0) p.reducao -= dt;
@@ -1097,6 +1103,7 @@
         alvoSup = tSup;
         ty = hyVoo;
       }
+      if (p.preso > 0) { p.mov = 0; if (p.sup < 0 && !p.voa) N().mover(L, p, 0, dt); return; }   // preso: ataca, mas não anda
       if (p.voa) {
         const yy = ty == null ? hyVoo : ty;
         const dx = tx - p.x, dy = yy - p.y, d = Math.hypot(dx, dy);
@@ -1117,6 +1124,224 @@
       p.mov = LV.lerp(p.mov, Math.abs(v) > 20 ? 1 : 0, Math.min(1, dt * 10));
       if (!e) p.face = Math.abs(v) > 20 ? Math.sign(v) : T.face;
     });
+  }
+
+  /* =================== ATAQUES DOS GUARDIÕES ===================
+     Cada Guardião tem 1 ataque básico e 2 especiais (um especial a cada 3 ataques, alternando).
+     Os especiais avisam antes: marcas no chão, brilho no Guardião e o nome do golpe. */
+  const KIT_CHEFE = [
+    { basico: 'chicote', esp: ['raizes', 'muralha'], cor: '#8fe07f' },          // Mãe-Raiz: raízes
+    { basico: 'baforada', esp: ['nuvemVeneno', 'chuvaEsporos'], cor: '#b8e05a' }, // Rei Bolor: gás venenoso
+    { basico: 'espada', esp: ['onda', 'estocada'], cor: '#62c9ff' },             // Sentinela Afogada: espada e água
+    { basico: 'raioLuz', esp: ['pilares', 'clarao'], cor: '#f6d6ff' },           // Matriarca Geode: luz
+    { basico: 'corrente', esp: ['bolasFogo', 'correntes'], cor: '#ff8a3d' },     // Coração Ígneo: correntes e fogo
+  ];
+  const NOME_ATAQUE = {
+    chicote: LV.t('Chicote de vinha'), raizes: LV.t('Raízes do chão'), muralha: LV.t('Muralha de raízes'),
+    baforada: LV.t('Baforada de esporos'), nuvemVeneno: LV.t('Nuvem venenosa'), chuvaEsporos: LV.t('Chuva de esporos'),
+    espada: LV.t('Golpe de espada'), onda: LV.t('Onda afogada'), estocada: LV.t('Estocada'),
+    raioLuz: LV.t('Raio de luz'), pilares: LV.t('Pilares de luz'), clarao: LV.t('Clarão'),
+    corrente: LV.t('Chicote de correntes'), bolasFogo: LV.t('Bolas de fogo'), correntes: LV.t('Correntes ígneas'),
+  };
+  game.KIT_CHEFE = KIT_CHEFE; game.NOME_ATAQUE = NOME_ATAQUE;
+  const chaoY = (x) => N().chaoSob(W.L, x, G - 2);
+  function alertar(o) { (W.alertas || (W.alertas = [])).push(Object.assign({ t: 0 }, o)); }
+  function perigo(o) { (W.perigos || (W.perigos = [])).push(Object.assign({ t: 0, atingidos: new Set() }, o)); }
+  // pontos de impacto: onde estão os aliados (com um pouco de erro) e mais alguns perto deles
+  function pontosPerto(al, n, espalho) {
+    const xs = al.map((a) => a.x + LV.rand(-25, 25));
+    while (xs.length < n) { const base = al.length ? LV.pick(al).x : W.tam.x; xs.push(base + LV.rand(-espalho, espalho)); }
+    return xs.slice(0, n).map((x) => LV.clamp(x, 40, W.w - 40));
+  }
+  function envenenar(a, dps, t) { a.veneno = { t: Math.max(t, (a.veneno && a.veneno.t) || 0), dps: Math.max(dps, (a.veneno && a.veneno.dps) || 0), tick: 0.5 }; }
+  function prender(a, t) { if (a.hp <= 0) return; if (!(a.preso > 0)) numero(a.x, topoDe(a) - 14, LV.t('preso!'), 'txt'); a.preso = Math.max(a.preso || 0, t); }
+  function atordoar(a, t) { if (a.hp <= 0) return; if (!(a.atordA > 0)) numero(a.x, topoDe(a) - 14, LV.t('atordoado!'), 'txt'); a.atordA = Math.max(a.atordA || 0, t); }
+
+  function iniciarAtaqueChefe(e, alvo, al) {
+    const kit = KIT_CHEFE[e.mapa] || KIT_CHEFE[0];
+    const especial = e.padrao % 3 === 2;
+    const nome = especial ? kit.esp[Math.floor(e.padrao / 3) % 2] : kit.basico;
+    e.ataque = nome; e.ataqueCor = kit.cor;
+    e.cargaMax = e.carga = especial ? 1.15 : 0.55;
+    e.mira = { x: alvo.x, y: alvoY(alvo) };
+    e.face = Math.sign(alvo.x - e.x) || e.face;
+    if (especial) { numero(e.x, topoDe(e) - 12, NOME_ATAQUE[nome], 'hab', kit.cor); som('lanterna'); }
+    const vida = e.cargaMax;
+    if (nome === 'raizes' || nome === 'pilares') {
+      e.pontos = pontosPerto(al, 5, 220);
+      e.pontos.forEach((x) => alertar({ tipo: 'circulo', x, y: chaoY(x), r: nome === 'pilares' ? 42 : 46, vida, cor: kit.cor }));
+    } else if (nome === 'chuvaEsporos') {
+      e.pontos = pontosPerto(al, 7, 260);
+      e.pontos.forEach((x) => alertar({ tipo: 'circulo', x, y: chaoY(x), r: 40, vida: vida + 0.9, cor: kit.cor }));
+    } else if (nome === 'nuvemVeneno') {
+      alertar({ tipo: 'circulo', x: e.mira.x, y: chaoY(e.mira.x), r: 150, vida, cor: kit.cor });
+    } else if (nome === 'clarao') {
+      alertar({ tipo: 'circulo', x: e.x, y: G, r: 320, vida, cor: kit.cor });
+    } else if (nome === 'muralha' || nome === 'onda') {
+      alertar({ tipo: 'faixa', x: e.x, y: G, r: 260, vida, cor: kit.cor });
+    } else if (nome === 'estocada') {
+      alertar({ tipo: 'linha', x: e.x, x1: LV.clamp(e.mira.x + e.face * 140, 70, W.w - 70), y: G, vida, cor: kit.cor });
+    } else if (nome === 'bolasFogo') {
+      e.pontos = pontosPerto(al, 5, 200);
+      e.pontos.forEach((x) => alertar({ tipo: 'circulo', x, y: chaoY(x), r: 56, vida: vida + 1.0, cor: kit.cor }));
+    }
+  }
+
+  function executarAtaqueChefe(e, alvo, al) {
+    const nome = e.ataque, atk = e.atk, el = e.el, cor = e.ataqueCor || e.pal.g, face = e.face || 1;
+    const oy = e.voa ? e.y : e.y - e.h * 0.55;
+    const naFrente = (a, alc) => (a.x - e.x) * face > -40 && Math.abs(a.x - e.x) < alc && Math.abs(alvoY(a) - oy) < 160;
+    e.cd = e.cargaMax > 1 ? 2.6 : 1.9;
+    switch (nome) {
+      /* ---------- Mãe-Raiz ---------- */
+      case 'chicote': {
+        fx({ tipo: 'vinha', x0: e.x + face * 30, y0: oy, x1: e.x + face * 240, y1: G - 40, cor, vida: 0.45 });
+        al.forEach((a) => { if (naFrente(a, 250)) danoAliado(a, atk * LV.rand(0.85, 1.0), el, e); });
+        som('golpe'); break;
+      }
+      case 'raizes': {
+        (e.pontos || []).forEach((x) => {
+          const gy = chaoY(x);
+          fx({ tipo: 'raiz', x, y: gy, cor, vida: 0.8 });
+          al.forEach((a) => { if (Math.abs(a.x - x) < 46 && alvoY(a) > gy - 130) { danoAliado(a, atk * 1.15, el, e); prender(a, 1.6); } });
+        });
+        W.shake = 8; som('impacto'); break;
+      }
+      case 'muralha': {
+        for (const dir of [-1, 1]) perigo({ tipo: 'ondaChao', estilo: 'raiz', x: e.x + dir * 40, dir, vel: 330, dist: 760, dmg: atk * 1.0, el, cor, src: e });
+        W.shake = 6; som('impacto'); break;
+      }
+      /* ---------- Rei Bolor ---------- */
+      case 'baforada': {
+        for (let i = 0; i < 18; i++) particula({ x: e.x + face * 40, y: oy, vx: face * LV.rand(120, 320), vy: LV.rand(-60, 60), g: -10, vida: 0.9, t: 0, r: LV.rand(3, 6), cor, tipo: 'luz' });
+        al.forEach((a) => { if (naFrente(a, 230)) { danoAliado(a, atk * 0.7, el, e); envenenar(a, atk * 0.22, 3); } });
+        break;
+      }
+      case 'nuvemVeneno': {
+        perigo({ tipo: 'gas', x: e.mira.x, y: chaoY(e.mira.x), r: 150, dur: 5, dps: atk * 0.4, tick: 0.2, cor, src: e, el });
+        break;
+      }
+      case 'chuvaEsporos': {
+        (e.pontos || []).forEach((x, i) => W.proj.push({ x: x + LV.rand(-10, 10), y: chaoY(x) - 430 - i * 40, vx: 0, vy: 240, g: 0, dmg: atk * 0.6, el, cor, dono: 'ini', src: e, linear: true, vida: 4, tipo: 'esporo',
+          aoCair: (pr) => {
+            const gy = chaoY(pr.x);
+            fx({ tipo: 'anel', x: pr.x, y: gy - 14, r0: 6, r1: 60, cor, vida: 0.4 });
+            for (let k = 0; k < 8; k++) particula({ x: pr.x, y: gy - 10, vx: LV.rand(-80, 80), vy: LV.rand(-90, -20), g: 60, vida: 0.8, t: 0, r: 3, cor, tipo: 'luz' });
+            aliados().forEach((a) => { if (Math.abs(a.x - pr.x) < 52 && alvoY(a) > gy - 120) { danoAliado(a, pr.dmg, el, e); envenenar(a, atk * 0.18, 3); } });
+          } }));
+        break;
+      }
+      /* ---------- Sentinela Afogada ---------- */
+      case 'espada': {
+        fx({ tipo: 'corteGrande', x: e.x + face * 70, y: oy, face, cor, vida: 0.35 });
+        al.forEach((a) => { if (naFrente(a, 210)) danoAliado(a, atk * LV.rand(0.95, 1.1), el, e); });
+        som('golpe'); W.shake = 4; break;
+      }
+      case 'onda': {
+        for (const dir of [-1, 1]) perigo({ tipo: 'ondaChao', estilo: 'agua', x: e.x + dir * 40, dir, vel: 380, dist: 800, dmg: atk * 0.9, el, cor, src: e, empurra: 80 });
+        W.shake = 6; som('impacto'); break;
+      }
+      case 'estocada': {
+        const alvoX = LV.clamp(e.mira.x + face * 140, 70, W.w - 70), dist = Math.abs(alvoX - e.x);
+        e.dash = { vx: face * 640, t: dist / 640, atingidos: new Set() };
+        som('golpe'); break;
+      }
+      /* ---------- Matriarca Geode ---------- */
+      case 'raioLuz': {
+        const a = alvo && alvo.hp > 0 ? alvo : al[0];
+        if (a) { fx({ tipo: 'raio', x0: e.x, y0: e.y - e.h * 0.8, x1: a.x, y1: alvoY(a), cor, vida: 0.35 }); danoAliado(a, atk * 0.95, el, e); faiscas(a.x, alvoY(a), cor, 8); }
+        break;
+      }
+      case 'pilares': {
+        (e.pontos || []).forEach((x) => {
+          const gy = chaoY(x);
+          fx({ tipo: 'coluna', x, y: gy, cor, vida: 0.7, larg: 48 });
+          al.forEach((a) => { if (Math.abs(a.x - x) < 44) danoAliado(a, atk * 1.2, el, e); });
+        });
+        W.shake = 6; som('brilho'); break;
+      }
+      case 'clarao': {
+        fx({ tipo: 'clarao', x: e.x, y: oy, r: 320, cor, vida: 0.6 });
+        W.flashTela = 0.55;
+        al.forEach((a) => { if (Math.abs(a.x - e.x) < 320) { danoAliado(a, atk * 0.8, el, e); atordoar(a, 1.2); } });
+        som('brilho'); break;
+      }
+      /* ---------- Coração Ígneo ---------- */
+      case 'corrente': {
+        const a = maisProximo(e, al, Infinity);
+        if (a) {
+          fx({ tipo: 'corrente', x0: e.x, y0: oy, alvo: a, cor, vida: 0.5 });
+          danoAliado(a, atk * 0.9, el, e);
+          if (a.sup >= 0 || a.voa) a.x += Math.sign(e.x - a.x) * 80;      // puxa para perto do Coração
+        }
+        som('golpe'); break;
+      }
+      case 'bolasFogo': {
+        (e.pontos || []).forEach((x, i) => {
+          const tv = 1.0 + i * 0.12, gy = chaoY(x), y0 = oy - 20;
+          W.proj.push({ x: e.x, y: y0, vx: (x - e.x) / tv, vy: (gy - y0 - 0.5 * 900 * tv * tv) / tv, g: 900, dmg: atk * 0.8, el, cor: '#ff8a3d', dono: 'ini', src: e, linear: true, vida: 3, tipo: 'brasa',
+            aoCair: (pr) => {
+              const gy2 = chaoY(pr.x);
+              fx({ tipo: 'explosao', x: pr.x, y: gy2 - 16, r: 64, vida: 0.45 }); explosao(pr.x, gy2 - 12, '#ff8a3d', 10);
+              aliados().forEach((a) => { if (Math.abs(a.x - pr.x) < 64 && alvoY(a) > gy2 - 130) danoAliado(a, pr.dmg, el, e); });
+              perigo({ tipo: 'fogo', x: pr.x, y: gy2, r: 46, dur: 2.2, dps: atk * 0.25, tick: 0.25, cor: '#ff8a3d', src: e, el });
+            } });
+        });
+        som('impacto'); break;
+      }
+      case 'correntes': {
+        al.forEach((a) => { fx({ tipo: 'corrente', x0: e.x, y0: oy, alvo: a, cor, vida: 1.8 }); danoAliado(a, atk * 0.6, el, e); prender(a, 2); envenenar(a, atk * 0.2, 2); });
+        W.shake = 5; som('impacto'); break;
+      }
+    }
+    W.alertas = (W.alertas || []).filter((x) => x.tipo === 'circulo' && x.vida > x.t + 0.2 && (nome === 'chuvaEsporos' || nome === 'bolasFogo'));
+  }
+
+  /* perigos que ficam no campo (ondas no chão, nuvem de gás, fogo) e marcas de aviso */
+  function updPerigos(dt) {
+    if (W.alertas) W.alertas = W.alertas.filter((a) => (a.t += dt) < a.vida);
+    if (!W.perigos || !W.perigos.length) return;
+    const al = aliados();
+    W.perigos = W.perigos.filter((p) => {
+      p.t += dt;
+      if (p.tipo === 'ondaChao') {
+        p.x += p.dir * p.vel * dt; p.dist -= p.vel * dt;
+        al.forEach((a) => {
+          // só pega quem está no chão: pular desvia
+          if (p.atingidos.has(a) || Math.abs(a.x - p.x) > 24 || a.voa || !(a.sup >= 0 || a.esc) || alvoY(a) < chaoY(p.x) - 120) return;
+          p.atingidos.add(a); danoAliado(a, p.dmg, p.el, p.src);
+          if (p.empurra) a.x = LV.clamp(a.x + p.dir * p.empurra, 30, W.w - 30);
+          if (p.estilo === 'raiz') prender(a, 1);
+        });
+        if (Math.random() < 0.5) particula({ x: p.x, y: chaoY(p.x) - 6, vx: -p.dir * 40, vy: LV.rand(-120, -40), g: 500, vida: 0.5, t: 0, r: 2.5, cor: p.cor, tipo: 'luz' });
+        return p.dist > 0 && p.x > 10 && p.x < W.w - 10;
+      }
+      if (p.tipo === 'gas' || p.tipo === 'fogo') {
+        p.tick -= dt;
+        if (p.tick <= 0) {
+          p.tick = 0.5;
+          al.forEach((a) => { if (Math.abs(a.x - p.x) < p.r && alvoY(a) > p.y - p.r * 1.1) { danoAliado(a, p.dps * 0.5, p.el, p.src); if (p.tipo === 'gas') envenenar(a, p.dps * 0.3, 2); } });
+        }
+        return p.t < p.dur;
+      }
+      return false;
+    });
+  }
+  /* estados nos aliados: veneno (dano aos poucos), preso (não anda) e atordoado (não anda nem ataca) */
+  function statusAliados(dt) {
+    for (const a of [W.tam].concat(W.pets)) {
+      if (a.preso > 0) a.preso -= dt;
+      if (a.atordA > 0) a.atordA -= dt;
+      if (a.veneno) {
+        a.veneno.t -= dt; a.veneno.tick -= dt;
+        if (a.veneno.tick <= 0 && a.hp > 0 && !(a.desm > 0) && !(a === W.tam && a.caido > 0)) { a.veneno.tick = 0.5; danoAliado(a, a.veneno.dps * 0.5, null, null); }
+        if (a.veneno.t <= 0) a.veneno = null;
+      }
+    }
+  }
+  function limparEfeitosChefe() {
+    W.alertas = []; W.perigos = [];
+    for (const a of [W.tam].concat(W.pets)) { a.preso = 0; a.atordA = 0; a.veneno = null; }
   }
 
   /* =================== INIMIGOS =================== */
@@ -1142,29 +1367,20 @@
       if (e.tipo === 'chefe') {
         const alvo = maisProximo(e, al, Infinity);
         if (e.voa) e.y += (G - 120 + Math.sin(W.t * 1.6) * 14 - e.y) * Math.min(1, dt * 3);
-        if (alvo) {
+        if (e.dash) {                                   // estocada: atravessa o campo e acerta quem estiver no caminho
+          vx = e.dash.vx; e.dash.t -= dt;
+          al.forEach((a) => { if (!e.dash.atingidos.has(a) && Math.abs(a.x - e.x) < 46 && alvoY(a) > G - 150) { e.dash.atingidos.add(a); danoAliado(a, e.atk * 1.2, e.el, e); a.x += Math.sign(e.dash.vx) * 40; } });
+          if (Math.random() < 0.6) particula({ x: e.x - Math.sign(vx) * 30, y: G - LV.rand(10, 70), vx: -vx * 0.2, vy: LV.rand(-60, -10), g: 300, vida: 0.5, t: 0, r: 2.5, cor: '#9fe6ff', tipo: 'luz' });
+          if (e.dash.t <= 0 || e.x <= 70 || e.x >= W.w - 70) e.dash = null;
+        } else if (alvo) {
           const d = alvo.x - e.x, s = Math.sign(d) || 1;
           if (e.carga <= 0) e.face = s;
-          if (Math.abs(d) > 90 && e.carga <= 0) vx = s * 62;
+          if (Math.abs(d) > 110 && e.carga <= 0) vx = s * 62;
           e.cd -= dt;
           if (e.carga > 0) {
             e.carga -= dt;
-            if (e.carga <= 0) {
-              if (e.padrao % 2 === 0) {
-                fx({ tipo: 'onda', x: e.x, y: G, r1: 180, cor: e.pal.g, vida: 0.5 });
-                W.shake = 7;
-                som('impacto');
-                al.forEach((a) => { if (Math.abs(a.x - e.x) < 180 && alvoY(a) > G - 150) danoAliado(a, e.atk * LV.rand(0.9, 1.1), e.el, e); });
-              } else {
-                const oy = e.voa ? e.y : e.y - e.h * 0.6;
-                for (let k = -2; k <= 2; k++) {
-                  const a = Math.atan2(alvoY(alvo) - oy, alvo.x - e.x) + k * 0.16;
-                  W.proj.push({ x: e.x, y: oy, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300, dmg: e.atk * 0.45, el: e.el, cor: e.pal.g, dono: 'ini', src: e, linear: true, vida: 2.6 });
-                }
-              }
-              e.padrao++; e.cd = 2.3; e.atkA = 1;
-            }
-          } else if (e.cd <= 0 && Math.abs(d) < 480) e.carga = 0.75;
+            if (e.carga <= 0) { executarAtaqueChefe(e, alvo, al); e.padrao++; e.atkA = 1; }
+          } else if (e.cd <= 0 && Math.abs(d) < 520) iniciarAtaqueChefe(e, alvo, al);
         }
         e.x = LV.clamp(e.x + vx * dt, 60, W.w - 60);
         e.mov = LV.lerp(e.mov, Math.abs(vx) > 5 ? 1 : 0, Math.min(1, dt * 10));
@@ -1186,7 +1402,7 @@
       else if (e.prov && e.provT > 0 && e.prov.desm <= 0 && e.prov.hp > 0) alvo = e.prov;
       else alvo = maisProximo(e, al.filter((a) => visivel(a) && noNinho(a)), Infinity, (a) => dist2(a, e));
       e.persegue = alvo;
-      const vel = (e.tipo === 'hostil' ? 1.1 : 1) * lentidao;
+      const vel = (e.tipo === 'hostil' ? e.velMul || 1.1 : 1) * lentidao;
       if (e.voa) {
         let tx = e.x, ty = casa.y - (e.altVoo || 70) + Math.sin(W.t * 2 + e.t0) * 10;
         if (alvo) {
@@ -1255,8 +1471,13 @@
       pr.vida -= dt;
       if (pr.vida <= 0) return false;
       if (pr.linear) {
+        if (pr.g) pr.vy += pr.g * dt;
         pr.x += pr.vx * dt; pr.y += pr.vy * dt;
-        particula({ x: pr.x, y: pr.y, vx: 0, vy: 0, g: 0, vida: 0.25, t: 0, r: 2.5, cor: pr.cor, tipo: 'luz' });
+        particula({ x: pr.x, y: pr.y, vx: 0, vy: 0, g: 0, vida: 0.25, t: 0, r: pr.tipo === 'brasa' ? 4 : 2.5, cor: pr.cor, tipo: 'luz' });
+        if (pr.aoCair) {
+          if (pr.vy > 0 && pr.y >= N().chaoSob(W.L, pr.x, pr.y - pr.vy * dt - 2) - 6) { pr.aoCair(pr); return false; }
+          return true;
+        }
         if (pr.y > G + 4) { faiscas(pr.x, G, pr.cor, 4); return false; }
         for (const a of aliados()) {
           if (Math.abs(a.x - pr.x) < 18 && Math.abs(alvoY(a) - pr.y) < (a.h || 40) * 0.5) { danoAliado(a, pr.dmg, pr.el, pr.src); faiscas(pr.x, pr.y, pr.cor, 6); return false; }
@@ -1382,10 +1603,13 @@
     if (!W || !S) return;
     W.t += dt; S.st.tempo += dt;
     const ds = domStats();
+    statusAliados(dt);
     updTamer(dt, ds);
     updPets(dt);
     updIni(dt);
     updProj(dt);
+    updPerigos(dt);
+    if (W.flashTela > 0) W.flashTela -= dt * 1.4;
     updDrops(dt, ds);
     updLant(dt, ds);
     updFx(dt);
@@ -1570,7 +1794,7 @@
         } else desenharCriatura(c, e, { t: t + e.t0, flash, alpha, mov: e.atord > 0 ? 0 : e.mov, atk: e.atkA });
         c.restore();
         desenharEstados(c, e, t);
-        if (e.carga > 0 && e.padrao % 2 === 0) art.glow(c, e.x, G, 130, e.pal.g, 0.25 * (1 - e.carga / 0.75) + 0.1);
+        if (e.carga > 0) art.glow(c, e.x, alvoY(e), e.cargaMax > 1 ? 150 : 100, e.ataqueCor || e.pal.g, 0.38 * (1 - e.carga / (e.cargaMax || 0.75)) + 0.08);
       } else if (it.k === 'p') {
         const lunge = e.estilo === 'investida' && e.atkA > 0 ? Math.sin(e.atkA * Math.PI) * 13 * e.face : 0;
         const desm = e.desm > 0;
@@ -1614,6 +1838,58 @@
       c.fillStyle = '#ffe3a3'; c.shadowColor = '#ffd38a'; c.shadowBlur = 14;
       c.beginPath(); c.moveTo(e.x - 13, y - 16); c.lineTo(e.x + 13, y - 16); c.lineTo(e.x, y); c.closePath(); c.fill();
       c.restore();
+    }
+  }
+  /* avisos no chão, perigos ativos e estados dos aliados (preso, atordoado, envenenado) */
+  function desenharChefeFx(c, t) {
+    for (const a of W.alertas || []) {
+      const k = a.t / a.vida, pulso = 0.55 + 0.45 * Math.sin(t * 14);
+      c.save();
+      if (a.tipo === 'circulo') {
+        c.beginPath(); c.ellipse(a.x, a.y, a.r, a.r * 0.24, 0, 0, TAU);
+        c.fillStyle = art.rgba('#ff4a3a', 0.12 + 0.22 * k); c.fill();
+        c.strokeStyle = art.rgba(a.cor, 0.5 + 0.4 * pulso); c.lineWidth = 2; c.stroke();
+        c.beginPath(); c.ellipse(a.x, a.y, a.r * k, a.r * 0.24 * k, 0, 0, TAU); c.strokeStyle = art.rgba('#ffffff', 0.5); c.lineWidth = 1; c.stroke();
+      } else if (a.tipo === 'faixa') {
+        c.fillStyle = art.rgba('#ff4a3a', 0.1 + 0.2 * k);
+        c.fillRect(a.x - a.r * 3, a.y - 8, a.r * 6, 10);
+        c.strokeStyle = art.rgba(a.cor, 0.6 * pulso); c.lineWidth = 2; c.strokeRect(a.x - a.r * 3, a.y - 8, a.r * 6, 10);
+      } else if (a.tipo === 'linha') {
+        c.strokeStyle = art.rgba('#ff4a3a', 0.35 + 0.4 * k); c.lineWidth = 6; c.setLineDash([14, 10]);
+        c.beginPath(); c.moveTo(a.x, a.y - 30); c.lineTo(a.x1, a.y - 30); c.stroke();
+      }
+      c.restore();
+    }
+    for (const p of W.perigos || []) {
+      if (p.tipo === 'ondaChao') {
+        const gy = N().chaoSob(W.L, p.x, G - 2);
+        if (p.estilo === 'raiz') {
+          for (let i = 0; i < 4; i++) {
+            const bx = p.x - p.dir * i * 16, h = 46 - i * 9;
+            c.beginPath(); c.moveTo(bx - 9, gy); c.lineTo(bx, gy - h); c.lineTo(bx + 9, gy); c.closePath();
+            c.fillStyle = '#3d2c1c'; c.fill(); c.strokeStyle = art.rgba(p.cor, 0.9); c.lineWidth = 1.5; c.stroke();
+          }
+        } else {
+          c.save(); c.globalCompositeOperation = 'lighter';
+          c.beginPath(); c.moveTo(p.x - p.dir * 70, gy); c.quadraticCurveTo(p.x - p.dir * 10, gy - 70, p.x + p.dir * 18, gy);
+          c.fillStyle = art.rgba(p.cor, 0.45); c.fill(); c.strokeStyle = art.rgba('#e8fbff', 0.8); c.lineWidth = 2; c.stroke();
+          c.restore();
+        }
+      } else if (p.tipo === 'gas' || p.tipo === 'fogo') {
+        const al = Math.min(1, p.t / 0.4, (p.dur - p.t) / 0.5);
+        for (let i = 0; i < 5; i++) {
+          const ang = (i / 5) * TAU + t * (p.tipo === 'gas' ? 0.7 : 2.4);
+          art.glow(c, p.x + Math.cos(ang) * p.r * 0.45, p.y - 30 + Math.sin(ang * 1.4) * 14, p.r * 0.7, p.cor, (p.tipo === 'gas' ? 0.2 : 0.3) * al);
+        }
+        if (Math.random() < 0.5) particula({ x: p.x + LV.rand(-p.r, p.r) * 0.8, y: p.y - LV.rand(0, 30), vx: LV.rand(-8, 8), vy: LV.rand(-50, -15), g: 0, vida: 0.8, t: 0, r: 2.5, cor: p.cor, tipo: 'luz' });
+      }
+    }
+    for (const a of [W.tam].concat(W.pets)) {
+      if (a.hp <= 0 || (a === W.tam && a.caido > 0)) continue;
+      const top = topoDe(a);
+      if (a.atordA > 0) for (let i = 0; i < 3; i++) { const ang = t * 6 + (i * TAU) / 3; art.glow(c, a.x + Math.cos(ang) * 12, top - 8 + Math.sin(ang) * 4, 6, '#fff6c0', 0.9); }
+      if (a.preso > 0) { c.save(); c.strokeStyle = art.rgba('#8fe07f', 0.85); c.lineWidth = 2; c.beginPath(); c.ellipse(a.x, chaoDe(a) - 3, 16, 5, 0, 0, TAU); c.stroke(); c.restore(); }
+      if (a.veneno && Math.random() < 0.15) particula({ x: a.x + LV.rand(-8, 8), y: top + 6, vx: 0, vy: -30, g: 0, vida: 0.6, t: 0, r: 2.2, cor: '#a8e05a', tipo: 'luz' });
     }
   }
   function desenharEstados(c, e, t) {
@@ -1726,6 +2002,7 @@
         c.beginPath(); c.arc(d.x, d.y, 3.6, 0, TAU); c.fillStyle = cor; c.fill(); c.strokeStyle = art.INK; c.lineWidth = 1; c.stroke();
       }
     }
+    desenharChefeFx(c, t);
     // áreas de habilidades (nuvem de esporos, teia)
     for (const a of W.areas) {
       const k = Math.min(1, a.t / 0.5), vida = Math.min(1, (a.dur - a.t) / 0.3);
@@ -1820,6 +2097,52 @@
         c.beginPath(); c.arc(a.x, alvoY(a), r, 0, TAU);
         c.strokeStyle = art.rgba(f.cor, 1 - k); c.lineWidth = 3 * (1 - k) + 1; c.stroke();
         art.glow(c, a.x, alvoY(a), r * 1.2, f.cor, 0.4 * (1 - k));
+      } else if (f.tipo === 'vinha') {
+        // chicote de vinha: curva que se estende até a ponta
+        const ext = Math.min(1, k * 3), x1 = LV.lerp(f.x0, f.x1, ext), y1 = LV.lerp(f.y0, f.y1, ext);
+        const cx = (f.x0 + x1) / 2, cy = Math.min(f.y0, y1) - 60 * (1 - k);
+        c.save(); c.lineCap = 'round';
+        c.beginPath(); c.moveTo(f.x0, f.y0); c.quadraticCurveTo(cx, cy, x1, y1);
+        c.strokeStyle = art.rgba('#2f4a22', 1 - k * 0.6); c.lineWidth = 9; c.stroke();
+        c.strokeStyle = art.rgba(f.cor, 0.9 * (1 - k)); c.lineWidth = 4; c.stroke();
+        c.restore();
+      } else if (f.tipo === 'raiz') {
+        // raízes pontudas saindo do chão
+        const h = 90 * Math.sin(Math.min(1, k * 2.2) * Math.PI * 0.5) * (1 - Math.max(0, k - 0.7) / 0.3);
+        c.save();
+        for (let i = -2; i <= 2; i++) {
+          const bx = f.x + i * 14, hh = h * (1 - Math.abs(i) * 0.18);
+          c.beginPath(); c.moveTo(bx - 8, f.y); c.lineTo(bx + i * 4, f.y - hh); c.lineTo(bx + 8, f.y); c.closePath();
+          c.fillStyle = '#3d2c1c'; c.fill(); c.strokeStyle = art.rgba(f.cor, 0.9); c.lineWidth = 1.5; c.stroke();
+        }
+        c.restore();
+      } else if (f.tipo === 'coluna') {
+        // pilar de luz caindo do alto
+        const al = k < 0.25 ? k / 0.25 : 1 - (k - 0.25) / 0.75, w = f.larg * (0.6 + 0.4 * al);
+        c.save(); c.globalCompositeOperation = 'lighter';
+        const gr = c.createLinearGradient(0, f.y - 520, 0, f.y);
+        gr.addColorStop(0, art.rgba(f.cor, 0)); gr.addColorStop(0.7, art.rgba(f.cor, 0.55 * al)); gr.addColorStop(1, art.rgba('#ffffff', 0.9 * al));
+        c.fillStyle = gr; c.fillRect(f.x - w / 2, f.y - 520, w, 520);
+        c.restore();
+        art.glow(c, f.x, f.y - 10, 60, f.cor, 0.8 * al);
+      } else if (f.tipo === 'clarao') {
+        const r = f.r * (0.2 + 0.8 * Math.min(1, k * 2.5));
+        art.glow(c, f.x, f.y, r, '#ffffff', 0.85 * (1 - k));
+        art.glow(c, f.x, f.y, r * 0.6, f.cor, 0.9 * (1 - k));
+      } else if (f.tipo === 'corrente') {
+        // corrente em elos do Guardião até o alvo
+        const a = f.alvo, x1 = a ? a.x : f.x0, y1 = a ? alvoY(a) : f.y0, n = Math.max(4, Math.round(Math.hypot(x1 - f.x0, y1 - f.y0) / 14));
+        c.save(); c.strokeStyle = art.rgba('#2a1a14', 0.95 * (1 - k * 0.5)); c.lineWidth = 3;
+        for (let i = 0; i < n; i++) {
+          const q = i / n, px = LV.lerp(f.x0, x1, q), py = LV.lerp(f.y0, y1, q) + Math.sin(q * Math.PI) * 18;
+          c.beginPath(); c.ellipse(px, py, 6, 3.5, Math.atan2(y1 - f.y0, x1 - f.x0) + (i % 2 ? 1.2 : 0), 0, TAU); c.stroke();
+        }
+        c.restore();
+        art.glow(c, x1, y1, 24, f.cor, 0.6 * (1 - k));
+      } else if (f.tipo === 'corteGrande') {
+        c.save(); c.translate(f.x, f.y); c.scale(f.face * 2.6, 2.2); c.globalCompositeOperation = 'lighter';
+        c.beginPath(); c.arc(-6, 0, 22, -1.2, 1.2);
+        c.strokeStyle = art.rgba(f.cor, 1 - k); c.lineWidth = 4 * (1 - k) + 1; c.stroke(); c.restore();
       } else if (f.tipo === 'raio') {
         c.save(); c.globalCompositeOperation = 'lighter'; c.lineCap = 'round';
         for (const [w, cor, al] of [[14, f.cor, 0.35], [6, f.cor, 0.8], [2, '#ffffff', 1]]) {
@@ -1935,6 +2258,7 @@
     art.drawTile(c, bg.nevoa, 1.1, cam, vw, -t * 16, 70, 0.45);
     c.setTransform(1, 0, 0, 1, 0, 0);
     if (game.vinheta) c.drawImage(game.vinheta, 0, 0);
+    if (W.flashTela > 0) { c.fillStyle = 'rgba(255,250,235,' + Math.min(0.85, W.flashTela).toFixed(3) + ')'; c.fillRect(0, 0, cw, ch); }
   };
 
   game.criarVinheta = function (w, h) {

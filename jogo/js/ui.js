@@ -13,8 +13,20 @@
   };
   const ABAS = [['equipe', LV.t('Equipe')], ['domador', LV.t('Domador')], ['loja', LV.t('Loja')], ['mapas', LV.t('Mapas')], ['santuario', LV.t('Santuário')], ['bolsa', LV.t('Bolsa')], ['ajuda', LV.t('Ajuda')]];
   const S = () => game.S;
+  const ATALHOS = { equipe: 'E', domador: 'T', loja: 'L', mapas: 'M', santuario: 'R', bolsa: 'B', ajuda: 'H' };
+  ui.ATALHOS = ATALHOS;
+  /* atalho de teclado de uma aba: abre o Diário nela; apertar de novo na mesma aba fecha */
+  ui.atalhoAba = function (aba) {
+    const app = document.getElementById('app'), raiz = document.documentElement;
+    const visivel = ui.gavetaAtiva() ? raiz.classList.contains('diario') : !app.classList.contains('sem-painel');
+    if (visivel && ui.aba === aba) { if (ui.gavetaAtiva()) ui.diario(false); else ui.painel(false); return; }
+    if (ui.gavetaAtiva()) { if (!visivel) ui.diario(true); } else if (!visivel) ui.painel(true);
+    ui.abrir(aba); som('clique');
+    const t = document.getElementById('tab-' + aba);
+    if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.9.1';
+  const VERSAO = '1.10.0';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -198,7 +210,13 @@
       vel: $('#h-vel'), boss: $('#bossbar'), bNome: $('#h-bnome'), bHp: $('#h-bhp'), bTempo: $('#h-btempo'), toasts: $('#toasts'),
       tabs: $('#tabs'), pane: $('#pane'), modal: $('#modal'), mbox: $('#mbox'), save: $('#savestate'), stage: $('#stage'), inicio: $('#inicio'), lant2: $('#h-lant2'),
     };
-    el.tabs.innerHTML = ABAS.map((a) => '<button class="tab" role="tab" id="tab-' + a[0] + '" data-aba="' + a[0] + '" aria-selected="' + (a[0] === ui.aba) + '">' + a[1] + '</button>').join('');
+    el.tabs.innerHTML = ABAS.map((a) => '<button class="tab' + (a[0] === 'ajuda' ? ' tab-ajuda' : '') + '" role="tab" id="tab-' + a[0] + '" data-aba="' + a[0] + '" aria-selected="' + (a[0] === ui.aba) + '"' +
+      ' title="' + a[1] + ' (' + ATALHOS[a[0]] + ')"' + (a[0] === 'ajuda' ? ' aria-label="' + a[1] + '">?' : '>' + a[1]) + '</button>').join('');
+    // barra de abas: a roda do mouse rola para o lado quando as abas não cabem
+    el.tabs.addEventListener('wheel', (e) => {
+      if (el.tabs.scrollWidth <= el.tabs.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      el.tabs.scrollLeft += e.deltaY; e.preventDefault();
+    }, { passive: false });
     el.tabs.addEventListener('click', (e) => { const b = e.target.closest('[data-aba]'); if (b) { ui.abrir(b.dataset.aba); som('clique'); } });
     el.pane.addEventListener('click', clique);
     iniciarArrasto();
@@ -269,7 +287,7 @@
     $('#veu').addEventListener('click', () => ui.diario(false));
     if (LV.movel) {
       document.querySelectorAll('#hud [title], #hud [aria-label]').forEach((b) => {
-        const tira = (v) => v.replace(/\s*\((?:B|C|Esc|teclas [^)]*|keys [^)]*)\)$/, '');
+        const tira = (v) => v.replace(/\s*\((?:[A-Z]|Esc|teclas [^)]*|keys [^)]*)\)$/, '');
         if (b.title) b.title = tira(b.title);
         if (b.getAttribute('aria-label')) b.setAttribute('aria-label', tira(b.getAttribute('aria-label')));
       });
@@ -795,7 +813,7 @@
         if (aqui) {
           h += barra('xp', prog, 'data-k="mprog"') + '<div class="small muted"><span data-k="mkills">' + Math.min(est.kills, metaM) + '</span> / ' + metaM + LV.t(' criaturas para chamar o Guardião') +
             (res > 0 ? ' · <b class="acc" data-k="mres">+' + res + LV.t(' na reserva</b>') : '') + '</div>' +
-            LV.t('<p class="nota">Cada vitória sobre o Guardião reduz a meta em 2 (mínimo ') + Math.ceil(m.killsChefe * 0.25) + LV.t('). Depois da meta, 10% dos abates ficam guardados para a próxima invocação.</p>');
+            LV.t('<p class="nota">Depois da meta, 10% dos abates ficam guardados para a próxima invocação.</p>');
           h += '<div class="row"><button class="btn pri" data-act="chefe" data-chefe="1"' + (prog >= 1 && !(game.W && game.W.chefe) ? '' : LV.t(' disabled')) + LV.t('>Desafiar Guardião</button></div>');
         } else h += '<div class="row"><button class="btn" data-act="verMapa" data-i="' + i + '">' + LV.t('Ver mapa') + '</button></div>';
       } else h += LV.t('<p class="small">Derrote ') + LV.MAPS[i - 1].chefe.nome + LV.t(' em ') + LV.MAPS[i - 1].nome + LV.t(' para liberar.</p>');
@@ -840,13 +858,10 @@
       (livre && !aqui && !game.tutorial && !(game.W && game.W.chefe) ? '<button class="btn pri" data-m="irMapa" data-i="' + i + '">' + LV.t('Ir para este mapa') + '</button>' : '') + '</div></div>';
     ui.modal(html, { cls: 'previa-m', previa: true });
   };
-  /* com a aba Mapas aberta (ou a prévia), o jogo pausa */
+  /* o jogo pausa só com a prévia de um mapa aberta ou durante a evolução de um pet */
   ui.pausaMenu = function () {
     if (!S() || !game.W || ui.inicioVisivel() || (ui.afk && ui.afk.ativo)) return false;
-    if (ui.modalAberto && ui.modalAberto.previa) return true;
-    if (ui.aba !== 'mapas') return false;
-    if (ui.gavetaAtiva()) return document.documentElement.classList.contains('diario');
-    return !document.getElementById('app').classList.contains('sem-painel');
+    return !!(ui.modalAberto && (ui.modalAberto.previa || ui.modalAberto.pausa));
   };
   let pausaMostrada = false;
   ui.marcarPausa = function (on) {
@@ -906,7 +921,8 @@
       LV.t('</div><div class="row"><button class="btn" data-act="salvar">Salvar agora</button><span class="muted small" data-k="savetxt"></span></div>') +
       '<p class="nota">' + (LV.movel
         ? LV.t('Controles: ◀ ▶ para andar, ▲ para pular ou subir escadas, ▼ para descer. Toque no cenário para ir até lá. Toque numa criatura: só o domador ataca. Segure o dedo numa criatura: o domador e os pets atacam juntos.')
-        : LV.t('Controles: A/D ou setas para andar, Espaço para pular, W/↑ para subir escadas, S/↓ para descer. Clique no cenário para ir até lá. Clique esquerdo numa criatura: só o domador ataca. Clique direito: o domador e os pets atacam juntos. 1, 2 e 3 trocam o modo dos pets.')) +
+        : LV.t('Controles: A/D ou setas para andar, Espaço para pular, W/↑ para subir escadas, S/↓ para descer. Clique no cenário para ir até lá. Clique esquerdo numa criatura: só o domador ataca. Clique direito: o domador e os pets atacam juntos. 1, 2 e 3 trocam o modo dos pets.') +
+          ' ' + LV.t('Atalhos: E Equipe · T Domador · L Loja · M Mapas · R Santuário · B Bolsa · H Ajuda · O Bestiário · C Conquistas · Q lanterna.')) +
       '</p></section>';
     return h;
   }
@@ -1302,7 +1318,7 @@
     let raf = 0, seguro = 0, terminou = false;
     ui.modal(LV.t('<div class="evowrap"><div class="eyebrow">Evolução</div><h2 id="evot">') + esc(d.de) + LV.t(' está mudando…</h2><canvas id="evocv" width="520" height="400" aria-label="Animação de evolução"></canvas>') +
       LV.t('<p id="evop" class="muted"> </p><div class="row end"><button class="btn pri" data-m="fechar" id="evob" disabled>Continuar</button></div></div>'), {
-      cls: 'evo-m',
+      cls: 'evo-m', pausa: true,
       aoAbrir(box) {
         const cv = box.querySelector('#evocv'), g = cv.getContext('2d');
         const t0 = performance.now();
@@ -1568,7 +1584,7 @@
       '<div class="ponteiro" id="ponteiro"></div></div>' +
       '<div class="mini-tempo" aria-hidden="true"><i id="mini-barra"></i></div><p class="small mini-relogio" id="mini-relogio" aria-live="off">5,0 s</p>' +
       '<p class="small" id="mini-dica">' + (LV.movel ? LV.t('Toque na barra ou no botão') : LV.t('Clique ou aperte Espaço')) + LV.t(' quando o ponteiro estiver na faixa clara. Você tem 5 segundos. No centro dourado, o pet pode ganhar um talento.</p>') +
-      LV.t('<div class="row end"><button class="btn pri" id="mini-btn">Fechar a lanterna!</button></div></div>');
+      '<div class="row end"><button class="btn pri" id="mini-btn">' + LV.t('Fechar a lanterna!') + (LV.movel ? '' : ' <kbd>' + LV.t('Espaço') + '</kbd>') + '</button></div></div>';
     ui.modal(html, {
       cls: 'mini-m', fechavel: false,
       aoAbrir(box) {
@@ -1583,7 +1599,7 @@
           const intro = document.createElement('div');
           intro.className = 'mini-intro';
           intro.innerHTML = '<div class="mini-intro-caixa"><div class="eyebrow">' + LV.t('Como capturar') + '</div><p>' +
-            LV.t('Você tem <b>5 segundos</b> para fechar a lanterna. ') + (LV.movel ? LV.t('Toque') : LV.t('Clique')) +
+            LV.t('Você tem <b>5 segundos</b> para fechar a lanterna. ') + (LV.movel ? LV.t('Toque') : LV.t('Clique (ou aperte Espaço)')) +
             LV.t(' quando o ponteiro estiver na <b>faixa clara</b> para capturar. Acertando o <b>centro dourado</b>, o pet ainda pode ganhar um talento bônus.') +
             '</p><button class="btn pri" type="button">' + LV.t('Começar!') + '</button></div>';
           box.querySelector('.mini').appendChild(intro);

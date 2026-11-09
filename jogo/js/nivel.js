@@ -122,7 +122,9 @@
     const nZ = escolhidos.length;
     const tipos = [];
     def.selvagens.forEach((sp) => tipos.push({ tipo: 'selvagem', sp }));
-    def.hostis.forEach((h) => tipos.push({ tipo: 'hostil', hid: h }));
+    // ninhos de Breus: 2 no primeiro mapa, 3 nos outros; cada um tem um Breu principal e mistura os outros do mapa
+    const nH = Math.min(def.hostis.length, idx === 0 ? 2 : 3);
+    for (let k = 0; k < nH; k++) tipos.push({ tipo: 'hostil', hid: def.hostis[k], hids: def.hostis });
     for (let i = tipos.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [tipos[i], tipos[j]] = [tipos[j], tipos[i]]; }
     const zonas = escolhidos.map((p, k) => {
       const t = tipos[k % tipos.length];
@@ -273,9 +275,26 @@
       e.x = clamp(e.x + vx * dt, 20, L.w - 20);
       if (e.vy >= 0) {
         const s = nivel.pousar(L, e.x, y0, e.y, e.ign);
-        if (s) { e.sup = s.id; e.y = s.y; e.vy = 0; e.ign = -1; }
+        // caindo de um pulo do jogador: a escada segura se a linha dela for cruzada antes do chão
+        const esc = e.pegaEscada ? nivel.escadaCruzada(L, e.x, y0, e.y) : null;
+        if (esc && (!s || esc.y <= s.y)) {
+          e.esc = esc.s; e.et = esc.t; e.sup = -1; e.vy = 0; e.ign = -1; e.pegaEscada = false;
+          e.x = esc.s.xb + (esc.s.xt - esc.s.xb) * esc.t; e.y = esc.y;
+          e.escVx = esc.s.dir * 110;          // a IA (caçada automática) segue subindo
+        } else if (s) { e.sup = s.id; e.y = s.y; e.vy = 0; e.ign = -1; e.pegaEscada = false; }
       }
     }
+  };
+  /* escada cuja linha foi cruzada de cima para baixo entre y0 e y1 na posição x (longe das pontas) */
+  nivel.escadaCruzada = function (L, x, y0, y1) {
+    let melhor = null;
+    for (const s of L.esc) {
+      const xa = Math.min(s.xb, s.xt), xb = Math.max(s.xb, s.xt);
+      if (x < xa + 6 || x > xb - 6) continue;
+      const t = (x - s.xb) / ((s.xt - s.xb) || 1), ys = s.yb + (s.yt - s.yb) * t;
+      if (y0 <= ys + 1 && y1 >= ys && (!melhor || ys < melhor.y)) melhor = { s, t: clamp(t, 0.02, 0.98), y: ys };
+    }
+    return melhor;
   };
   nivel.pular = function (e, v) {
     if (e.sup < 0 && !e.esc) return false;
@@ -284,7 +303,7 @@
   };
   nivel.descer = function (e) {
     if (e.sup <= 0 || e.esc) return false;
-    e.ign = e.sup; e.ignT = 0.35; e.sup = -1; e.vy = 60;
+    e.ign = e.sup; e.ignT = 0.35; e.sup = -1; e.vy = 60; e.pegaEscada = false;   // descendo, a escada não segura
     return true;
   };
   nivel.escadaPerto = function (L, e, subir) {

@@ -338,8 +338,29 @@
   Object.assign(LV.HOSTIS.vespa, { img: 'inimigos/vespa', alt: 50, flip: true });
   LV.HOSTIS.soldado = { nome: LV.t('Besouro Soldado'), corpo: 'casca', voa: false, estilo: 'investida', alc: 58, img: 'inimigos/soldado', alt: 62 };
   LV.HOSTIS.fogofatuo = { nome: LV.t('Fogo-fátuo'), corpo: 'fantasma', voa: true, estilo: 'projetil', alc: 180, img: 'inimigos/fogofatuo', alt: 46 };
+  /* Breus temáticos de cada mapa. hp/atk/vel: multiplicadores próprios (o padrão dos hostis é 1.1 / 1.05 / 1.1) */
+  const NOVOS = {
+    galho: { nome: LV.t('Galho Oco'), corpo: 'casca', voa: false, estilo: 'investida', alc: 46, alt: 58 },
+    mariposa: { nome: LV.t('Mariposa de Breu'), corpo: 'mariposa', voa: true, estilo: 'projetil', alc: 165, alt: 44, hp: 0.85 },
+    bolor: { nome: LV.t('Bolor Andante'), corpo: 'cogumelo', voa: false, estilo: 'investida', alc: 50, alt: 64, hp: 1.6, atk: 0.9, vel: 0.8 },
+    esporonegro: { nome: LV.t('Esporo Negro'), corpo: 'aguaviva', voa: true, estilo: 'projetil', alc: 175, alt: 50 },
+    afogado: { nome: LV.t('Afogado'), corpo: 'casca', voa: false, estilo: 'investida', alc: 56, alt: 64, hp: 1.3 },
+    enguia: { nome: LV.t('Enguia de Breu'), corpo: 'larva', voa: true, estilo: 'investida', alc: 44, alt: 54, hp: 0.8, atk: 1.15, vel: 1.5 },
+    mineiro: { nome: LV.t('Mineiro Oco'), corpo: 'besouro', voa: false, estilo: 'investida', alc: 50, alt: 56, hp: 1.25, atk: 1.1 },
+    olho: { nome: LV.t('Olho de Breu'), corpo: 'fantasma', voa: true, estilo: 'projetil', alc: 190, alt: 52, hp: 0.9, atk: 1.1 },
+    salamandra: { nome: LV.t('Salamandra de Cinza'), corpo: 'larva', voa: false, estilo: 'investida', alc: 48, alt: 40, hp: 0.9, vel: 1.45 },
+    brasamorta: { nome: LV.t('Brasa Morta'), corpo: 'besouro', voa: false, estilo: 'projetil', alc: 150, alt: 60, hp: 0.8, atk: 1.15 },
+  };
+  for (const id in NOVOS) LV.HOSTIS[id] = Object.assign({ img: 'inimigos/' + id }, NOVOS[id]);
 
-  const HOST = [['rastejante', 'fogofatuo'], ['casca', 'rastejante'], ['casca', 'vespa', 'soldado'], ['soldado', 'rastejante', 'fogofatuo'], ['vespa', 'casca', 'fogofatuo', 'soldado']];
+  // Breus de cada mapa (os primeiros viram o Breu principal de cada ninho; os ninhos misturam todos os da lista)
+  const HOST = [
+    ['rastejante', 'galho', 'mariposa'],                     // Raízes
+    ['bolor', 'esporonegro', 'casca', 'fogofatuo'],          // Fungos
+    ['afogado', 'enguia', 'soldado', 'casca'],               // Ruínas
+    ['mineiro', 'olho', 'soldado', 'rastejante'],            // Cristais
+    ['salamandra', 'brasamorta', 'vespa', 'fogofatuo'],      // Cinzas
+  ];
   const CHEFE_IMG = [['chefes/maeraiz', 210, true], ['chefes/reibolor', 196, false], ['chefes/sentinela', 220, true], ['chefes/matriarca', 176, false], ['chefes/coracao', 200, true]];
   const CEN = [
     { plat: 'plat_raiz', alta: 'plat_raiz', pilar: false, props: ['cogumelos', 'lapide'], tinta: '#14463f', correntes: false },
@@ -451,6 +472,16 @@
     casca: LV.t('Uma casca que perdeu toda a luz e ainda anda. Bate forte e quase não sente dor.'),
     vespa: LV.t('Breu feito da cinza que sobe do Coração. Dispara ferrões de brasa apagada de longe.'),
     soldado: LV.t('Breu de armadura que patrulha as ruínas, como se ainda obedecesse ao Povo do Lume.'),
+    galho: LV.t('Breu que se veste de galho seco. Fica parado entre as raízes até alguém passar perto, e então agarra.'),
+    mariposa: LV.t('Ronda as luzes do bosque sem nunca brilhar. Solta um pó escuro que apaga o que toca.'),
+    bolor: LV.t('Um monte de bolor que aprendeu a andar. Lento e pesado, aguenta muitos golpes antes de cair.'),
+    esporonegro: LV.t('Esporo do Rei Bolor que flutua sobre os túmulos. Cospe nuvens de escuridão de longe.'),
+    afogado: LV.t('O que restou de quem ficou na capital quando a água subiu. Arrasta um gancho velho e não larga quem prende.'),
+    enguia: LV.t('Nada no ar como se a capital ainda estivesse debaixo d’água. Rápida: morde e some.'),
+    mineiro: LV.t('Cavava cristais para o Povo do Lume. A lâmpada do capacete apagou há muito tempo, mas ele continua cavando.'),
+    olho: LV.t('Vigia as galerias escuras das minas. Quando encontra uma luz, dispara contra ela sem piscar.'),
+    salamandra: LV.t('Nasce da cinza fria perto do Coração. Corre rente ao chão e morde com dentes de carvão.'),
+    brasamorta: LV.t('Uma brasa que perdeu todo o calor. Pula de pedra em pedra e arremessa carvão apagado.'),
   };
   const DESC_CHEFES = [
     LV.t('A primeira raiz de Lumevale, que bombeia o Lume para o alto como seiva. Na febre, apertou as raízes e estrangulou o fluxo.'),
