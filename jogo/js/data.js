@@ -210,6 +210,19 @@
   /* moedas que um Guardião solta: primeira vitória rende mais */
   LV.moedasChefe = (idx, primeira) => (primeira ? 8 + idx * 2 : 3 + idx);
 
+  /* ---------- curva de dificuldade (v1.11) ----------
+     Multiplicadores por mapa sobre as fórmulas. Sem eles a vida dos Guardiões crescia 3x, 6x, 9x e 21x de um para o
+     outro, e o grupo cresce quase em linha reta: os mapas 1 a 3 caíam em ~20 s e o 4 virava um muro. Com eles cada
+     Guardião pede ~2x mais poder que o anterior (em relação ao crescimento natural do grupo), então a partir do mapa 2
+     renascer passa a ser o caminho para avançar. Criaturas mais fortes também rendem um pouco mais (metade do aumento). */
+  LV.DIFICULDADE = [
+    { hp: 1, atk: 1, chefeHp: 1, chefeAtk: 1 },            // Raízes: primeiro contato, continua fácil
+    { hp: 1.35, atk: 1.2, chefeHp: 2.1, chefeAtk: 1.35 },  // Cripta
+    { hp: 1.8, atk: 1.4, chefeHp: 3.4, chefeAtk: 1.6 },    // Cidade Afogada
+    { hp: 1.6, atk: 1.35, chefeHp: 2.2, chefeAtk: 1.5 },   // Minas
+    { hp: 1.3, atk: 1.2, chefeHp: 0.75, chefeAtk: 1.2 },   // Coração (já era um salto enorme)
+  ];
+
   /* ---------- melhorias da Loja ----------
      Cada melhoria é dividida em faixas de "passo" níveis. A faixa k custa Lumes + a moeda do Guardião k:
      as primeiras compras pedem Sementes Antigas (mapa 1), depois Trufas Reais (mapa 2) e assim por diante.
@@ -243,7 +256,7 @@
     { id: 'lanterneiro', nome: LV.t('Lanterneiro'), desc: LV.t('Chance no lançamento e lanternas iniciais'), base: 5, mult: 1.6, max: 10, efeito: (n) => '+' + n * 8 + LV.t('% de chance · +') + n * 2 + LV.t(' lanternas') },
     { id: 'primeiro', nome: LV.t('Primeiro Passo'), desc: LV.t('Nível inicial do pet escolhido'), base: 6, mult: 1.8, max: 5, efeito: (n) => LV.t('começa no nível ') + (1 + n * 3) },
     { id: 'trilha', nome: LV.t('Memória da Trilha'), desc: LV.t('Caçada automática desde o primeiro mapa'), base: 8, mult: 1, max: 1, efeito: (n) => (n ? LV.t('liberada desde o início') : LV.t('só a partir do mapa 2')) },
-    { id: 'vinculo', nome: LV.t('Vínculo Eterno'), desc: LV.t('Vaga extra de pet em campo'), base: 60, mult: 1, max: 1, efeito: (n) => '+' + n + LV.t(' vaga') },
+    { id: 'vinculo', nome: LV.t('Vínculo Eterno'), desc: LV.t('Vaga extra de pet em campo, em todas as jornadas'), base: 150, mult: 1, max: 1, efeito: (n) => '+' + n + LV.t(' vaga permanente') },
   ];
   LV.meta = (id) => LV.META.find((u) => u.id === id);
   /* atributos automáticos: cada vaga comprada escolhe um atributo que recebe os pontos ao subir de nível.
@@ -293,20 +306,20 @@
     precoLanterna: (mapasLiberados) => [30, 90, 260, 700, 1800][LV.clamp(mapasLiberados, 1, 5) - 1],
     estagioMult: [1, 1.55, 2.3],
     escala: [1, 1.22, 1.45],
-    evoNivel: [16, 36],
-    capPet: (nivelDom) => nivelDom + 10,
+    evoNivel: [22, 45],
+    capPet: (nivelDom) => nivelDom + 6,
   };
 
   LV.evoReq = function (spId, est) {
     const sp = LV.SPECIES[spId];
     if (!sp || est >= 2) return null;
     const mats = {};
-    if (est === 0) mats[sp.evoMat[0]] = 12;
+    if (est === 0) mats[sp.evoMat[0]] = 20;
     else {
-      mats[sp.evoMat[0]] = (mats[sp.evoMat[0]] || 0) + 30;
-      mats[sp.evoMat[1]] = (mats[sp.evoMat[1]] || 0) + 25;
+      mats[sp.evoMat[0]] = (mats[sp.evoMat[0]] || 0) + 60;
+      mats[sp.evoMat[1]] = (mats[sp.evoMat[1]] || 0) + 45;
     }
-    return { nivel: LV.F.evoNivel[est], mats, lumes: est === 0 ? 900 : 18000, para: sp.nome[est + 1] };
+    return { nivel: LV.F.evoNivel[est], mats, lumes: est === 0 ? 2500 : 60000, para: sp.nome[est + 1] };
   };
   LV.nomePet = (p) => p.apelido || LV.SPECIES[p.sp].nome[p.est];
   /* chance de captura com a vida cheia: ~30% nas primeiras áreas, caindo com o nível da criatura
@@ -451,6 +464,9 @@
     spd: { nome: LV.t('Ágil'), desc: (v) => '+' + Math.round(v * 100) + LV.t('% de velocidade de ataque') },
   };
 
+  /* peças ilustradas dos ataques dos Guardiões (img/ataques) */
+  LV.ATAQUES_IMG = ['raiz', 'vinha', 'raizbaixa', 'esporo', 'gas', 'vagem', 'onda', 'respingo', 'arco', 'cristais', 'lasca', 'estilhacos',
+    'bolafogo', 'chamas', 'corrente', 'correntechao', 'explosao', 'brasas'];
   /* lista de todas as imagens para pré-carregar */
   LV.IMAGENS = (function () {
     const l = [];
@@ -460,6 +476,7 @@
     ['parado', 'andando', 'pulando', 'lanterna'].forEach((k) => l.push(LV.HEROI[k]));
     for (const k in LV.PECAS) l.push('pecas/' + k);
     l.push('pecas/escada_mao');
+    LV.ATAQUES_IMG.forEach((n) => l.push('ataques/' + n));
     return l;
   })();
   /* cenários pintados (Gemini), um por mapa: desenhados atrás de tudo com parallax lento */
@@ -496,7 +513,7 @@
   LV.BESTIARIO = [];
   /* selvagens: uma entrada por forma (id "espécie_estágio"). Formas evoluídas aparecem na natureza nos ninhos de nível
      alto (a partir do 18 e do 40); nos mapas rasos só por evolução */
-  const NV_FORMA = [0, 18, 40];
+  const NV_FORMA = [0, 24, 46];
   for (const id in LV.SPECIES) {
     const sp = LV.SPECIES[id];
     for (let est = 0; est < 3; est++) {

@@ -643,5 +643,9 @@
     "Pérolas Afogadas": "Drowned Pearls",
     "Geodos Cantantes": "Singing Geodes",
     "Tições Eternos": "Eternal Brands",
+    "Golpe de âncora": "Anchor Strike",
+    "Investida da âncora": "Anchor Charge",
+    "Vaga extra de pet em campo, em todas as jornadas": "Extra pet slot in the field, on every journey",
+    " vaga permanente": " permanent slot",
   });
 })();

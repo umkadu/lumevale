@@ -66,9 +66,9 @@
       ]],
       ['Guardians and maps', [
         'Defeat creatures on the map until the goal (' + metas + ') and tap <b>Challenge Guardian</b>.',
-        'The fight lasts 60 s and ends if every pet faints. During the challenge the tamer and the pets attack the Guardian on their own.',
+        'The fight lasts 60 s and ends if every pet faints. During the challenge the tamer and the pets attack the Guardian on their own (pets in <b>Passive</b> mode stay out unless you order them with a right-click or long press).',
         'The goal never changes. Past the goal, 10% of kills are saved for the next summon.',
-        'Each Guardian has a basic attack and two specials from its theme: roots, poison gas, sword and water, light, chains and fire. Specials are announced first: circles and stripes on the ground show where they will hit. Some poison, root or stun the pets.',
+        'Each Guardian has a basic attack and two specials from its theme: roots, poison gas, anchor and water, light, chains and fire. Specials are announced first: circles and stripes on the ground show where they will hit. Some poison, root or stun the pets.',
         'The first victory opens the next map and gives you a new pet. In the Maps tab, tap a map to preview it and travel (the game pauses while the preview is open).',
       ]],
       ['Auto-hunt', [
@@ -140,9 +140,9 @@
       ]],
       ['Guardiões e mapas', [
         'Derrote criaturas do mapa até a meta (' + metas + ') e toque em <b>Desafiar Guardião</b>.',
-        'A luta dura 60 s e acaba se todos os pets desmaiarem. Durante o desafio, o domador e os pets atacam o Guardião sozinhos.',
+        'A luta dura 60 s e acaba se todos os pets desmaiarem. Durante o desafio, o domador e os pets atacam o Guardião sozinhos (pets no modo <b>Passivo</b> ficam de fora, a não ser que você mande com o clique direito ou o toque longo).',
         'A meta é sempre a mesma. Depois dela, 10% dos abates ficam guardados para a próxima invocação.',
-        'Cada Guardião tem um ataque básico e dois especiais do seu tema: raízes, gás venenoso, espada e água, luz, correntes e fogo. Os especiais são avisados antes: círculos e faixas no chão mostram onde vão cair. Alguns envenenam, prendem ou atordoam os pets.',
+        'Cada Guardião tem um ataque básico e dois especiais do seu tema: raízes, gás venenoso, âncora e água, luz, correntes e fogo. Os especiais são avisados antes: círculos e faixas no chão mostram onde vão cair. Alguns envenenam, prendem ou atordoam os pets.',
         'A primeira vitória abre o próximo mapa e dá um pet novo. Na aba Mapas, toque num mapa para ver a prévia e viajar (o jogo pausa enquanto a prévia está aberta).',
       ]],
       ['Caçada automática', [
