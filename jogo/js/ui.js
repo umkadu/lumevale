@@ -26,7 +26,7 @@
     if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.11.3';
+  const VERSAO = '1.11.4';
   ui.VERSAO = VERSAO;
   let el = {};
 
