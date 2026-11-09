@@ -136,6 +136,49 @@
   .mini-intro-caixa { display: grid; gap: 10px; justify-items: center; text-align: center; max-width: 420px; padding: 8px; }
   .mini-intro-caixa p { margin: 0; font-size: 16px; line-height: 1.5; }
   .mini-intro-caixa b { color: var(--ouro); }
+  /* história: abertura, diário de Candeia, final */
+  #abertura { position: fixed; inset: 0; z-index: 60; display: grid; place-items: end center; padding: max(24px, var(--seg-topo)) max(16px, env(safe-area-inset-right, 0px)) max(28px, var(--seg-base)); background: #04060a; overflow: hidden; }
+  .ab-fundo { position: absolute; inset: -4%; background: center / cover no-repeat; opacity: 0.55; filter: saturate(0.9); animation: abZoom 14s ease-out infinite alternate; transition: background-image .6s; }
+  .ab-fundo::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(4, 6, 10, 0.85) 80%), linear-gradient(transparent 40%, rgba(4, 6, 10, 0.92)); }
+  @keyframes abZoom { to { transform: scale(1.06); } }
+  .ab-caixa { position: relative; width: min(680px, 100%); display: grid; gap: 16px; justify-items: center; text-align: center; margin-bottom: 4vh; }
+  #ab-txt { margin: 0; font: clamp(17px, 2.2vw, 23px)/1.55 var(--f-corpo); color: #eef0f3; text-shadow: 0 2px 10px #000; }
+  #ab-txt b { color: var(--ouro); font-weight: 700; }
+  #ab-txt.entra { animation: abTexto 0.9s ease-out; }
+  @keyframes abTexto { from { opacity: 0; transform: translateY(8px); } }
+  .ab-heroi { width: 110px; height: 110px; object-fit: contain; filter: drop-shadow(0 0 26px rgba(255, 210, 140, 0.55)); animation: pulo 2.4s ease-in-out infinite; }
+  .ab-pontos { display: flex; gap: 8px; }
+  .ab-pontos i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, 0.25); }
+  .ab-pontos i.on { background: var(--ouro); box-shadow: 0 0 8px var(--ouro); }
+  .ab-acoes { display: flex; gap: 10px; }
+  @media (max-height: 520px) { .ab-caixa { gap: 10px; margin-bottom: 0; } #ab-txt { font-size: 17px; } .ab-heroi { width: 72px; height: 72px; } }
+  .efeito-lore { margin: -4px 0 0; font: italic 15px var(--f-corpo); color: color-mix(in srgb, var(--acc) 75%, #fff); }
+  .desbloqueios .link, .link { background: none; border: 0; padding: 0; color: var(--acc); font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+  .diario-m { width: min(560px, 100%); }
+  .diario-lista { display: grid; gap: 6px; }
+  .diario-item { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; padding: 10px 12px; text-align: left; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--linha); color: inherit; font: inherit; cursor: pointer; }
+  .diario-item:hover { border-color: color-mix(in srgb, var(--acc) 55%, transparent); }
+  .diario-item.bloq { cursor: default; opacity: 0.6; }
+  .diario-item .n { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--linha2); font: 15px var(--f-disp); }
+  .diario-item b { display: block; font: 17px var(--f-disp); }
+  .diario-item small { color: var(--apagado); font-size: 12.5px; }
+  .diario-item .ler { color: var(--acc); font-weight: 700; font-size: 13px; }
+  .diario-pag h2 { margin: 2px 0 8px; }
+  .papel { padding: 16px 18px; background: linear-gradient(180deg, #e9dfc6, #d9cba8); color: #2a2216; box-shadow: inset 0 0 40px rgba(90, 60, 20, 0.25); border-radius: 2px; }
+  .papel p { margin: 0 0 10px; font: italic 16px/1.55 Georgia, "Palatino Linotype", serif; }
+  .papel .assina { text-align: right; margin: 0; font-style: normal; }
+  .final { display: grid; gap: 10px; text-align: center; justify-items: center; }
+  .final h2 { margin: 0; font-size: clamp(26px, 4vw, 36px); color: var(--ouro); text-shadow: 0 0 24px rgba(255, 210, 120, 0.4); }
+  .final p { margin: 0; max-width: 52ch; }
+  .final blockquote { margin: 4px 0; font: italic 19px var(--f-disp); color: #f4efe2; }
+  .final cite { display: block; margin-top: 4px; font: 12px var(--f-corpo); color: var(--apagado); font-style: normal; }
+  .final .gancho { font-style: italic; color: #b8a6ff; }
+  .final .row { justify-self: stretch; }
+  .historia-resumo { display: grid; gap: 8px; font-size: 14px; line-height: 1.5; color: #cdd4dd; }
+  .historia-resumo p { margin: 0; }
+  .historia-resumo b { color: var(--tinta); }
+  .historia-resumo .btn { justify-self: start; margin-top: 4px; }
+  #titulo-mapa .tm-sub { margin: 4px 0 0; max-width: 46ch; font: italic 15px var(--f-corpo); color: rgba(244, 239, 226, 0.85); text-shadow: 0 1px 6px #000; }
   /* aviso congelado: o jogo para, a tela escurece e o cartão explica o próximo passo */
   #aviso-pausa { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 70px 16px 90px; background: rgba(3, 4, 7, 0.45); pointer-events: none; animation: fadeIn .25s ease-out; }
   .ap-caixa { pointer-events: auto; width: min(460px, 100%); display: grid; gap: 8px; justify-items: start; padding: 16px 18px; background: linear-gradient(180deg, #141b27, #0a0e14);
@@ -969,12 +1012,22 @@
     </div>
   </div>
   <div id="inicio" hidden><div class="inicio-caixa"></div></div>
+  <div id="abertura" hidden role="dialog" aria-modal="true" aria-labelledby="ab-txt">
+    <div class="ab-fundo" id="ab-fundo"></div>
+    <div class="ab-caixa">
+      <img class="ab-heroi" id="ab-heroi" src="img/heroi/parado.webp" alt="" hidden>
+      <p id="ab-txt"></p>
+      <div class="ab-pontos" id="ab-pontos" aria-hidden="true"></div>
+      <div class="ab-acoes"><button class="btn" id="ab-pular" type="button">Pular</button><button class="btn pri" id="ab-seguir" type="button">Continuar</button></div>
+    </div>
+  </div>
 </div>
 
 <script src="js/i18n.js"></script>
 <script src="js/lang_en.js"></script>
 <script src="js/data.js"></script>
 <script src="js/ajuda.js"></script>
+<script src="js/historia.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/art.js"></script>
 <script src="js/sprites.js"></script>

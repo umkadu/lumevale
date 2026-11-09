@@ -25,6 +25,8 @@
       conq: {},                                  // conquistas: 1 = pronta para resgatar, 2 = resgatada
       autoAttr: [],                              // atributos que recebem os pontos sozinhos ao subir de nível (fixos)
       autoVagas: 0,                              // vagas de automação já pagas (continuam após redefinir)
+      diario: [],                                // páginas do Diário de Candeia já encontradas (uma por Guardião)
+      finalVisto: false,                         // o final (Coração Ígneo vencido) já foi mostrado
     };
   }
   function novoEstado() {
@@ -131,6 +133,12 @@
       const q = LV.evoReq(p.sp, p.est);
       if (q && p.nivel >= q.nivel && o.lumes >= q.lumes && Object.keys(q.mats).every((m) => (o.mats[m] || 0) >= q.mats[m])) o.avisados.push(p.uid + ':' + p.est);
     });
+    // história: páginas do diário guardadas para sempre; saves antigos ganham as dos Guardiões já vencidos
+    const smh = s.meta || {};
+    o.meta.diario = [...new Set((Array.isArray(smh.diario) ? smh.diario : []).map((i) => intOr(i, -1, -1, LV.MAPS.length - 1)).filter((i) => i >= 0))];
+    o.mapas.forEach((m, i) => { if (m.chefe && !o.meta.diario.includes(i)) o.meta.diario.push(i); });
+    o.meta.diario.sort((a, b) => a - b);
+    o.meta.finalVisto = !!smh.finalVisto;
     return o;
   }
   game.novoEstado = novoEstado;
@@ -331,7 +339,12 @@
     }
     const prox = W.idx + 1 < LV.MAPS.length && S.mapas[W.idx + 1].liberado ? W.idx + 1 : null;
     const autoNova = primeira && W.idx === 0 && !MU('trilha');
-    emit('chefeVencido', { nome: e.nome, primeira, premio, proximoIdx: prox, proximo: prox != null ? LV.MAPS[prox].nome : null, moeda: md, qMoeda, autoNova });
+    // história: cada Guardião revela uma página do Diário de Candeia; o último mostra o final uma vez
+    const paginaNova = !S.meta.diario.includes(W.idx);
+    if (paginaNova) { S.meta.diario.push(W.idx); S.meta.diario.sort((a, b) => a - b); }
+    const final = W.idx === LV.MAPS.length - 1 && !S.meta.finalVisto;
+    if (final) S.meta.finalVisto = true;
+    emit('chefeVencido', { nome: e.nome, mapaIdx: W.idx, primeira, premio, proximoIdx: prox, proximo: prox != null ? LV.MAPS[prox].nome : null, moeda: md, qMoeda, autoNova, paginaNova, final });
     emit('chefe', false);
     som('brilho');
     if (LV.audio) LV.audio.tensao(false);

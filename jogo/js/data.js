@@ -155,7 +155,7 @@
   /* ---------- mapas ---------- */
   LV.MAPS = [
     {
-      nome: LV.t('Raízes Murmurantes'), sub: LV.t('A primeira descida. Raízes antigas ainda guardam alguma luz.'),
+      nome: LV.t('Raízes Murmurantes'), sub: LV.t('A primeira descida. As raízes ainda bombeiam um resto de Lume para o alto.'),
       lv: [1, 9], mat: 'musgo', tema: 'raizes', part: 'vagalume', elHostil: 'musgo', killsChefe: 25, seed: 11,
       pal: { c1: '#03080a', c2: '#0d2628', longe: '#1c4846', meio: '#0f2e2c', perto: '#071615', chao: '#030909', chaoTopo: '#13332d', luz: '#b8ffe6', acento: '#8ff0c4', nevoa: '#5aa597' },
       hostil: { d: '#0b1210', m: '#28382f', b: '#cfc7b2', g: '#ffb35c' },
@@ -163,7 +163,7 @@
       chefe: { nome: LV.t('Mãe-Raiz'), corpo: 'rastejante', el: 'musgo', s: 2.5, voa: false, pal: { d: '#0a1410', m: '#2c4a39', b: '#a3d29c', g: '#c6ff7a' }, premio: { sp: 'umbrim', est: 0 } },
     },
     {
-      nome: LV.t('Cripta Fúngica'), sub: LV.t('Salões úmidos onde cogumelos crescem sobre túmulos esquecidos.'),
+      nome: LV.t('Cripta Fúngica'), sub: LV.t('Aqui descansam os primeiros domadores. O bolor cresce sobre a luz que eles deixaram.'),
       lv: [9, 20], mat: 'esporo', tema: 'fungos', part: 'esporos', elHostil: 'musgo', killsChefe: 30, seed: 23,
       pal: { c1: '#0a0605', c2: '#26140b', longe: '#3c2315', meio: '#2c180e', perto: '#140a06', chao: '#080403', chaoTopo: '#301b10', luz: '#ffd59a', acento: '#ffb45a', nevoa: '#a8693a' },
       hostil: { d: '#140c08', m: '#3a2a20', b: '#d8cbb2', g: '#9fffd8' },
@@ -171,7 +171,7 @@
       chefe: { nome: LV.t('Rei Bolor'), corpo: 'cogumelo', el: 'musgo', s: 2.6, voa: false, pal: { d: '#2a120c', m: '#7a3a22', b: '#e2cba9', g: '#ffcf5a' }, premio: { sp: 'lascado', est: 0 } },
     },
     {
-      nome: LV.t('Cidade Afogada'), sub: LV.t('Uma capital inteira sob a chuva eterna. Os lampiões ainda acendem.'),
+      nome: LV.t('Cidade Afogada'), sub: LV.t('A capital do Povo do Lume, sob a chuva eterna. Os lampiões ainda acendem.'),
       lv: [20, 34], mat: 'escama', tema: 'ruinas', part: 'chuva', elHostil: 'mare', killsChefe: 35, seed: 37,
       pal: { c1: '#03060c', c2: '#0f1e34', longe: '#23395b', meio: '#132540', perto: '#081220', chao: '#03070d', chaoTopo: '#16253a', luz: '#cfe6ff', acento: '#7fc8ff', nevoa: '#4f7aa8' },
       hostil: { d: '#0a0f18', m: '#25324a', b: '#d5dbe3', g: '#ffd36b' },
@@ -179,7 +179,7 @@
       chefe: { nome: LV.t('Sentinela Afogada'), corpo: 'casca', el: 'mare', s: 2.6, voa: false, pal: { d: '#0a1220', m: '#2b4566', b: '#e3e9ef', g: '#8fe9ff' }, premio: { sp: 'brilhoca', est: 0 } },
     },
     {
-      nome: LV.t('Minas de Cristal'), sub: LV.t('Galerias escavadas por mãos que ninguém lembra. O cristal canta.'),
+      nome: LV.t('Minas de Cristal'), sub: LV.t('Os antigos cavaram aqui atrás do Lume cristalizado. Fundo demais.'),
       lv: [34, 50], mat: 'cristal', tema: 'cristais', part: 'brilho', elHostil: 'cristal', killsChefe: 40, seed: 53,
       pal: { c1: '#07040c', c2: '#1f1030', longe: '#3e2661', meio: '#24153a', perto: '#120a1e', chao: '#06030a', chaoTopo: '#26173d', luz: '#f5d6ff', acento: '#f39cff', nevoa: '#8a5bb0' },
       hostil: { d: '#120c18', m: '#33284a', b: '#d8cfe6', g: '#7ffff0' },
@@ -187,7 +187,7 @@
       chefe: { nome: LV.t('Matriarca Geode'), corpo: 'caranguejo', el: 'cristal', s: 2.5, voa: false, pal: { d: '#1a1028', m: '#5a3a80', b: '#d7b8ff', g: '#ff9cf0' }, premio: { sp: 'tecelo', est: 1 } },
     },
     {
-      nome: LV.t('Coração de Cinza'), sub: LV.t('O fundo de tudo. O calor de um mundo que ainda não esfriou.'),
+      nome: LV.t('Coração de Cinza'), sub: LV.t('O fundo de tudo. O Coração do vale arde em febre.'),
       lv: [50, 72], mat: 'brasa', tema: 'cinzas', part: 'brasas', elHostil: 'brasa', killsChefe: 45, seed: 71,
       pal: { c1: '#090303', c2: '#2a0c08', longe: '#4b1b12', meio: '#2a0e0a', perto: '#140605', chao: '#070202', chaoTopo: '#2c100a', luz: '#ffc29a', acento: '#ff7a3a', nevoa: '#8a3a26' },
       hostil: { d: '#120806', m: '#3a1e18', b: '#d9c3b5', g: '#ffe27a' },
@@ -446,18 +446,18 @@
      A chave de cada uma é a mesma usada nas contagens (espécie, id do hostil ou "chefe<n>").
      ========================================================= */
   const DESC_HOSTIS = {
-    rastejante: LV.t('Larva de carapaça escura que rasteja pelas raízes. Ataca em bando quem chega perto.'),
-    fogofatuo: LV.t('Chama errante que flutua sobre os túmulos e cospe faíscas frias.'),
-    casca: LV.t('Concha vazia que ainda anda. Bate forte e quase não sente dor.'),
-    vespa: LV.t('Vespa de cinzas que dispara ferrões incandescentes de longe.'),
-    soldado: LV.t('Besouro de armadura que patrulha as ruínas. Resistente e insistente.'),
+    rastejante: LV.t('Breu que rasteja pelas raízes: escuridão completa, sem nenhuma luz dentro. Ataca em bando qualquer luz que chegue perto.'),
+    fogofatuo: LV.t('Uma chama fria que não ilumina nada. Breu que imita a luz para atrair domadores para longe da trilha.'),
+    casca: LV.t('Uma casca que perdeu toda a luz e ainda anda. Bate forte e quase não sente dor.'),
+    vespa: LV.t('Breu feito da cinza que sobe do Coração. Dispara ferrões de brasa apagada de longe.'),
+    soldado: LV.t('Breu de armadura que patrulha as ruínas, como se ainda obedecesse ao Povo do Lume.'),
   };
   const DESC_CHEFES = [
-    LV.t('A primeira raiz de Lumevale. Protege a descida com vinhas que esmagam o chão.'),
-    LV.t('Senhor dos salões fúngicos. Sua coroa de bolor espalha esporos venenosos.'),
-    LV.t('Guardiã da capital submersa. Ainda cumpre uma vigília que ninguém lembra de ter ordenado.'),
-    LV.t('Mãe de todos os cristais. Cada golpe faz as galerias cantarem.'),
-    LV.t('O calor que mantém o fundo do mundo vivo. Nunca esfriou.'),
+    LV.t('A primeira raiz de Lumevale, que bombeia o Lume para o alto como seiva. Na febre, apertou as raízes e estrangulou o fluxo.'),
+    LV.t('Cresce sobre os túmulos dos primeiros domadores e usa uma velha lanterna como coroa. Seus esporos apagam qualquer luz.'),
+    LV.t('Guardiã da capital afogada. Ainda cumpre a última ordem que recebeu: ninguém desce às minas.'),
+    LV.t('Mãe dos cristais. Seu canto segurava as rachaduras do Coração; agora ela canta para enterrar quem se aproxima.'),
+    LV.t('O coração do vale, ferido e em febre. Não é mau: queima a própria luz para continuar vivo.'),
   ];
   LV.BESTIARIO = [];
   /* selvagens: uma entrada por forma (id "espécie_estágio"). Formas evoluídas aparecem na natureza nos ninhos de nível
@@ -507,8 +507,8 @@
   });
   for (const hid in LV.HOSTIS) {
     const h = LV.HOSTIS[hid];
-    C.push({ id: hid + 'd', cat: LV.t('Hostis'), nome: LV.t('Couraça contra ') + h.nome, desc: LV.t('Derrote 100 ') + h.nome, meta: 100, prog: (s) => best(s, hid, 'k'), rec: { buff: { tipo: 'defesa', alvo: hid, v: 0.2 } }, alvo: hid });
-    C.push({ id: hid + 'a', cat: LV.t('Hostis'), nome: LV.t('Flagelo de ') + h.nome, desc: LV.t('Derrote 400 ') + h.nome, meta: 400, prog: (s) => best(s, hid, 'k'), rec: { buff: { tipo: 'dano', alvo: hid, v: 0.2 } }, alvo: hid });
+    C.push({ id: hid + 'd', cat: LV.t('Breus'), nome: LV.t('Couraça contra ') + h.nome, desc: LV.t('Derrote 100 ') + h.nome, meta: 100, prog: (s) => best(s, hid, 'k'), rec: { buff: { tipo: 'defesa', alvo: hid, v: 0.2 } }, alvo: hid });
+    C.push({ id: hid + 'a', cat: LV.t('Breus'), nome: LV.t('Flagelo de ') + h.nome, desc: LV.t('Derrote 400 ') + h.nome, meta: 400, prog: (s) => best(s, hid, 'k'), rec: { buff: { tipo: 'dano', alvo: hid, v: 0.2 } }, alvo: hid });
   }
   for (const sp in LV.SPECIES) {
     const nome = LV.SPECIES[sp].nome[0];
@@ -516,7 +516,7 @@
     C.push({ id: sp + 'c', cat: LV.t('Selvagens'), nome: nome + LV.t(' Radiante'), desc: LV.t('Capture 20 ') + nome, meta: 20, prog: (s) => best(s, sp, 'c'), rec: { pet: sp }, alvo: sp });
   }
   LV.conquista = (id) => C.find((c) => c.id === id);
-  LV.CAT_CONQ = [LV.t('Caçadas'), LV.t('Capturas'), LV.t('Domador'), LV.t('Guardiões'), LV.t('Hostis'), LV.t('Selvagens')];
+  LV.CAT_CONQ = [LV.t('Caçadas'), LV.t('Capturas'), LV.t('Domador'), LV.t('Guardiões'), LV.t('Breus'), LV.t('Selvagens')];
   /* pet Radiante (recompensa): +30% de vida e ataque, +10% de velocidade e um brilho dourado */
   LV.RADIANTE = { hp: 1.3, atk: 1.3, spd: 1.1 };
   LV.nomePet = (p) => p.apelido || LV.SPECIES[p.sp].nome[p.est] + (p.especial ? LV.t(' Radiante') : '');

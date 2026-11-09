@@ -20,8 +20,8 @@
     const metas = LV.MAPS.map((m) => m.killsChefe).join(' / ');
     if (en) return [
       ['Getting started', [
-        'You are a tamer descending into the depths of Lumevale with your pets. Pets fight on their own near you.',
-        'Defeat creatures to earn XP, <b>Lumes</b> (◆, the main currency) and materials.',
+        'You are a Lume Tamer descending into the depths of Lumevale with your <b>Glimmers</b> (the pets). They fight on their own near you.',
+        'Defeat creatures to earn XP, <b>Lumes</b> (◆, drops of crystallized Lume, the main currency) and materials.',
         'Catch wild creatures with the lantern to grow your team.',
         'Each map has a <b>Guardian</b>. Beating it opens the next, deeper map.',
       ]],
@@ -46,7 +46,7 @@
         (movel ? 'Tap' : 'Click') + ' the lantern' + (movel ? '' : ' (or press Q)') + ': the game pauses and wild creatures show their chance. Then pick one.',
         'The chance is rolled when the lantern hits. At full health it is about <b>30%</b> in the first areas and lower for high-level creatures. <b>The less health, the higher the chance</b> (up to about 85%).',
         'If it holds, the minigame starts: close the lantern while the pointer is in the light zone, within 5 s. In the <b>golden center</b> the pet may gain a talent (Fierce, Sturdy or Nimble).',
-        'Docile creatures only fight back; aggressive ones attack whoever comes near their nest. Hostile creatures can’t be caught.',
+        'Docile creatures only fight back; aggressive ones attack whoever comes near their nest. The <b>Murks</b> (total darkness, no light inside) can’t be caught and always attack.',
         'Lanterns are bought in the Shop.',
       ]],
       ['Evolution and abilities', [
@@ -90,8 +90,8 @@
     ];
     return [
       ['Primeiros passos', [
-        'Você é um domador que desce pelas profundezas de Lumevale com seus pets. Os pets lutam sozinhos perto de você.',
-        'Derrote criaturas para ganhar XP, <b>Lumes</b> (◆, a moeda principal) e materiais.',
+        'Você é um Domador de Lume e desce pelas profundezas de Lumevale com suas <b>Centelhas</b> (os pets). Elas lutam sozinhas perto de você.',
+        'Derrote criaturas para ganhar XP, <b>Lumes</b> (◆, gotas de Lume cristalizado, a moeda principal) e materiais.',
         'Capture criaturas selvagens com a lanterna para aumentar sua equipe.',
         'Cada mapa tem um <b>Guardião</b>. Vencê-lo abre o próximo mapa, mais fundo.',
       ]],
@@ -116,7 +116,7 @@
         (movel ? 'Toque' : 'Clique') + ' na lanterna' + (movel ? '' : ' (ou aperte Q)') + ': o jogo pausa e as criaturas selvagens mostram a chance. Depois escolha uma.',
         'A chance é sorteada quando a lanterna acerta. Com vida cheia é cerca de <b>30%</b> nas primeiras áreas e menor em criaturas de nível alto. <b>Quanto menos vida, maior a chance</b> (até uns 85%).',
         'Se prender, vem o minijogo: feche a lanterna com o ponteiro na faixa clara, em até 5 s. No <b>centro dourado</b> o pet pode ganhar um talento (Feroz, Robusto ou Ágil).',
-        'Criaturas mansas só revidam; as agressivas atacam quem chega perto do ninho. Criaturas hostis não podem ser capturadas.',
+        'Criaturas mansas só revidam; as agressivas atacam quem chega perto do ninho. Os <b>Breus</b> (escuridão completa, sem nenhuma luz dentro) não podem ser capturados e atacam sempre.',
         'Lanternas são compradas na Loja.',
       ]],
       ['Evolução e habilidades', [

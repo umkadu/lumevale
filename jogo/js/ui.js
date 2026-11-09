@@ -14,7 +14,7 @@
   const ABAS = [['equipe', LV.t('Equipe')], ['domador', LV.t('Domador')], ['loja', LV.t('Loja')], ['mapas', LV.t('Mapas')], ['santuario', LV.t('Santuário')], ['bolsa', LV.t('Bolsa')], ['ajuda', LV.t('Ajuda')]];
   const S = () => game.S;
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.8.1';
+  const VERSAO = '1.9';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -26,6 +26,64 @@
     d.innerHTML = '<span>' + LV.t('Nova versão do Lumevale pronta.') + '</span><button type="button" class="btn pri">' + LV.t('Atualizar') + '</button>';
     d.querySelector('button').addEventListener('click', () => { som('clique'); d.querySelector('button').disabled = true; aplicar(); });
     el.toasts.prepend(d);
+  };
+
+  /* =================== HISTÓRIA =================== */
+  /* abertura: 4 telas antes do novo jogo (pode pular) */
+  ui.abertura = function (fim) {
+    const H = LV.historia(), telas = H.abertura, box = document.getElementById('abertura');
+    let i = 0;
+    const fundo = document.getElementById('ab-fundo'), txt = document.getElementById('ab-txt'), pontos = document.getElementById('ab-pontos');
+    const seguir = document.getElementById('ab-seguir'), pular = document.getElementById('ab-pular'), heroi = document.getElementById('ab-heroi');
+    pular.textContent = H.pular;
+    const mostrar = () => {
+      const t = telas[i];
+      fundo.style.backgroundImage = 'url(img/fundos/' + t.fundo + '.webp)';
+      txt.innerHTML = t.txt;
+      txt.classList.remove('entra'); void txt.offsetWidth; txt.classList.add('entra');
+      heroi.hidden = !t.heroi;
+      pontos.innerHTML = telas.map((x, k) => '<i' + (k === i ? ' class="on"' : '') + '></i>').join('');
+      seguir.textContent = i === telas.length - 1 ? H.comecar : H.continuar;
+      try { seguir.focus({ preventScroll: true }); } catch (e) { /* ok */ }
+    };
+    const acabar = () => {
+      box.hidden = true;
+      document.removeEventListener('keydown', tecla, true);
+      seguir.onclick = pular.onclick = null;
+      fim();
+    };
+    const tecla = (ev) => {
+      if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); acabar(); }
+    };
+    seguir.onclick = () => { som('clique'); if (++i >= telas.length) acabar(); else mostrar(); };
+    pular.onclick = () => { som('clique'); acabar(); };
+    document.addEventListener('keydown', tecla, true);
+    box.hidden = false;
+    mostrar();
+  };
+  /* Diário de Mestra Candeia: lista das páginas ou uma página aberta */
+  function htmlPagina(p) {
+    const H = LV.historia(), pg = H.paginas[p];
+    return '<div class="diario-pag"><div class="eyebrow">' + H.diario + ' · ' + H.pagina + ' ' + (p + 1) + '</div><h2>' + pg.t + '</h2>' +
+      '<div class="papel">' + pg.txt.map((x) => '<p>' + x + '</p>').join('') + '<p class="assina">— C.</p></div>' +
+      '<div class="row end"><button class="btn" data-m="diario">' + H.voltar + '</button><button class="btn pri" data-m="fechar">' + H.fechar + '</button></div></div>';
+  }
+  ui.diarioCandeia = function (p) {
+    const H = LV.historia(), achadas = S().meta.diario || [];
+    if (p != null && achadas.includes(p)) { ui.modal(htmlPagina(p), { cls: 'diario-m' }); return; }
+    const lista = H.paginas.map((pg, i) => achadas.includes(i)
+      ? '<button class="diario-item" data-m="lerPagina" data-p="' + i + '"><span class="n">' + (i + 1) + '</span><span><b>' + pg.t + '</b><small>' + LV.MAPS[i].nome + '</small></span><span class="ler">' + H.ler + ' ›</span></button>'
+      : '<div class="diario-item bloq"><span class="n">' + (i + 1) + '</span><span><b>???</b><small>' + H.bloqueada(LV.MAPS[i].chefe.nome) + '</small></span></div>').join('');
+    ui.modal('<div class="cabec"><div><div class="eyebrow">' + achadas.length + ' / ' + H.paginas.length + '</div><h2>' + H.diario + '</h2><p class="muted small">' + H.diarioSub + '</p></div>' +
+      '<button class="btn" data-m="fechar">' + H.fechar + '</button></div><div class="diario-lista">' + lista + '</div>', { cls: 'diario-m' });
+  };
+  /* final: depois da primeira vitória sobre o Coração Ígneo */
+  ui.modalFinal = function () {
+    const F = LV.historia().final;
+    ui.modal('<div class="final"><div class="eyebrow">' + F.olho + '</div><h2>' + F.titulo + '</h2>' + F.txt.map((x) => '<p>' + x + '</p>').join('') +
+      '<blockquote>' + F.citacao + '<cite>— ' + F.autor + '</cite></blockquote><p>' + F.lenda + '</p><p class="gancho">' + F.gancho + '</p><p class="muted small">' + F.depois + '</p>' +
+      '<div class="row end"><button class="btn pri" data-m="fechar">' + F.botao + '</button></div></div>', { cls: 'final-m', fechavel: false });
+    som('evolucao');
   };
 
   /* =================== AVISO CONGELADO =================== */
@@ -55,8 +113,9 @@
     game.pausaAviso = true;
     setTimeout(() => ui.avisoPausa({
       olho: LV.t('Seu objetivo'),
-      texto: LV.t('Derrote ') + '<b>' + n + LV.t(' criaturas</b> neste mapa para chamar o Guardião. O contador fica no alto, à direita. Quando ele encher, ') +
-        verbo + LV.t(' em <b>Desafiar Guardião</b>: vencer abre o caminho para o próximo mapa.'),
+      texto: LV.t('Derrote ') + '<b>' + n + LV.t(' criaturas</b> neste mapa para chamar ') + '<b>' + esc(game.W.def.chefe.nome) + '</b>' +
+        LV.t(', o Guardião que prende a luz desta camada. O contador fica no alto, à direita. Quando ele encher, ') +
+        verbo + LV.t(' em <b>Desafiar Guardião</b>: vencer solta a luz e abre o caminho para o próximo mapa.'),
       botao: LV.t('Vamos lá!'), destaque: '.hud-map', aoOk: depois,
     }), 2600);   // deixa o nome do mapa aparecer e sumir antes
   }
@@ -78,7 +137,7 @@
         olho: tu.escapou ? LV.t('Quase!') : LV.t('Ele está fraco!'),
         texto: (tu.escapou
           ? nm + LV.t(' escapou da lanterna, mas continua fraco. ') + vb + LV.t(' na lanterna para tentar de novo!')
-          : nm + LV.t(' está com pouca vida: mais um ataque pode derrotá-lo. ') + vb + LV.t(' na lanterna para capturá-lo!')) +
+          : nm + LV.t(' está com pouca vida: mais um ataque pode derrotá-lo. Com a luz fraca, ele aceita o abrigo da lanterna. ') + vb + LV.t(' na lanterna para capturá-lo!')) +
           '<span class="ap-chance">' + LV.t('Chance de captura agora: ') + '<b>' + Math.round(game.chanceTutorial() * 100) + '%</b>' + (LV.movel ? '' : LV.t(' · ou aperte Q')) + '</span>',
         destaque: '#b-lant',
       });
@@ -87,7 +146,7 @@
     const nome = '<b>' + esc(tu.alvo.nome) + '</b>', verbo = LV.movel ? LV.t('Toque') : LV.t('Clique');
     let h = '';
     if (tu.passo === 'atacar') {
-      h = LV.t('Este é ') + nome + LV.t(', uma criatura selvagem. ') + verbo + LV.t(' nele para atacar com a sua lanterna e baixar a vida dele.');
+      h = LV.t('Este é ') + nome + LV.t(', uma Centelha: criatura nascida do Lume. ') + verbo + LV.t(' nele para atacar com a sua lanterna e baixar a vida dele.');
     } else if (tu.passo === 'mirar') {
       h = verbo + LV.t(' na criatura destacada para lançar a lanterna. O jogo fica pausado enquanto você mira.');
     }
@@ -100,7 +159,7 @@
       '<div class="tut-fim-pet"><img src="' + art.retrato(pet.sp, pet.est, 128) + '" alt="" width="112" height="112"><div>' +
       '<p>' + LV.t('Parabéns pela sua primeira captura! ') + nome + LV.t(' vai lutar ao seu lado, ganhar níveis e mudar de forma.') + '</p>' +
       (pet.bonus ? '<p class="talento-l">★ ' + LV.t('Talento ') + '<b>' + LV.TALENTOS[pet.bonus.t].nome + '</b>: ' + LV.TALENTOS[pet.bonus.t].desc(pet.bonus.v) + '</p>' : '') +
-      '<p class="acc">' + LV.t('Sua aventura em Lumevale começa agora.') + '</p></div></div>' +
+      '<p class="acc">' + LV.t('Agora desça e devolva a luz ao vale.') + '</p></div></div>' +
       '<div class="row end"><button class="btn pri" data-m="tutFim">' + LV.t('Começar a aventura') + '</button></div></div>', { fechavel: false, cls: 'tut-fim-m' });
     som('nivel');
   }
@@ -262,6 +321,12 @@
         reabrirEspecial(); hud(); ui.render(); LV.salvarLogo();
       }
       else if (b.dataset.m === 'tutFim') { ui.fecharModal(); terminarTutorial(); }
+      else if (b.dataset.m === 'lerPagina') {
+        const p = +b.dataset.p;
+        if (ui.modalAberto && ui.modalAberto.cls === 'diario-m') { ui.fecharModal(); ui.diarioCandeia(p); }
+        else { ui.fila.unshift([htmlPagina(p), { cls: 'diario-m' }]); ui.fecharModal(); }   // a página vem antes do que estava na fila (ex.: o final)
+      }
+      else if (b.dataset.m === 'diario') { ui.fecharModal(); ui.diarioCandeia(); }
       else if (b.dataset.m === 'irMapa') {
         ui.fecharModal();
         if (game.acao.viajar(+b.dataset.i)) { ui.diario(false); ui.render(); LV.salvarLogo(); }
@@ -691,7 +756,7 @@
   function abaSantuario() {
     const s = S(), m = s.meta, prev = game.ecosPrevistos();
     let h = LV.t('<section class="sec"><header class="sec-h"><h2>Santuário dos Ecos</h2><span class="ecos-saldo">') + ICON.eco + ' <b data-k="ecos">' + fmt(m.ecos) + LV.t('</b> Ecos</span></header>') +
-      LV.t('<p class="nota">Os Ecos são a luz que fica quando você recomeça. As melhorias do Santuário valem para todas as jornadas.</p>') +
+      '<p class="nota">' + (S().meta.finalVisto ? LV.historia().santuarioFinal : LV.historia().santuario) + '</p>' +
       LV.t('<dl class="stats"><div><dt>Renascimentos</dt><dd>') + m.renasc + LV.t('</dd></div><div><dt>Ecos já ganhos</dt><dd>') + fmt(m.ecosTotal) + '</dd></div>' +
       LV.t('<div><dt>Maior nível</dt><dd>') + Math.max(m.recorde, s.dom.nivel) + LV.t('</dd></div><div><dt>Guardiões nesta jornada</dt><dd>') + s.mapas.filter((x) => x.chefe).length + ' / ' + LV.MAPS.length + '</dd></div></dl></section>';
     h += LV.t('<section class="sec renascer"><header class="sec-h"><h2>Renascer</h2></header>');
@@ -754,7 +819,7 @@
       (chefe ? '<img class="pv-chefe' + (est.chefe ? '' : ' oculta') + '" src="' + imgDe(chefe) + '" alt="">' : '');
     const cartao = (c) => {
       const v = vista(c.b.id);
-      const tag = c.hostil ? LV.t('Hostil') : c.sp.passivo ? LV.t('Mansa') : LV.t('Agressiva');
+      const tag = c.hostil ? LV.t('Breu') : c.sp.passivo ? LV.t('Mansa') : LV.t('Agressiva');
       return '<div class="pv-card' + (v ? '' : ' oculta') + '"><img src="' + imgDe(c.b) + '" alt="" width="52" height="52"><div><b>' + (v ? esc(c.b.nome) : '???') + '</b>' +
         '<small>' + tag + (c.sp ? ' · ' + LV.EL[c.sp.el].nome : '') + '</small></div></div>';
     };
@@ -799,14 +864,17 @@
     ultimoTitulo = { nome, t: performance.now() };
     const d = document.getElementById('titulo-mapa');
     d.innerHTML = '<span class="tm-linha"></span><span class="eyebrow">' + (game.tutorial ? LV.t('Tutorial') : LV.t('Profundeza ') + (i + 1)) + '</span>' +
-      '<h2>' + esc(nome) + '</h2><span class="tm-linha"></span>';
+      '<h2>' + esc(nome) + '</h2><span class="tm-linha"></span><p class="tm-sub">' + (game.tutorial ? LV.historia().tutorialSub : m.sub) + '</p>';
     d.classList.remove('mostra'); void d.offsetWidth; d.classList.add('mostra');
   };
 
   /* =================== ABA: AJUDA =================== */
   function abaAjuda() {
     const secoes = LV.ajuda ? LV.ajuda() : [];
-    return '<section class="sec ajuda"><header class="sec-h"><h2>' + LV.t('Como jogar') + '</h2><span class="muted small">' + LV.t('toque num tópico') + '</span></header>' +
+    const H = LV.historia(), achadas = (S().meta.diario || []).length;
+    return '<section class="sec ajuda"><header class="sec-h"><h2>' + H.resumoT + '</h2></header><div class="historia-resumo">' + H.resumo.map((x) => '<p>' + x + '</p>').join('') +
+      '<button class="btn" data-m-abrir="diario">' + H.diarioCurto + ' · ' + achadas + '/' + H.paginas.length + '</button></div></section>' +
+      '<section class="sec ajuda"><header class="sec-h"><h2>' + LV.t('Como jogar') + '</h2><span class="muted small">' + LV.t('toque num tópico') + '</span></header>' +
       secoes.map((sx, i) => '<details class="aj"' + (i === 0 ? ' open' : '') + '><summary>' + sx[0] + '</summary><ul>' + sx[1].map((l) => '<li>' + l + '</li>').join('') + '</ul></details>').join('') +
       '</section>';
   }
@@ -830,7 +898,7 @@
       '</dl></section>';
     const nq = game.conquistasProntas(), vistos = LV.BESTIARIO.filter((b) => vista(b.id)).length;
     h += LV.t('<section class="sec"><header class="sec-h"><h2>Diário de campo</h2></header><div class="row">') +
-      LV.t('<button class="btn" data-m-abrir="best">Bestiário · ') + vistos + '/' + LV.BESTIARIO.length + '</button>' +
+      LV.t('<button class="btn" data-m-abrir="diario">' + LV.historia().diarioCurto + ' · ' + (S().meta.diario || []).length + '/' + LV.historia().paginas.length + '</button><button class="btn" data-m-abrir="best">Bestiário · ') + vistos + '/' + LV.BESTIARIO.length + '</button>' +
       '<button class="btn' + (nq ? LV.t(' ouro') : '') + LV.t('" data-m-abrir="conq">Conquistas') + (nq ? ' · ' + nq + LV.t(' para resgatar') : '') + '</button></div></section>';
     const autoOk = game.autoLiberada();
     h += LV.t('<section class="sec"><header class="sec-h"><h2>Opções</h2></header><div class="opts">') +
@@ -908,7 +976,7 @@
   function clique(e) {
     if (ui._semClique) return;            // o clique que encerra um arrasto não seleciona nada
     const ab = e.target.closest('[data-m-abrir]');
-    if (ab) { som('clique'); if (ab.dataset.mAbrir === 'best') ui.abrirBestiario(); else ui.abrirConquistas(); return; }
+    if (ab) { som('clique'); if (ab.dataset.mAbrir === 'best') ui.abrirBestiario(); else if (ab.dataset.mAbrir === 'diario') ui.diarioCandeia(); else ui.abrirConquistas(); return; }
     const b = e.target.closest('[data-act]');
     if (!b || b.disabled) return;
     const a = b.dataset.act, uid = +b.dataset.uid;
@@ -1149,7 +1217,7 @@
       ? LV.t('<div class="eyebrow">Renascimento ') + m.renasc + LV.t('</div><h1 class="titulo">Lumevale</h1>') +
         LV.t('<p>Tudo recomeça na primeira descida. Os Ecos e o Santuário continuam com você (') + fmt(m.ecos) + LV.t(' Ecos para gastar). Escolha de novo o seu primeiro companheiro') + (nv > 1 ? LV.t(': ele já começa no nível ') + nv + '.' : '.') + '</p>'
       : LV.t('<div class="eyebrow">Uma descida pelas profundezas</div><h1 class="titulo">Lumevale</h1>') +
-        LV.t('<p>Lá embaixo, criaturas de luz ainda vivem entre raízes, ruínas e cristais. Escolha seu primeiro companheiro. Ele vai lutar por você, crescer e mudar de forma.</p>');
+        LV.t('<p>Lá embaixo, as Centelhas ainda guardam o que resta do Lume. Escolha seu primeiro companheiro: ele vai lutar por você, crescer e mudar de forma.</p>');
     ui.modal('<div class="intro">' + txt + '<div class="inis">' + cards + LV.t('</div><p class="muted small">Brasa vence Musgo, Musgo vence Maré, Maré vence Brasa.</p></div>'), { cls: 'grande', fechavel: false });
   };
   function escolherInicial(sp) {
@@ -1190,7 +1258,9 @@
 
   /* Guardião derrotado: moeda → pet novo → mecânicas liberadas (todas com o mesmo destaque) → caminho aberto */
   ui.modalChefe = function (d) {
+    const H = LV.historia();
     let h = LV.t('<div class="eyebrow">Guardião derrotado</div><h2>') + esc(d.nome) + LV.t(' caiu</h2>');
+    if (d.primeira && d.mapaIdx != null) h += '<p class="efeito-lore">' + H.efeito[d.mapaIdx] + '</p>';
     if (d.moeda) h += '<p class="premio-moeda">' + iconeMoeda(d.moeda) + ' <b>+' + d.qMoeda + ' ' + d.moeda.nome + '</b> <span class="muted small">(' + fmt(S().moedas[d.moeda.id]) + LV.t(' no total) · use na Loja</span></p>');
     if (d.primeira && d.premio) {
       h += '<div class="premio"><img src="' + art.retrato(d.premio.sp, d.premio.est, 96) + LV.t('" alt="" width="96" height="96"><p>Das cinzas do Guardião surgiu <b>') + LV.nomePet(d.premio) + LV.t('</b> (Nv ') + d.premio.nivel + LV.t('). Ele agora faz parte da sua coleção.</p></div>');
@@ -1198,6 +1268,7 @@
     const novas = [];
     if (d.autoNova) novas.push([LV.t('Caçada automática liberada'), LV.t('Ligue no botão ao lado da lanterna.')]);
     if (d.primeira && d.moeda && LV.MOEDAS.indexOf(d.moeda) === 0) novas.push([LV.t('Renascimento liberado'), LV.t('Renasça no Santuário para ganhar Ecos permanentes.')]);
+    if (d.paginaNova && d.mapaIdx != null) novas.push([H.novaPagina, '“' + H.paginas[d.mapaIdx].t + '” · <button type="button" class="link" data-m="lerPagina" data-p="' + d.mapaIdx + '">' + H.ler + ' ›</button>']);
     if (novas.length) {
       h += '<ul class="desbloqueios">' + novas.map((n) => '<li><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 9.8 6.2 14.5 8 9.8 9.8 8 14.5 6.2 9.8 1.5 8 6.2 6.2Z" fill="currentColor"/></svg><div><b>' + n[0] + '</b><span>' + n[1] + '</span></div></li>').join('') + '</ul>';
     }
@@ -1208,6 +1279,7 @@
     h += LV.t('<div class="row end"><button class="btn" data-m="fechar">Continuar aqui</button>') +
       (d.proximoIdx != null ? '<button class="btn pri" data-m="proxmapa" data-i="' + d.proximoIdx + LV.t('">Ir ao próximo mapa</button>') : '') + '</div>';
     ui.modal(h, { fechavel: false });
+    if (d.final) ui.modalFinal();      // entra na fila: aparece quando esta janela fechar
   };
 
   /* clarão da evolução: luz que nasce no pet e toma a tela inteira, com um anel se expandindo e a janela tremendo */
@@ -1381,7 +1453,7 @@
         (sp ? LV.t('<div class="formas">Forma ') + (b.est + 1) + LV.t(' de 3</div>') : '') + LV.t('<p class="muted small">Ainda não encontrada. ') + dica + '</p></div></div></aside>';
     }
     const tipo = sp ? LV.t('<span class="tagb">Selvagem</span>') + (sp.passivo ? LV.t('<span class="tagb manso">Mansa</span>') : LV.t('<span class="tagb agr">Agressiva</span>'))
-      : b.tipo === 'hostil' ? LV.t('<span class="tagb">Hostil</span><span class="tagb agr">Sempre agressiva</span>') : LV.t('<span class="tagb chefe">Guardião</span>');
+      : b.tipo === 'hostil' ? LV.t('<span class="tagb">Breu</span><span class="tagb agr">Sempre agressivo</span>') : LV.t('<span class="tagb chefe">Guardião</span>');
     const tot = sp ? s.meta.best[b.sp] || {} : null;
     const cadeia = sp ? LV.t('<div class="formas">Forma ') + (b.est + 1) + LV.t(' de 3: ') + sp.nome.map((n, i) => (i === b.est ? '<b>' + esc(n) + '</b>' : vista(b.sp + '_' + i) ? esc(n) : '???')).join(' → ') + '</div>' : '';
     const onde = b.mapas.length ? b.mapas.map((i) => (s.mapas[i].liberado ? LV.MAPS[i].nome : '???')).join(', ') + (sp && b.est ? LV.t(' (ninhos de nível ') + (b.est === 1 ? '18+' : '40+') + ')' : '') : LV.t('Só por evolução');
@@ -1423,7 +1495,7 @@
       h += '<div class="best-linha">' + [0, 1, 2].map((e) => cartaoBesta(LV.besta(id + '_' + e))).join('<i class="seta-evo" aria-hidden="true">›</i>') + '</div>';
     }
     h += '</div></section>';
-    [['hostil', LV.t('Hostis')], ['chefe', LV.t('Guardiões')]].forEach(([t, nome]) => {
+    [['hostil', LV.t('Breus')], ['chefe', LV.t('Guardiões')]].forEach(([t, nome]) => {
       h += '<section><h3>' + nome + '</h3><div class="best-grade">' + LV.BESTIARIO.filter((b) => b.tipo === t).map(cartaoBesta).join('') + '</div></section>';
     });
     return h + '</div>' + detalheBesta(ui.bestSel) + '</div>';
@@ -1851,7 +1923,7 @@
     else if (a === 'slot') { inicioValidar(); novo.slot = +b.dataset.n; ui.atualizarInicio(); }
     else if (a === 'carregar') { if (!LV.carregarJogo(+b.dataset.n)) ui.toast(LV.t('Não foi possível carregar este espaço.'), 'ruim', true); }
     else if (a === 'idioma') LV.trocarIdioma(b.dataset.id, 'menu');
-    else if (a === 'comecar') { inicioValidar(); if (novo.sp && (novo.nome || '').trim()) LV.novoJogo(novo.slot, novo.nome, novo.sp, !!novo.pular); }
+    else if (a === 'comecar') { inicioValidar(); if (novo.sp && (novo.nome || '').trim()) { const n = Object.assign({}, novo); ui.abertura(() => LV.novoJogo(n.slot, n.nome, n.sp, !!n.pular)); } }
   }
   /* "voltar" do Android no menu inicial: sobe um nível; no menu principal devolve false (sai do app) */
   ui.inicioVoltar = function () {
