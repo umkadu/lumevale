@@ -631,8 +631,11 @@
     const ganho = Math.min(a.hpMax - a.hp, Math.round(v));
     a.hp += ganho;
     if (ganho > 0) numero(a.x, topoDe(a) - 4, '+' + LV.fmt(ganho), 'cura');
-    for (let k = 0; k < 6; k++) particula({ x: a.x + LV.rand(-14, 14), y: alvoY(a) + LV.rand(-6, 10), vx: LV.rand(-12, 12), vy: LV.rand(-70, -35), g: 0, vida: LV.rand(0.6, 1), t: 0, r: LV.rand(1.5, 2.6), cor: '#a8ff9a', tipo: 'luz' });
+    for (let k = 0; k < 3; k++) particula({ x: a.x + LV.rand(-16, 16), y: alvoY(a) + LV.rand(-6, 12), vx: LV.rand(-16, 16), vy: LV.rand(-70, -35), g: 0, vida: LV.rand(0.7, 1.1), t: 0, r: LV.rand(5, 7), img: 'hab/folha', rot: LV.rand(0, TAU), gira: LV.rand(-3, 3), tipo: 'spr' });
+    for (let k = 0; k < 3; k++) particula({ x: a.x + LV.rand(-14, 14), y: alvoY(a) + LV.rand(-6, 10), vx: LV.rand(-12, 12), vy: LV.rand(-70, -35), g: 0, vida: LV.rand(0.6, 1), t: 0, r: LV.rand(1.5, 2.4), cor: '#d8ffb0', tipo: 'luz' });
   }
+  // lasquinhas de cristal que saltam quando a carapaça se forma
+  function lascasPet(x, y, cor, n) { for (let i = 0; i < n; i++) particula({ x, y, vx: LV.rand(-160, 160), vy: LV.rand(-240, -60), g: 700, vida: LV.rand(0.4, 0.7), t: 0, r: LV.rand(2, 3.2), cor, tipo: 'lasca' }); }
   function tentarHabilidade(p, ini) {
     const h = LV.HAB[p.ref.sp], n = habNivel(p), T = W.tam;
     if (!h) return false;
@@ -644,8 +647,9 @@
       case 'explosao': {
         const a = alvoDe(); if (!a) return false;
         const r = h.raio(n), x = a.x, y = alvoY(a);
-        fx({ tipo: 'explosao', x, y, r, cor: '#ff9a52', vida: 0.6 });
-        explosao(x, y, '#ffb35c', 24); W.shake = Math.max(W.shake, 5); som('impacto');
+        fx({ tipo: 'brilho', x, y, r: r * 1.1, cor: '#ff9a52', vida: 0.5 });
+        fx({ tipo: 'spr', img: 'hab/explosao', x, y, h: r * 1.35, ay: 0.5, cresce: [0.3, 1.05], vida: 0.6, flip: Math.random() < 0.5 });
+        explosao(x, y, '#ffb35c', 14); W.shake = Math.max(W.shake, 5); som('impacto');
         perto.filter((e) => Math.hypot(e.x - x, alvoY(e) - y) < r).forEach((e) => { dano(e, p.atk * h.mult(n), p.el, p); aplicarDot(e, p.atk * 0.15, 3, 'brasa', '#ff8a3d'); });
         break;
       }
@@ -658,7 +662,7 @@
       }
       case 'escudo': {
         if (!perto.length) return false;
-        time.forEach((a) => { a.escudo = Math.round(a.hpMax * h.pct(n)); a.escudoT = 6; fx({ tipo: 'bolha', alvo: a, cor: '#7fe3ff', vida: 0.6 }); });
+        time.forEach((a) => { a.escudo = Math.round(a.hpMax * h.pct(n)); a.escudoT = 6; fx({ tipo: 'spr', img: 'hab/bolha', x: a.x, y: alvoY(a), h: (a.h || 40) * 1.5, ay: 0.5, cresce: [0.3, 1.1], vida: 0.45, alfa: 0.9 }); });
         som('brilho');
         break;
       }
@@ -666,8 +670,8 @@
         const r = 125;
         const alvos = ini.filter((e) => Math.hypot(e.x - p.x, alvoY(e) - alvoY(p)) < r);
         if (!alvos.length) return false;
-        fx({ tipo: 'anel', x: p.x, y: alvoY(p), r0: 10, r1: r, cor: '#8ff6ff', vida: 0.5 });
-        fx({ tipo: 'anel', x: p.x, y: alvoY(p), r0: 4, r1: r * 0.7, cor: '#ffffff', vida: 0.35 });
+        fx({ tipo: 'spr', img: 'hab/anelagua', x: p.x, y: alvoY(p), h: r * 2, ay: 0.5, cresce: [0.12, 1], vida: 0.5, gira: 0.8 });
+        fx({ tipo: 'brilho', x: p.x, y: alvoY(p), r: r * 0.6, cor: '#8ff6ff', vida: 0.35 });
         alvos.forEach((e) => { dano(e, p.atk * h.mult(n), p.el, p); if (e.tipo !== 'chefe') e.atord = Math.max(e.atord || 0, h.atord(n)); else e.atord = Math.max(e.atord || 0, h.atord(n) * 0.35); });
         som('impacto');
         break;
@@ -675,7 +679,7 @@
       case 'cura': {
         const feridos = time.filter((a) => a.hp < a.hpMax * 0.9);
         if (!feridos.length) return false;
-        fx({ tipo: 'anel', x: p.x, y: alvoY(p), r0: 10, r1: 150, cor: '#a8ff9a', vida: 0.7 });
+        fx({ tipo: 'spr', img: 'hab/polen', x: p.x, y: alvoY(p), h: 170, ay: 0.5, cresce: [0.25, 1.1], vida: 0.8, luz: true, alfa: 0.45, gira: 0.5 });
         time.forEach((a) => curar(a, a.hpMax * h.pct(n)));
         som('brilho');
         break;
@@ -693,7 +697,8 @@
         const dur = h.dur(n);
         alvos.forEach((e) => { e.prov = p; e.provT = dur; });
         p.reducao = dur; p.reducaoK = h.red(n);
-        fx({ tipo: 'anel', x: p.x, y: alvoY(p), r0: 20, r1: 190, cor: '#f3a6ff', vida: 0.5 });
+        fx({ tipo: 'brilho', x: p.x, y: alvoY(p), r: 120, cor: '#f3a6ff', vida: 0.45 });
+        lascasPet(p.x, alvoY(p), '#f3b8ff', 8);
         som('impacto');
         break;
       }
@@ -701,7 +706,7 @@
         const a = alvoDe(); if (!a) return false;
         const dir = Math.sign(a.x - p.x) || p.face, L = h.alc(n), y0 = alvoY(p);
         p.face = dir;
-        fx({ tipo: 'raio', x0: p.x + dir * 10, y0, x1: p.x + dir * L, y1: y0 + (alvoY(a) - y0) * 0.4, cor: '#9ff3ff', vida: 0.4 });
+        fx({ tipo: 'lanca', x0: p.x + dir * 10, y0, x1: p.x + dir * L, y1: y0 + (alvoY(a) - y0) * 0.4, cor: '#9ff3ff', vida: 0.5 });
         ini.filter((e) => (e.x - p.x) * dir > -10 && Math.abs(e.x - p.x) < L && Math.abs(alvoY(e) - y0) < 60).forEach((e) => dano(e, p.atk * h.mult(n), p.el, p));
         som('brilho');
         break;
@@ -1296,7 +1301,7 @@
           W.proj.push({ x: e.x, y: y0, vx: (x - e.x) / tv, vy: (gy - y0 - 0.5 * 900 * tv * tv) / tv, g: 900, dmg: atk * 0.8, el, cor: '#ff8a3d', dono: 'ini', src: e, linear: true, vida: 3, tipo: 'bolaFogo',
             aoCair: (pr) => {
               const gy2 = chaoY(pr.x);
-              fx({ tipo: 'explosao', x: pr.x, y: gy2 - 16, r: 54, vida: 0.4 }); explosao(pr.x, gy2 - 12, '#ff8a3d', 6);
+              fx({ tipo: 'brilho', x: pr.x, y: gy2 - 16, r: 60, cor: '#ff8a3d', vida: 0.4 }); explosao(pr.x, gy2 - 12, '#ff8a3d', 6);
               fx({ tipo: 'spr', img: 'explosao', x: pr.x, y: gy2 + 4, h: 92, cresce: [0.35, 1.05], vida: 0.55, flip: Math.random() < 0.5 });
               aliados().forEach((a) => { if (Math.abs(a.x - pr.x) < 64 && alvoY(a) > gy2 - 130) danoAliado(a, pr.dmg, el, e); });
               perigo({ tipo: 'fogo', x: pr.x, y: gy2, r: 46, dur: 2.2, dps: atk * 0.25, tick: 0.25, cor: '#ff8a3d', src: e, el });
@@ -1510,10 +1515,10 @@
       if (d < 12 + (a.h || 40) * 0.18) {
         if (pr.dono === 'pet') {
           if (pr.tipo === 'pulso') {
-            fx({ tipo: 'anel', x: a.x, y: ty, r0: 8, r1: 78, cor: pr.cor, vida: 0.35 });
+            fx({ tipo: 'brilho', x: a.x, y: ty, r: 70, cor: pr.cor, vida: 0.35 });
             W.ini.filter(alvoValido).forEach((o) => { if (Math.hypot(o.x - a.x, alvoY(o) - ty) < 80) dano(o, pr.dmg * (o === a ? 1 : 0.6), pr.el, pr.fonte); });
           } else {
-            if (pr.tipo === 'brasa') { explosao(a.x, ty, '#ff9a52', 8); fx({ tipo: 'anel', x: a.x, y: ty, r0: 4, r1: 30, cor: '#ff9a52', vida: 0.3 }); }
+            if (pr.tipo === 'brasa') { explosao(a.x, ty, '#ff9a52', 6); fx({ tipo: 'spr', img: 'hab/explosao', x: a.x, y: ty, h: 48, ay: 0.5, cresce: [0.3, 1], vida: 0.4 }); }
             dano(a, pr.dmg, pr.el, pr.fonte);
           }
           if (pr.efeito && a.hp > 0) pr.efeito(a);
@@ -1521,6 +1526,7 @@
         return false;
       }
       const sp = pr.vel * dt;
+      pr.ang = Math.atan2(dy, dx);
       pr.x += (dx / d) * sp; pr.y += (dy / d) * sp;
       if (Math.random() < 0.8) particula({ x: pr.x, y: pr.y, vx: LV.rand(-10, 10), vy: LV.rand(-10, 10), g: 0, vida: 0.28, t: 0, r: pr.tipo === 'pulso' ? 3 : 2, cor: pr.cor, tipo: 'luz' });
       return true;
@@ -1868,7 +1874,7 @@
   /* avisos no chão, perigos ativos e estados dos aliados (preso, atordoado, envenenado) */
   /* ---- peças ilustradas dos ataques dos Guardiões (img/ataques), no mesmo traço do resto do jogo ---- */
   const suave = (v) => 1 - Math.pow(1 - LV.clamp(v, 0, 1), 3);
-  function imgAtq(n) { return SPR().get('ataques/' + n); }
+  function imgAtq(n) { return SPR().get(n.indexOf('/') >= 0 ? n : 'ataques/' + n); }
   // desenha uma peça; (ax, ay) é o ponto de apoio na imagem (0 a 1), por padrão o meio da base
   function atq(c, n, x, y, h, o) {
     const im = imgAtq(n);
@@ -1879,6 +1885,7 @@
     if (o.rot) c.rotate(o.rot);
     c.scale((o.flip ? -1 : 1) * (o.sx || 1), o.sy || 1);
     if (o.alpha != null) c.globalAlpha *= LV.clamp(o.alpha, 0, 1);
+    if (o.luz) c.globalCompositeOperation = 'lighter';
     if (o.corte != null) { c.beginPath(); c.rect(-w * ax, -h * ay - 2, w * LV.clamp(o.corte, 0, 1), h + 4); c.clip(); }
     c.drawImage(im, -w * ax, -h * ay, w, h);
     c.restore();
@@ -2005,7 +2012,7 @@
     for (const a of [W.tam].concat(W.pets)) {
       if (a.hp <= 0 || (a === W.tam && a.caido > 0)) continue;
       const top = topoDe(a);
-      if (a.atordA > 0) for (let i = 0; i < 3; i++) { const ang = t * 6 + (i * TAU) / 3; art.glow(c, a.x + Math.cos(ang) * 12, top - 8 + Math.sin(ang) * 4, 6, '#fff6c0', 0.9); }
+      if (a.atordA > 0) for (let i = 0; i < 3; i++) { const ang = t * 6 + (i * TAU) / 3; if (!atq(c, 'hab/estrela', a.x + Math.cos(ang) * 13, top - 8 + Math.sin(ang) * 4, 11, { ay: 0.5, rot: t * 4 + i })) art.glow(c, a.x + Math.cos(ang) * 12, top - 8 + Math.sin(ang) * 4, 6, '#fff6c0', 0.9); }
       if (a.preso > 0 && a.presoTipo !== 'corrente' && !atq(c, 'raizbaixa', a.x, chaoDe(a) + 3, 18)) { c.save(); c.strokeStyle = art.rgba('#8fe07f', 0.85); c.lineWidth = 2; c.beginPath(); c.ellipse(a.x, chaoDe(a) - 3, 16, 5, 0, 0, TAU); c.stroke(); c.restore(); }
       if (a.veneno && Math.random() < 0.15) particula({ x: a.x + LV.rand(-8, 8), y: top + 6, vx: 0, vy: -30, g: 0, vida: 0.6, t: 0, r: 2.2, cor: '#a8e05a', tipo: 'luz' });
     }
@@ -2023,11 +2030,14 @@
     if (e.atord > 0) {
       for (let k = 0; k < 3; k++) {
         const a = t * 5 + (k * TAU) / 3;
-        art.glow(c, e.x + Math.cos(a) * 12, top - 6 + Math.sin(a) * 4, 6, '#fff3a0', 0.9);
+        if (!atq(c, 'hab/estrela', e.x + Math.cos(a) * 13, top - 6 + Math.sin(a) * 4, 11, { ay: 0.5, rot: t * 4 + k })) art.glow(c, e.x + Math.cos(a) * 12, top - 6 + Math.sin(a) * 4, 6, '#fff3a0', 0.9);
       }
     }
     if (e.fraco > 0) art.glow(c, e.x, cy, e.h * 0.5, '#8a5cff', 0.22);
-    if (e.lento > 0 || e.vuln > 0) {
+    if (e.vuln > 0 && imgAtq('hab/teia')) {
+      // presa na teia: fios por cima da criatura
+      atq(c, 'hab/teia', e.x, cy, Math.max(26, e.h * 0.8), { ay: 0.5, alpha: 0.6 });
+    } else if (e.vuln > 0) {
       c.save(); c.globalAlpha = 0.55; c.strokeStyle = '#ffd6f2'; c.lineWidth = 1;
       const r = Math.max(14, e.h * 0.35);
       c.beginPath();
@@ -2037,7 +2047,9 @@
     if (e.prov && e.provT > 0) art.glow(c, e.x, top - 4, 7, '#f3a6ff', 0.8);
   }
   function desenharProtecao(c, a, t) {
-    if (a.escudo > 0) {
+    if (a.escudo > 0 && imgAtq('hab/bolha')) {
+      atq(c, 'hab/bolha', a.x, alvoY(a), (a.h || 40) * 1.35, { ay: 0.5, alpha: 0.75 + 0.15 * Math.sin(t * 4), sy: 1 + 0.03 * Math.sin(t * 5) });
+    } else if (a.escudo > 0) {
       const r = (a.h || 40) * 0.62, cy = alvoY(a);
       c.save();
       c.beginPath(); c.arc(a.x, cy, r, 0, TAU);
@@ -2045,7 +2057,11 @@
       c.strokeStyle = 'rgba(160,236,255,' + (0.45 + 0.2 * Math.sin(t * 4)) + ')'; c.lineWidth = 1.6; c.stroke();
       c.restore();
     }
-    if (a.reducao > 0) art.glow(c, a.x, alvoY(a), (a.h || 40) * 0.8, '#f3a6ff', 0.25 + 0.1 * Math.sin(t * 6));
+    if (a.reducao > 0) {
+      art.glow(c, a.x, alvoY(a), (a.h || 40) * 0.8, '#f3a6ff', 0.18 + 0.08 * Math.sin(t * 6));
+      const hh = (a.h || 40) * 1.3, by = a.voa ? alvoY(a) + hh * 0.45 : a.y + 4;
+      atq(c, 'hab/carapaca', a.x, by, hh, { alpha: Math.min(1, a.reducao * 2) * 0.85 });
+    }
   }
   function desenharMira(c, t) {
     const vw = game.viewW, cam = W.cam;
@@ -2125,12 +2141,22 @@
     for (const a of W.areas) {
       const k = Math.min(1, a.t / 0.5), vida = Math.min(1, (a.dur - a.t) / 0.3);
       const al = Math.min(k, vida);
-      if (a.tipo === 'nuvem') {
+      if (a.tipo === 'nuvem' && imgAtq('hab/nuvem')) {
+        // nuvem de esporos do Esporito: tufos que respiram devagar
+        for (let i = 0; i < 3; i++) {
+          const ox = (i - 1) * a.r * 0.55 + Math.sin(t * 0.9 + i * 2) * 8, oy = Math.sin(t * 1.2 + i) * 4;
+          atq(c, 'hab/nuvem', a.x + ox, a.y + 8 + oy, a.r * (0.95 + 0.08 * Math.sin(t * 1.4 + i * 2.3)), { alpha: 0.5 * al, flip: i === 1 });
+        }
+        if (Math.random() < 0.4) particula({ x: a.x + LV.rand(-a.r, a.r) * 0.8, y: a.y - LV.rand(0, 40), vx: LV.rand(-10, 10), vy: LV.rand(-25, -8), g: 0, vida: 0.9, t: 0, r: 2, cor: a.cor, tipo: 'luz' });
+      } else if (a.tipo === 'nuvem') {
         for (let i = 0; i < 6; i++) {
           const ang = (i / 6) * TAU + t * 0.6;
           art.glow(c, a.x + Math.cos(ang) * a.r * 0.5, a.y - 26 + Math.sin(ang * 1.3) * 12, a.r * 0.75, a.cor, 0.16 * al);
         }
         if (Math.random() < 0.4) particula({ x: a.x + LV.rand(-a.r, a.r) * 0.8, y: a.y - LV.rand(0, 40), vx: LV.rand(-10, 10), vy: LV.rand(-25, -8), g: 0, vida: 0.9, t: 0, r: 2, cor: a.cor, tipo: 'luz' });
+      } else if (a.tipo === 'teia' && imgAtq('hab/teia')) {
+        // teia noturna presa sobre os inimigos
+        atq(c, 'hab/teia', a.x, a.y - a.r * 0.45, a.r * 1.9 * (0.85 + 0.15 * Math.min(1, k * 2)), { ay: 0.5, alpha: 0.9 * al, rot: Math.sin(t * 0.8 + a.x) * 0.04 });
       } else if (a.tipo === 'teia') {
         c.save(); c.globalAlpha = 0.6 * al; c.strokeStyle = a.cor; c.lineWidth = 1.1;
         c.beginPath();
@@ -2173,6 +2199,30 @@
       c.fillStyle = p.cor; c.fillRect(-p.r, -p.r * 0.6, p.r * 2, p.r * 1.2); c.restore();
     }
     for (const pr of W.proj) {
+      if (pr.tipo === 'corvo' && imgAtq('hab/corvo')) {
+        // corvo de sombra: voa até o alvo batendo as asas
+        const a = pr.ang != null ? pr.ang : 0, esq = Math.cos(a) < 0;
+        art.glow(c, pr.x, pr.y, 18, pr.cor, 0.5);
+        atq(c, 'hab/corvo', pr.x, pr.y, 34, { ay: 0.5, flip: esq, rot: esq ? a + Math.PI : a, sy: 1 + 0.12 * Math.sin(t * 28 + pr.x) });
+        continue;
+      }
+      if (pr.tipo === 'brasa' && imgAtq('hab/brasacai')) {
+        // brasa da Chuva de Cinzas caindo com o rastro para trás
+        const a = pr.ang != null ? pr.ang : Math.PI / 2;
+        art.glow(c, pr.x, pr.y, 22, '#ff8a3d', 0.6);
+        atq(c, 'hab/brasacai', pr.x, pr.y, 44, { ay: 0.82, rot: a - Math.PI / 2 });
+        continue;
+      }
+      if (!pr.tipo || pr.tipo === 'projetil' || pr.tipo === 'pulso') {
+        // tiro básico: a peça do elemento (os Breus atiram sombra)
+        const sombra = pr.src && pr.src.tipo === 'hostil', nome = 'hab/tiro_' + (sombra ? 'sombra' : pr.el || 'musgo');
+        if (imgAtq(nome)) {
+          const a = pr.ang != null ? pr.ang : (pr.alvo ? Math.atan2(alvoY(pr.alvo) - pr.y, pr.alvo.x - pr.x) : 0), esq = Math.cos(a) < 0;
+          art.glow(c, pr.x, pr.y, pr.tipo === 'pulso' ? 18 : 12, pr.cor, 0.55);
+          atq(c, nome, pr.x, pr.y, pr.tipo === 'pulso' ? 24 : 17, { ax: 0.78, ay: 0.5, flip: esq, rot: esq ? a + Math.PI : a });
+          continue;
+        }
+      }
       if (pr.tipo === 'corvo') {
         art.glow(c, pr.x, pr.y, 16, pr.cor, 0.8);
         const a = pr.alvo ? Math.atan2(alvoY(pr.alvo) - pr.y, pr.alvo.x - pr.x) : 0, bate = Math.sin(t * 30) * 4;
@@ -2193,6 +2243,19 @@
         const r = LV.lerp(f.r0, f.r1, 1 - Math.pow(1 - k, 2));
         c.beginPath(); c.arc(f.x, f.y, Math.max(0.5, r), 0, TAU);
         c.strokeStyle = art.rgba(f.cor, 0.85 * (1 - k)); c.lineWidth = 3 * (1 - k) + 0.5; c.stroke();
+      } else if (f.tipo === 'corte' && imgAtq('hab/garra')) {
+        // golpe corpo a corpo: três marcas de garra
+        atq(c, 'hab/garra', f.x, f.y, 30 * (0.85 + 0.25 * suave(k * 2)), { ay: 0.5, flip: f.face < 0, alpha: 1 - k * k });
+      } else if (f.tipo === 'brilho') {
+        art.glow(c, f.x, f.y, f.r * (0.5 + 0.5 * suave(k * 2)), f.cor, 0.75 * (1 - k));
+      } else if (f.tipo === 'lanca' && imgAtq('hab/lanca')) {
+        // lança de quartzo: cruza a linha toda deixando um rastro de luz
+        const v = suave(Math.min(1, k / 0.5)), x = LV.lerp(f.x0, f.x1, v), y = LV.lerp(f.y0, f.y1, v), ang = Math.atan2(f.y1 - f.y0, f.x1 - f.x0), esq = Math.cos(ang) < 0;
+        c.save(); c.globalCompositeOperation = 'lighter'; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(f.x0, f.y0); c.lineTo(x, y);
+        c.strokeStyle = art.rgba(f.cor, 0.4 * (1 - k)); c.lineWidth = 7 * (1 - k * 0.6); c.stroke(); c.restore();
+        atq(c, 'hab/lanca', x, y, 26, { ax: 0.88, ay: 0.5, flip: esq, rot: esq ? ang + Math.PI : ang, alpha: 1 - LV.clamp((k - 0.6) / 0.4, 0, 1) });
+        art.glow(c, x, y, 26, f.cor, 0.7 * (1 - k));
       } else if (f.tipo === 'corte') {
         c.save(); c.translate(f.x, f.y); c.scale(f.face, 1); c.globalCompositeOperation = 'lighter';
         c.beginPath(); c.arc(-6, 0, 16, -1.1, 1.1);
@@ -2288,7 +2351,7 @@
       } else if (f.tipo === 'spr') {
         // peça ilustrada que aparece, cresce e some (respingos, nuvens, explosões...)
         const s = f.cresce ? LV.lerp(f.cresce[0], f.cresce[1], suave(k)) : 1;
-        atq(c, f.img, f.x, f.y, f.h * s, { ax: f.ax, ay: f.ay, flip: f.flip, rot: (f.rot || 0) + (f.gira || 0) * k, alpha: (f.alfa == null ? 1 : f.alfa) * (1 - LV.clamp((k - 0.45) / 0.55, 0, 1)) });
+        atq(c, f.img, f.x, f.y, f.h * s, { luz: f.luz, ax: f.ax, ay: f.ay, flip: f.flip, rot: (f.rot || 0) + (f.gira || 0) * k, alpha: (f.alfa == null ? 1 : f.alfa) * (1 - LV.clamp((k - 0.45) / 0.55, 0, 1)) });
       } else if (f.tipo === 'corrente') {
         // corrente em elos do Guardião até o alvo
         const a = f.alvo, x1 = a ? a.x : f.x0, y1 = a ? alvoY(a) : f.y0, n = Math.max(4, Math.round(Math.hypot(x1 - f.x0, y1 - f.y0) / 14));

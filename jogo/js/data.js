@@ -467,6 +467,9 @@
   /* peças ilustradas dos ataques dos Guardiões (img/ataques) */
   LV.ATAQUES_IMG = ['raiz', 'vinha', 'raizbaixa', 'esporo', 'gas', 'vagem', 'onda', 'respingo', 'arco', 'cristais', 'lasca', 'estilhacos',
     'bolafogo', 'chamas', 'corrente', 'correntechao', 'explosao', 'brasas'];
+  /* peças ilustradas das habilidades e dos tiros das Centelhas (img/hab) */
+  LV.HAB_IMG = ['explosao', 'brasacai', 'tiro_brasa', 'bolha', 'anelagua', 'tiro_mare', 'polen', 'folha', 'nuvem', 'tiro_musgo', 'corvo', 'tiro_sombra',
+    'carapaca', 'lanca', 'tiro_cristal', 'teia', 'garra', 'estrela'];
   /* lista de todas as imagens para pré-carregar */
   LV.IMAGENS = (function () {
     const l = [];
@@ -477,6 +480,7 @@
     for (const k in LV.PECAS) l.push('pecas/' + k);
     l.push('pecas/escada_mao');
     LV.ATAQUES_IMG.forEach((n) => l.push('ataques/' + n));
+    LV.HAB_IMG.forEach((n) => l.push('hab/' + n));
     return l;
   })();
   /* cenários pintados (Gemini), um por mapa: desenhados atrás de tudo com parallax lento */
