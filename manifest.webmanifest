@@ -7,7 +7,7 @@
   "start_url": "jogo/",
   "scope": "./",
   "display": "fullscreen",
-  "orientation": "landscape",
+  "orientation": "any",
   "background_color": "#06080c",
   "theme_color": "#06080c",
   "categories": [

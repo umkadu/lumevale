@@ -307,6 +307,11 @@
     return { nivel: LV.F.evoNivel[est], mats, lumes: est === 0 ? 900 : 18000, para: sp.nome[est + 1] };
   };
   LV.nomePet = (p) => p.apelido || LV.SPECIES[p.sp].nome[p.est];
+  /* chance de captura com a vida cheia: ~30% nas primeiras áreas, caindo com o nível da criatura
+     (Nv 1: 30% · Nv 10: 22% · Nv 20: 15% · Nv 30: 11% · Nv 40: 8% · Nv 50+: 5%); espécies raras e formas evoluídas resistem mais */
+  LV.chanceBaseCaptura = (sp, lv, est) => LV.clamp(0.3 * Math.pow(0.965, Math.max(0, lv - 1)), 0.045, 0.3) * (0.75 + 0.25 * (sp.cap / 0.3)) * (est ? 0.75 : 1);
+  // chance no lançamento: sobe da chance base até o teto conforme a vida da criatura cai
+  LV.chanceComVida = (base, hpf) => base + (Math.min(0.95, base + 0.55) - base) * Math.pow(1 - LV.clamp(hpf, 0, 1), 1.3);
 
   /* =========================================================
      ARTE ILUSTRADA — sprites, alturas em pixels lógicos e cenário

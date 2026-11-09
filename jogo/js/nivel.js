@@ -136,6 +136,18 @@
     return L;
   };
 
+  /* mapa do tutorial: um trecho reto das Raízes, sem ninhos */
+  nivel.gerarTutorial = function () {
+    const def = LV.MAPS[0], cen = def.cen, r = LV.rng(4242), W = 1600;
+    const sup = [{ id: 0, x0: 0, x1: W, y: G, tipo: 'chao' }];
+    const props = [];
+    for (let px = 140; px < W - 100; px += 230 + r() * 220) props.push({ tipo: cen.props[Math.floor(r() * cen.props.length)], x: px, y: G + 2, s: 0.8 + r() * 0.5, flip: r() < 0.5, ph: r() * 10 });
+    if (cen.correntes) for (let px = 260; px < W - 100; px += 300 + r() * 380) props.push({ tipo: 'corrente', x: px, y: -6, s: 0.6 + r() * 0.7, pend: true, ph: r() * 10 });
+    const L = { idx: 0, w: W, sup, esc: [], props, pilares: [], cen, zonas: [], arestas: null, rotas: new Map(), tutorial: true };
+    construirArestas(L);
+    return L;
+  };
+
   /* ---------- consultas ---------- */
   nivel.sobre = function (L, x, y) {
     let best = null;

@@ -128,12 +128,18 @@
 
   /* ---------- fluxo de jogo ---------- */
   function demo() { game.carregar(null); game.pausado = true; }
-  LV.novoJogo = function (slot, nome, sp) {
+  LV.novoJogo = function (slot, nome, sp, pularTutorial) {
     const s = game.novoEstado();
     s.dom.nome = (nome || '').trim().slice(0, 24) || LV.t('Viajante');
     game.slot = slot;
 
     game.carregar(s);
+    if (!pularTutorial && game.iniciarTutorial(sp)) {
+      // o save só é gravado quando o tutorial termina (com o primeiro companheiro já capturado)
+      game.pausado = false;
+      ui.entrarNoJogo('tutorial');
+      return;
+    }
     game.acao.escolherInicial(sp);
     game.pausado = false;
     LV.salvar(true);
@@ -222,7 +228,7 @@
 
   /* ganhos de quando o jogo esteve fechado ou em segundo plano: aparecem na tela de descanso */
   function aplicarOffline(ms) {
-    if (!game.S || !game.S.inicial || !game.slot) return;
+    if (!game.S || !game.S.inicial || !game.slot || game.tutorial) return;
     const seg = ms / 1000;
     if (seg < 90) return;
     const base = ui.afk.foto();
@@ -246,6 +252,11 @@
   }, 1000);
 
   /* ---------- tela ---------- */
+  // altura real da janela: o app instalado no iPhone às vezes mede 100% sem a barra de status (sobra uma faixa preta)
+  const medirTela = () => document.documentElement.style.setProperty('--altura-tela', window.innerHeight + 'px');
+  medirTela();
+  window.addEventListener('resize', medirTela);
+  window.addEventListener('orientationchange', () => setTimeout(medirTela, 250));
   function resize(forcarFundo) {
     const r = stage.getBoundingClientRect();
     const q = LV.config.qualidade;
@@ -276,7 +287,9 @@
     if (!(dt >= 0)) dt = 0;
     if (dt > 0.25) dt = 0.25;
     if (game.S && game.W) {
-      if (!game.pausado) {
+      game.pausaMenu = ui.pausaMenu();
+      ui.marcarPausa(game.pausaMenu);
+      if (!game.pausado && !game.pausaMenu) {      // pausaMenu: aba Mapas aberta
         acc += dt * game.S.op.vel;
         let n = 0;
         while (acc >= 1 / 60 && n < 14) { game.step(1 / 60); acc -= 1 / 60; n++; }

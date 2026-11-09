@@ -28,14 +28,16 @@
   :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
   [hidden] { display: none !important; }
 
-  #app { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 400px; }
+  #app { height: 100%; height: var(--altura-tela, 100%); display: grid; grid-template-columns: minmax(0, 1fr) 400px; }
+  /* áreas seguras do celular (barra de status, entalhe e barra de gestos do iPhone) */
+  :root { --seg-topo: env(safe-area-inset-top, 0px); --seg-base: env(safe-area-inset-bottom, 0px); }
   #stage { position: relative; overflow: hidden; min-height: 0; min-width: 0; background: #020305; }
   #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: manipulation; cursor: crosshair; outline: none; }
 
   /* ---------- HUD ---------- */
   #hud {
     position: absolute; inset: 0; pointer-events: none;
-    padding-block: 12px 12px;
+    padding-top: max(12px, var(--seg-topo)); padding-bottom: 12px;
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
     display: grid; grid-template-rows: auto 1fr auto; gap: 8px;
@@ -84,6 +86,72 @@
   .toast.ruim { border-left-color: var(--ruim); }
   .toast.chefe { border-left-color: var(--ouro); font: 19px var(--f-disp); letter-spacing: 0.05em; color: var(--ouro); }
   .toast.sai { opacity: 0; transform: translateY(-6px); }
+  /* aba Ajuda */
+  .aj { border: 1px solid var(--linha); background: rgba(255, 255, 255, 0.02); }
+  .aj + .aj { margin-top: 6px; }
+  .aj summary { cursor: pointer; padding: 10px 12px; font: 17px var(--f-disp); color: var(--tinta); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  .aj summary::-webkit-details-marker { display: none; }
+  .aj summary::after { content: "+"; color: var(--acc); font: 700 18px var(--f-corpo); }
+  .aj[open] summary::after { content: "−"; }
+  .aj[open] summary { color: var(--acc); }
+  .aj ul { margin: 0; padding: 0 14px 12px 30px; display: grid; gap: 6px; font-size: 14px; line-height: 1.45; color: #cdd4dd; }
+  .aj b { color: var(--tinta); }
+  /* Guardião derrotado: mecânicas liberadas, todas com o mesmo peso */
+  .desbloqueios { list-style: none; margin: 0; padding: 10px 12px; display: grid; gap: 8px; background: color-mix(in srgb, var(--acc) 7%, rgba(255, 255, 255, 0.02)); border: 1px solid color-mix(in srgb, var(--acc) 30%, transparent); }
+  .desbloqueios li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: start; }
+  .desbloqueios .ic { width: 16px; height: 16px; margin-top: 3px; color: var(--acc); }
+  .desbloqueios b { display: block; font-size: 15px; color: var(--tinta); }
+  .desbloqueios span { display: block; font-size: 13px; color: var(--apagado); }
+  /* aba Mapas: cartões clicáveis, prévia do mapa e aviso de pausa */
+  .mapa[data-act] { cursor: pointer; }
+  .mapa[data-act]:hover { border-color: color-mix(in srgb, var(--ma) 60%, transparent); }
+  #pausado { position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%); padding: 8px 18px; background: rgba(6, 8, 12, 0.72);
+    border: 1px solid var(--linha2); font: 22px var(--f-disp); letter-spacing: 0.08em; color: #eef0f3; pointer-events: none; }
+  .previa-m { width: min(640px, 100%); }
+  .previa { display: grid; gap: 10px; }
+  .pv-img { position: relative; aspect-ratio: 16 / 7; background: #05070a center 55% / cover; border: 1px solid var(--linha2); overflow: hidden; }
+  .pv-img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(5, 7, 10, 0.15), rgba(5, 7, 10, 0.05) 45%, rgba(5, 7, 10, 0.85)); pointer-events: none; }
+  .pv-tit { position: absolute; left: 14px; bottom: 10px; z-index: 2; text-shadow: 0 2px 8px #000; }
+  .pv-tit h2 { margin: 2px 0 0; font-size: 28px; }
+  .pv-fila { position: absolute; right: 10px; bottom: 6px; z-index: 1; display: flex; align-items: flex-end; gap: 2px; }
+  .pv-cri { width: 54px; height: 54px; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.8)); animation: pulo 2.2s ease-in-out infinite; animation-delay: calc(var(--k) * -0.4s); }
+  .pv-chefe { width: 96px; height: 96px; object-fit: contain; margin-left: 4px; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.9)); }
+  .pv-cri.oculta, .pv-chefe.oculta, .pv-card.oculta img { filter: brightness(0) drop-shadow(0 0 2px rgba(255, 255, 255, 0.35)); opacity: 0.85; }
+  .pv-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--apagado); }
+  .pv-meta b { color: var(--tinta); }
+  .pv-h { margin: 4px 0 0; font: 17px var(--f-disp); color: var(--acc); }
+  .pv-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+  .pv-card { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; align-items: center; padding: 4px 8px 4px 4px; border: 1px solid var(--linha); background: rgba(255, 255, 255, 0.02); }
+  .pv-card img { width: 52px; height: 52px; object-fit: contain; }
+  .pv-card b { display: block; font-size: 14px; }
+  .pv-card small { color: var(--apagado); font-size: 12px; }
+  /* título do mapa ao entrar (como placa de área) */
+  #titulo-mapa { position: absolute; top: 34%; left: 50%; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 4px; pointer-events: none; opacity: 0; text-align: center; width: min(90%, 720px); }
+  #titulo-mapa h2 { margin: 0; font: clamp(30px, 5vw, 52px)/1.05 var(--f-disp); letter-spacing: 0.04em; color: #f4efe2; text-shadow: 0 2px 12px #000, 0 0 30px color-mix(in srgb, var(--acc) 45%, transparent); }
+  #titulo-mapa .eyebrow { color: var(--acc); }
+  #titulo-mapa .tm-linha { width: min(320px, 60%); height: 1px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--acc) 80%, #fff), transparent); }
+  #titulo-mapa.mostra { animation: tituloMapa 4.2s ease forwards; }
+  @keyframes tituloMapa { 0% { opacity: 0; transform: translate(-50%, -40%); } 18% { opacity: 1; transform: translate(-50%, -50%); } 72% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -54%); } }
+  /* tutorial: faixa de instruções no alto e destaque no botão da lanterna */
+  #tut { position: absolute; top: 112px; left: 50%; transform: translateX(-50%); width: min(560px, calc(100% - 32px)); pointer-events: auto;
+    display: flex; gap: 12px; align-items: center; padding: 10px 12px 10px 14px; background: rgba(8, 10, 14, 0.9); border: 1px solid rgba(255, 227, 163, 0.45);
+    border-left: 3px solid var(--ouro); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); text-shadow: none; animation: tutEntra .3s ease-out; }
+  @keyframes tutEntra { from { opacity: 0; transform: translate(-50%, 6px); } }
+  #tut p { margin: 0; flex: 1; font-size: 15px; line-height: 1.4; color: #eef0f3; }
+  #tut b { color: var(--ouro); }
+  #tut .hbtn { flex: none; padding: 6px 10px; font-size: 11px; opacity: 0.8; }
+  .lant-btn.tut-alvo { animation: tutAlvo 1.1s ease-in-out infinite; }
+  @keyframes tutAlvo { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 227, 163, 0.75), 0 0 22px rgba(255, 196, 122, 0.4); } 60% { box-shadow: 0 0 0 16px rgba(255, 227, 163, 0), 0 0 34px rgba(255, 196, 122, 0.7); } }
+  .pular-tut { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 12px; border: 1px solid var(--linha); background: rgba(255, 255, 255, 0.02); cursor: pointer; }
+  .pular-tut input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--acc); }
+  .pular-tut b { display: block; }
+  .pular-tut small { display: block; color: var(--apagado); font-size: 12.5px; line-height: 1.35; }
+  .tut-fim { display: grid; gap: 12px; }
+  .tut-fim h2 { margin: 0; }
+  .tut-fim-pet { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 16px; align-items: center; }
+  .tut-fim-pet p { margin: 0 0 6px; }
+  .tut-fim-pet img { filter: drop-shadow(0 0 18px color-mix(in srgb, var(--acc) 50%, transparent)); animation: pulo 1.6s ease-in-out infinite; }
+  @keyframes pulo { 50% { transform: translateY(-6px); } }
   /* aviso de versão nova (app instalado pelo site): fica até o jogador tocar */
   .toast.atualizar { display: flex; align-items: center; gap: 10px; pointer-events: auto; border-left-color: var(--ouro); padding: 5px 6px 5px 12px; }
   .toast.atualizar .btn { padding: 5px 12px; font-size: 12px; }
@@ -118,7 +186,7 @@
   .tab:hover { color: var(--tinta); }
   .tab[aria-selected="true"] { color: #f1f3f6; border-bottom-color: var(--acc); }
   #pane { flex: 1; min-height: 0; overflow-y: auto; padding-block: 6px 28px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); scrollbar-width: thin; scrollbar-color: #2a3240 transparent; }
-  #savebar { flex: none; padding-block: 6px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-top: 1px solid var(--linha); font-size: 12px; color: var(--fraco); }
+  #savebar { flex: none; padding-top: 6px; padding-bottom: max(6px, var(--seg-base)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-top: 1px solid var(--linha); font-size: 12px; color: var(--fraco); }
 
   .sec { padding-block: 14px 6px; display: grid; gap: 10px; }
   .sec + .sec { border-top: 1px solid var(--linha); }
@@ -279,7 +347,7 @@
   /* ---------- janelas ---------- */
   #modal {
     position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(3, 4, 7, 0.74); backdrop-filter: blur(3px);
-    padding-block: 20px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-top: max(20px, var(--seg-topo)); padding-bottom: max(20px, var(--seg-base)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   }
   .mbox { position: relative; width: min(540px, 100%); max-height: 100%; overflow: auto; padding: 24px 24px 20px; background: linear-gradient(180deg, #131a26, #0a0e14); border: 1px solid var(--linha2); box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7); display: grid; gap: 12px; }
   .mbox::before, .mbox::after { content: ""; position: absolute; width: 18px; height: 18px; border: 1px solid var(--acc); pointer-events: none; }
@@ -331,7 +399,7 @@
     #toasts { top: 116px; }
   }
   @media (max-width: 560px) {
-    #hud { padding-block: 8px 8px; }
+    #hud { padding-top: max(8px, var(--seg-topo)); padding-bottom: 8px; }
     .hud-top { flex-wrap: nowrap; }
     .who { gap: 6px; }
     .who-txt { width: 108px; }
@@ -435,7 +503,7 @@
   #inicio {
     position: fixed; inset: 0; z-index: 40; overflow-y: auto; display: grid; place-items: center;
     background: radial-gradient(ellipse at 50% 40%, rgba(6, 8, 12, 0.35), rgba(3, 4, 7, 0.88) 70%), linear-gradient(180deg, rgba(3, 4, 7, 0.5), rgba(3, 4, 7, 0.85));
-    padding-block: 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-top: max(24px, var(--seg-topo)); padding-bottom: max(24px, var(--seg-base)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   }
   #app.no-menu #hud { visibility: hidden; }
   #app.no-menu #panel { display: none; }
@@ -541,7 +609,7 @@
   #b-conq.tem { color: var(--ouro); border-color: rgba(240, 207, 134, 0.6); }
 
   /* ---------- tela de descanso (AFK) ---------- */
-  #afk { position: fixed; inset: 0; z-index: 48; display: grid; place-items: center; overflow-y: auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)); background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--acc) 10%, #0b1016), #05070a 70%); }
+  #afk { position: fixed; inset: 0; z-index: 48; display: grid; place-items: center; overflow-y: auto; padding: max(24px, var(--seg-topo)) max(16px, env(safe-area-inset-left, 0px)) max(24px, var(--seg-base)); background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--acc) 10%, #0b1016), #05070a 70%); }
   .afk-ceu { position: fixed; inset: 0; pointer-events: none; opacity: 0.7;
     background-image: radial-gradient(2px 2px at 12% 30%, color-mix(in srgb, var(--acc) 80%, #fff), transparent), radial-gradient(1.5px 1.5px at 72% 18%, #fff3c4, transparent), radial-gradient(2px 2px at 85% 62%, color-mix(in srgb, var(--acc) 80%, #fff), transparent), radial-gradient(1.5px 1.5px at 30% 78%, #fff3c4, transparent), radial-gradient(1.5px 1.5px at 52% 48%, color-mix(in srgb, var(--acc) 70%, #fff), transparent), radial-gradient(2px 2px at 20% 60%, #fff3c4, transparent);
     background-size: 100% 100%; animation: afkVaga 14s ease-in-out infinite alternate; }
@@ -689,7 +757,7 @@
   .tbtn.peq { width: 46px; height: 46px; }
   .tbtn.peq svg { width: 22px; height: 22px; }
   .tbtn.on { background: color-mix(in srgb, var(--acc) 24%, rgba(6, 8, 12, 0.7)); border-color: var(--acc); transform: scale(0.94); }
-  .fechar-gaveta { position: absolute; top: 6px; right: max(8px, env(safe-area-inset-right, 0px)); z-index: 2; width: 40px; height: 40px; place-items: center; background: none; border: 1px solid var(--linha); color: var(--apagado); cursor: pointer; }
+  .fechar-gaveta { position: absolute; top: max(6px, var(--seg-topo)); right: max(8px, env(safe-area-inset-right, 0px)); z-index: 2; width: 40px; height: 40px; place-items: center; background: none; border: 1px solid var(--linha); color: var(--apagado); cursor: pointer; }
   .fechar-gaveta svg { width: 20px; height: 20px; }
   html.movel { -webkit-tap-highlight-color: transparent; }
   html.movel #stage, html.movel #hud { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
@@ -705,6 +773,8 @@
   html.movel .ctrl { flex-wrap: nowrap; gap: 10px; align-items: flex-end; }
   html.movel .hud-bottom { flex-wrap: nowrap; align-items: flex-end; }
   html.movel .chipPet:hover, html.movel .ini:hover { transform: none; }
+  html.movel #tut { top: max(96px, calc(var(--seg-topo) + 84px)); padding: 7px 8px 7px 11px; gap: 8px; }
+  html.movel #tut p { font-size: 13px; line-height: 1.35; }
   /* mensagens no celular: menores e mais compactas */
   html.movel #toasts { gap: 4px; }
   html.movel .toast { font-size: 12px; line-height: 1.3; padding: 4px 9px; }
@@ -719,6 +789,9 @@
     }
     html.movel.diario #panel { transform: none; visibility: visible; transition: transform .22s ease; }
     html.movel #tabs { padding-right: 56px; }
+    html.movel #tabs::after { content: ""; flex: 0 0 44px; }            /* a última aba não fica embaixo do X */
+    html.movel .tab { font-size: 13.5px; padding-inline: 4px; }
+    html.movel.diario #pausado { left: calc((100% - min(440px, 62vw)) / 2); }   /* visível ao lado da gaveta aberta */
     html.movel .so-gaveta { display: grid; place-items: center; }
     html.movel.diario #veu { display: block; position: fixed; inset: 0; z-index: 34; background: rgba(3, 4, 7, 0.5); }
     html.movel .pets-col { position: absolute; top: 88px; left: max(16px, env(safe-area-inset-left, 0px)); display: flex; gap: 8px; align-items: flex-start; }
@@ -727,6 +800,7 @@
     html.movel .modo-btn #h-modo { display: none; }
     html.movel .modo-menu kbd { display: none; }
     html.movel #bossbar { top: 70px; }
+    html.movel #hud { padding-bottom: max(12px, var(--seg-base)); }   /* barra de gestos do iPhone deitado */
     /* mensagens no canto direito, abaixo do nome do mapa: longe dos pets e do domador */
     html.movel #toasts { top: 104px; left: auto; right: max(16px, env(safe-area-inset-right, 0px)); transform: none; width: min(300px, 40vw); justify-items: end; }
     html.movel #bossbar:not([hidden]) ~ #toasts { top: 146px; }
@@ -740,6 +814,7 @@
     html.movel .pad-esq { gap: 8px; }
     html.movel .ctrl { gap: 6px; }
     html.movel #h-vel { display: none; }
+    html.movel .tab { font-size: 12.5px; padding-inline: 3px; letter-spacing: 0; }   /* as 7 abas cabem em pé */
     html.movel #b-auto { padding: 6px 7px; font-size: 10px; max-width: 74px; white-space: normal; line-height: 1.15; }
     html.movel .lant-btn { width: 46px; height: 46px; }
     html.movel .hud-dir { gap: 6px; }
@@ -844,6 +919,9 @@
         <div class="bar"><i id="h-bhp" style="width:100%"></i></div>
         <div class="btempo"><span id="h-btempo"></span><button class="hbtn" id="b-abandonar" hidden>Abandonar batalha</button></div>
       </div>
+      <div id="pausado" hidden>Pausado</div>
+      <div id="titulo-mapa" aria-live="polite"></div>
+      <div id="tut" hidden aria-live="polite"><p id="tut-txt"></p><button class="hbtn" id="b-tut-pular">Pular tutorial</button></div>
       <div id="toasts" aria-live="polite"></div>
     </div>
   </main>
@@ -874,6 +952,7 @@
 <script src="js/i18n.js"></script>
 <script src="js/lang_en.js"></script>
 <script src="js/data.js"></script>
+<script src="js/ajuda.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/art.js"></script>
 <script src="js/sprites.js"></script>

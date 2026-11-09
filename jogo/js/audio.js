@@ -7,18 +7,47 @@
   const INTERVALO = { moeda: 0.07, golpe: 0.07, clique: 0.04, desmaio: 0.35, impacto: 0.2 };
   const cfg = () => LV.config || { musica: 0.5, efeitos: 0.7, mudo: false };
 
-  /* ---------- efeitos ---------- */
-  for (const k in VOL) {
-    try { const a = new Audio('audio/' + k + '.mp3'); a.preload = 'auto'; audio.base[k] = a; } catch (e) { /* sem áudio */ }
+  /* ---------- efeitos ----------
+     Tocados pelo mesmo motor da música (Web Audio), destravado no primeiro toque: assim os sons que o
+     próprio jogo dispara também saem no iPhone (lá, cada <audio> só toca dentro de um toque do jogador).
+     No .exe (arquivos locais) e antes de destravar, usa <audio> como antes. */
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* iOS 17+: toca mesmo com a chave do silencioso */ }
+  const buffers = (audio.buffers = {}), brutos = {};
+  if (window.fetch && location.protocol !== 'file:') {
+    for (const k in VOL) brutos[k] = fetch('audio/' + k + '.mp3').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
+  }
+  function decodificar() {
+    for (const k in brutos) {
+      brutos[k].then((ab) => {
+        if (!ab || !audio.ctx || buffers[k]) return;
+        try {
+          const p = audio.ctx.decodeAudioData(ab.slice(0), (b) => { buffers[k] = b; }, () => { /* formato não suportado: fica o <audio> */ });
+          if (p && p.catch) p.catch(() => {});
+        } catch (e) { /* idem */ }
+      });
+    }
+  }
+  function elemento(k) {
+    if (!audio.base[k]) { try { const a = new Audio('audio/' + k + '.mp3'); a.preload = 'auto'; audio.base[k] = a; } catch (e) { return null; } }
+    return audio.base[k];
   }
   audio.tocar = function (k) {
     const c = cfg();
-    if (c.mudo || !(c.efeitos > 0)) return;
-    const b = audio.base[k];
-    if (!b) return;
+    if (c.mudo || !(c.efeitos > 0) || !VOL[k]) return;
     const agora = performance.now() / 1000;
     if (agora - (audio.ultimo[k] || 0) < (INTERVALO[k] || 0)) return;
     audio.ultimo[k] = agora;
+    const ctx = audio.ctx;
+    if (ctx && ctx.state === 'running' && buffers[k]) {
+      try {
+        const s = ctx.createBufferSource(), g = ctx.createGain();
+        s.buffer = buffers[k]; g.gain.value = VOL[k];
+        s.connect(g); g.connect(audio.gEfeitos); s.start();
+        return;
+      } catch (e) { /* cai para o <audio> */ }
+    }
+    const b = elemento(k);
+    if (!b) return;
     try {
       const a = b.cloneNode();
       a.volume = Math.min(1, VOL[k] * c.efeitos);
@@ -26,6 +55,8 @@
       if (p && p.catch) p.catch(() => {});
     } catch (e) { /* ignora */ }
   };
+  // os <audio> de reserva só são criados onde não há Web Audio com arquivos (ex.: .exe)
+  if (!Object.keys(brutos).length) for (const k in VOL) elemento(k);
 
   /* ---------- música ---------- */
   const TEMAS = {
@@ -44,11 +75,13 @@
   }
 
   audio.iniciar = function () {
-    if (audio.ctx) { if (audio.ctx.state === 'suspended') audio.ctx.resume(); return; }
+    if (audio.ctx) { if (audio.ctx.state !== 'running') { const p = audio.ctx.resume(); if (p && p.catch) p.catch(() => {}); } return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     const ctx = (audio.ctx = new AC());
     audio.gMusica = ctx.createGain(); audio.gMusica.connect(ctx.destination);
+    audio.gEfeitos = ctx.createGain(); audio.gEfeitos.connect(ctx.destination);
+    decodificar();
     audio.seco = ctx.createGain(); audio.seco.gain.value = 0.45; audio.seco.connect(audio.gMusica);
     const rv = ctx.createConvolver(); rv.buffer = impulso(ctx, 4, 2.6);
     const rvg = ctx.createGain(); rvg.gain.value = 0.7;
@@ -63,6 +96,7 @@
     const c = cfg();
     const v = c.mudo ? 0 : Math.max(0, Math.min(1, c.musica)) * 0.55;
     audio.gMusica.gain.setTargetAtTime(v, audio.ctx.currentTime, 0.3);
+    audio.gEfeitos.gain.setTargetAtTime(c.mudo ? 0 : Math.max(0, Math.min(1, c.efeitos)), audio.ctx.currentTime, 0.05);
   };
 
   let prox = 0, proxPluck = 0, proxPulso = 0, drone = null, acorde = 0;
@@ -136,8 +170,26 @@
   }
   audio.tensao = function (on) { audio.tens = !!on; };
 
-  /* destrava o áudio no primeiro gesto do jogador (exigência dos navegadores) */
-  const destravar = () => { audio.iniciar(); };
-  window.addEventListener('pointerdown', destravar);
-  window.addEventListener('keydown', destravar);
+  /* destrava o áudio no primeiro gesto do jogador (exigência dos navegadores).
+     O iPhone só aceita alguns gestos (toque terminado, clique) e pode suspender o áudio ao sair do app ou
+     numa ligação: por isso os ouvintes ficam ativos e religam o áudio sempre que ele não estiver tocando. */
+  const destravar = () => {
+    audio.iniciar();
+    const ctx = audio.ctx;
+    if (!ctx || audio.destravado) return;
+    try {   // um som mudo dentro do gesto libera o áudio de vez no iPhone
+      const s = ctx.createBufferSource();
+      s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0);
+      audio.destravado = true;
+    } catch (e) { /* tenta no próximo gesto */ }
+  };
+  ['pointerdown', 'touchend', 'click', 'keydown'].forEach((ev) => window.addEventListener(ev, () => {
+    if (!audio.ctx || audio.ctx.state !== 'running' || !audio.destravado) destravar();
+  }, { capture: true, passive: true }));
+  document.addEventListener('visibilitychange', () => {
+    const ctx = audio.ctx;
+    if (!ctx) return;
+    const p = document.hidden ? ctx.suspend() : ctx.resume();   // sem som com o app em segundo plano
+    if (p && p.catch) p.catch(() => {});
+  });
 })();

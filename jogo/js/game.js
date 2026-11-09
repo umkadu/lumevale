@@ -197,6 +197,7 @@
   }
   game.reiniciarMapa = function () {
     if (!W) return;
+    if (game.tutorial && game.tutorial.passo !== 'fim') { game.iniciarTutorial(game.tutorial.sp); return; }
     if (W.chefe) falharChefe('abandonou');
     iniciarMapa(W.idx);
   };
@@ -454,6 +455,7 @@
       if (e.sup >= 0) { const s = W.L.sup[e.sup]; e.x = LV.clamp(e.x, s.x0 + 8, s.x1 - 8); }
     }
     if (!status) faiscas(e.x, alvoY(e), el ? LV.EL[el].cor : '#ffe3a3', crit ? 10 : 5);
+    if (e.tutorial) { e.hp = Math.max(e.hp, Math.ceil(e.hpMax * 0.08)); tutorialPasso(); return; }
     if (e.hp <= 0) matar(e);
   }
   function danoAliado(a, v, el, src) {
@@ -742,15 +744,18 @@
     if (S.lanternas <= 0) return 'sem';
     if (S.pets.length >= 80) return 'cheio';
     if (!selvagensNaTela().length) return 'ninguem';
+    if (game.tutorial && game.tutorial.passo === 'atacar') return 'tutorial';
     game.captura = { fase: 'mira', t: 0 };
     game.pausado = true;
     emit('mira', true);
+    if (game.tutorial) tutorialPasso('mirar');
     return true;
   };
   game.cancelarMira = function () {
     if (!game.captura || game.captura.fase !== 'mira') return;
     game.captura = null; game.pausado = false;
     emit('mira', false);
+    if (game.tutorial) tutorialPasso('lanterna');
   };
   game.alvoEm = function (x, y, raio) {
     let best = null, bd = raio || 50;
@@ -760,12 +765,13 @@
     }
     return best;
   };
-  /* chance sorteada no lançamento: vida cheia quase nunca dá certo; criaturas acima do nível do domador resistem mais */
+  /* chance sorteada no impacto da lanterna: ~30% com vida cheia nas primeiras áreas (menos em criaturas de nível alto),
+     subindo conforme a vida cai (até ~85% quase sem vida no começo); criaturas acima do nível do domador resistem mais */
   function chanceCaptura(e) {
-    const sp = LV.SPECIES[e.sp], hpf = Math.max(0, e.hp / e.hpMax);
-    const vida = 0.12 + 1.5 * Math.pow(1 - hpf, 1.4);                 // 100% de vida: 0,12 · 50%: 0,69 · 10%: 1,34
+    const sp = LV.SPECIES[e.sp];
+    const base = LV.chanceBaseCaptura(sp, e.lv, e.est);
     const nivel = Math.pow(0.95, Math.max(0, e.lv - S.dom.nivel));
-    return LV.clamp(sp.cap * vida * (1 + domStats().sorteCap) * nivel * (e.est ? 0.7 : 1), 0.02, 0.9);
+    return LV.clamp(LV.chanceComVida(base, e.hp / e.hpMax) * (1 + domStats().sorteCap) * nivel, 0.02, 0.95);
   }
   game.mirarEm = function (x, y, raio) {
     const C = game.captura;
@@ -780,6 +786,7 @@
     game.captura = { fase: 'lancando', alvo: e, t: 0, x0: T.x + T.face * T.h * 0.36, y0: T.y - T.h * 0.84, x: T.x, y: T.y - 50, rot: 0, chance: chanceCaptura(e) };
     som('lanterna');
     emit('mira', false); emit('lanternas', S.lanternas);
+    if (game.tutorial) tutorialPasso('minijogo');
     return true;
   };
   game.atualizarCaptura = function (dt) {
@@ -793,7 +800,7 @@
       C.x = LV.lerp(C.x0, e.x, k); C.y = LV.lerp(C.y0, alvoY(e) - 8, k) - Math.sin(k * Math.PI) * 95; C.rot = C.t * 14;
       if (k >= 1) {
         // a chance é sorteada no impacto: se falhar, a lanterna se parte antes do minijogo
-        if (Math.random() < C.chance) { C.fase = 'sugando'; C.t = 0; C.rot = 0; faiscas(e.x, alvoY(e), '#ffe3a3', 16); som('brilho'); }
+        if (Math.random() < C.chance || e.tutorial) { C.fase = 'sugando'; C.t = 0; C.rot = 0; faiscas(e.x, alvoY(e), '#ffe3a3', 16); som('brilho'); }
         else {
           C.fase = 'partiu'; C.t = 0;
           e.capt = null; e.irritado = true; e.flash = 1;
@@ -839,10 +846,12 @@
       e.capt = null; e.sugar = 0; e.flash = 1; e.irritado = true;
       numero(e.x, topoDe(e) - 10, LV.t('Escapou!'), 'txt');
       explosao(e.x, alvoY(e), '#ffe3a3', 12);
+      if (e.tutorial) { S.lanternas = Math.max(S.lanternas, 1); game.tutorial.escapou = true; tutorialPasso('lanterna'); }
     } else {
       e.sugar = 0;
       const pet = capturar(e, resultado === 'perfeito' ? talento || null : null);
       if (pet && pet.bonus) numero(W.tam.x, topoDe(W.tam) - 20, LV.TALENTOS[pet.bonus.t].nome + '!', 'txt');
+      if (pet && e.tutorial) tutorialCapturou(pet);
     }
     emit('lanternas', S.lanternas);
   };
@@ -1105,6 +1114,7 @@
       if (e.nasc > 0) { e.nasc -= dt; continue; }
       if (e.fuga != null) { e.fuga -= dt; continue; }
       if (e.capt) continue;
+      if (e.tutorial) { e.mov = 0; e.face = Math.sign(W.tam.x - e.x) || e.face; continue; }
       // efeitos de estado
       if (e.dots && e.dots.length) {
         e.dots = e.dots.filter((d) => { d.t -= dt; d.tick -= dt; if (d.tick <= 0) { d.tick += 0.5; dano(e, d.dps * 0.5, d.el, 'status'); } return d.t > 0; });
@@ -1583,6 +1593,15 @@
       c.restore();
     }
     if (W.marca) { W.marca.t += 1 / 60; if (W.marca.t > 2) W.marca = null; }
+    // tutorial: seta grande e pulsante sobre a criatura enquanto é ela que o jogador precisa tocar
+    const tu = game.tutorial;
+    if (tu && (tu.passo === 'atacar' || tu.passo === 'mirar') && tu.alvo.hp > 0 && !tu.alvo.capt) {
+      const e = tu.alvo, y = topoDe(e) - 30 + Math.sin(t * 5) * 6;
+      c.save();
+      c.fillStyle = '#ffe3a3'; c.shadowColor = '#ffd38a'; c.shadowBlur = 14;
+      c.beginPath(); c.moveTo(e.x - 13, y - 16); c.lineTo(e.x + 13, y - 16); c.lineTo(e.x, y); c.closePath(); c.fill();
+      c.restore();
+    }
   }
   function desenharEstados(c, e, t) {
     if (e.hp <= 0 || e.capt) return;
@@ -1920,6 +1939,7 @@
 
   /* =================== CARREGAR / OFFLINE =================== */
   game.carregar = function (s) {
+    game.tutorial = null;
     S = game.S = normalizar(s); recalcularBuffs();
     iniciarMapa(S.mapa);
   };
@@ -1954,6 +1974,67 @@
     base += Math.max(0, S.st.chefes - distintos);                       // vitórias repetidas
     base += Math.floor(Math.pow(Math.max(0, S.dom.nivel - 8), 1.25) / 3);
     return Math.floor(base * (1 + 0.2 * MU('eco')));
+  };
+
+  /* =================== TUTORIAL (novo jogo) ===================
+     Mapa curto e sem pets: o pet inicial escolhido aparece como criatura selvagem. Ensina a atacar para
+     baixar a vida, a lançar a lanterna e o minijogo. Ao capturar, ele vira o primeiro companheiro.
+     O save só é gravado depois do tutorial (S.inicial continua falso até lá). */
+  game.tutorial = null;
+  game.iniciarTutorial = function (spId) {
+    if (!LV.SPECIES[spId]) return false;
+    const def = LV.MAPS[0], ds = domStats(), L = N().gerarTutorial();
+    S.mapa = 0;
+    W = game.W = {
+      idx: 0, def, L, w: L.w, t: 0, cam: 0, shake: 0,
+      tam: { x: 220, y: G, vy: 0, sup: 0, esc: null, et: 0, ign: -1, ignT: 0, face: 1, hp: ds.hp, hpMax: ds.hp, cd: 1, mov: 0, manual: 0, alvoX: null, caido: 0, flash: 0, atk: 0, el: null, arVx: 0, escVx: 0, h: LV.HEROI.alt },
+      pets: [], ini: [], proj: [], drops: [], fx: [], nums: [], parts: [], lant: [], areas: [],
+      spawn: 0, chefe: null, killLog: [], seq: 1, taxaT: 0, amb: null, inicioReal: performance.now(),
+      bg: art.criarFundo(0, game.bgScale), zonas: [],
+    };
+    game.captura = null;
+    const sp = LV.SPECIES[spId], corpo = sp.base.estilo === 'investida';
+    const hp = Math.max(30, Math.round(ds.atk * 7));          // ~4 golpes da lanterna levam à metade da vida
+    const e = { tipo: 'selvagem', sp: spId, nome: sp.nome[0], el: sp.el, corpo: sp.corpo, pal: sp.pal, voa: sp.voa, est: 0, alc: corpo ? 42 : 170, estilo: corpo ? 'investida' : 'projetil',
+      img: LV.imgPet(spId, 0), h: (sp.alt || [44, 60, 78])[0], flip: !!(sp.flipEst && sp.flipEst[0]),
+      id: W.seq++, lv: 2, x: 700, y: sp.voa ? G - 90 : G, altVoo: 90, sup: sp.voa ? -1 : 0, casa: 0, zona: -1, hp, hpMax: hp, atk: 1, cd: 9, face: -1, mov: 0, flash: 0, atkA: 0,
+      nasc: 0.3, vx: 0, wander: 0, s: 1, t0: 0, xp: 0, lumes: 0, tentou: false, tutorial: true };
+    W.ini.push(e);
+    game.tutorial = { sp: spId, passo: 'atacar', alvo: e, lant0: S.lanternas, escapou: false };
+    emit('mapa', 0);
+    emit('tutorial', game.tutorial);
+    if (LV.audio) LV.audio.musica(def.tema);
+    return true;
+  };
+  function tutorialPasso(novo) {
+    const tu = game.tutorial;
+    if (!tu) return;
+    if (!novo && tu.passo === 'atacar' && tu.alvo.hp <= tu.alvo.hpMax * 0.5) novo = 'lanterna';
+    if (!novo || novo === tu.passo) return;
+    if (novo !== 'lanterna') tu.escapou = false;
+    tu.passo = novo;
+    emit('tutorial', tu);
+  }
+  game.chanceTutorial = () => (game.tutorial ? chanceCaptura(game.tutorial.alvo) : 0);
+  function tutorialCapturou(pet) {
+    const tu = game.tutorial;
+    // o primeiro companheiro começa como o pet inicial de sempre (nível 1, ou mais com o Primeiro Passo do Santuário)
+    pet.nivel = 1 + 3 * MU('primeiro'); pet.xp = 0;
+    S.ativos = [pet.uid]; S.inicial = true; S.aguardaInicial = false;
+    S.lanternas = tu.lant0;
+    tu.passo = 'fim'; tu.pet = pet;
+    emit('tutorial', tu);
+  }
+  /* depois do parabéns (ou ao pular): começa a aventura de verdade no primeiro mapa */
+  game.concluirTutorial = function () {
+    const tu = game.tutorial;
+    if (!tu) return false;
+    if (!S.inicial) { S.lanternas = tu.lant0; game.acao.escolherInicial(tu.sp); }
+    game.tutorial = null;
+    game.captura = null; game.pausado = false;
+    iniciarMapa(0);
+    emit('equipe'); emit('lanternas', S.lanternas);
+    return true;
   };
 
   game.acao = {
