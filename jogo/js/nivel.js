@@ -353,21 +353,7 @@
       const pc = LV.PECAS[s.tipo];
       spr.plataforma(c, spr.tingida('pecas/' + s.tipo, tinta, 0.2), s.x0 - 6, s.x1 + 6, s.y, pc);
     }
-    // ninhos: um monte de pedras e um brilho na cor da espécie que vive ali
-    for (const z of L.zonas || []) {
-      if (!vis(z.x0, z.x1)) continue;
-      const pul = 0.7 + 0.3 * Math.sin(t * 1.5 + z.id);
-      art.glow(c, z.cx, z.y - 4, 70, z.cor, 0.12 * pul);
-      c.save();
-      c.fillStyle = '#0b0d12'; c.strokeStyle = art.INK; c.lineWidth = 1.6;
-      for (const [dx, rx, ry] of [[-16, 10, 5], [-4, 13, 7], [10, 9, 5], [20, 6, 3.5]]) {
-        c.beginPath(); c.ellipse(z.cx + dx, z.y - ry + 2, rx, ry, 0, Math.PI, 0); c.fill(); c.stroke();
-      }
-      c.strokeStyle = art.rgba(z.cor, 0.55); c.lineWidth = 1.2;
-      c.beginPath(); c.moveTo(z.cx - 22, z.y - 3); c.quadraticCurveTo(z.cx, z.y - 9, z.cx + 24, z.y - 2); c.stroke();
-      c.restore();
-      art.glow(c, z.cx - 4, z.y - 8, 10, z.cor, 0.55 * pul);
-    }
+    // ninhos: sem marcação no cenário (o montinho de pedras com brilho foi tirado por não combinar com a arte)
     for (const p of L.props) {
       if (p.pend || !vis(p.x - 60, p.x + 60)) continue;
       const im = spr.get('pecas/' + p.tipo);
