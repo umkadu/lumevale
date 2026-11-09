@@ -71,10 +71,10 @@
 
   LV.MAT = {
     musgo: { nome: LV.t('Musgo Luminoso'), cor: '#9ef08a' },
-    esporo: { nome: LV.t('Esporo Âmbar'), cor: '#ffb347' },
-    escama: { nome: LV.t('Escama de Maré'), cor: '#6fd3ff' },
-    cristal: { nome: LV.t('Cristal Rosado'), cor: '#f39cff' },
-    brasa: { nome: LV.t('Brasa Viva'), cor: '#ff6b3d' },
+    esporo: { nome: LV.t('Esporo Âmbar'), plural: LV.t('Esporos Âmbar'), cor: '#ffb347' },
+    escama: { nome: LV.t('Escama de Maré'), plural: LV.t('Escamas de Maré'), cor: '#6fd3ff' },
+    cristal: { nome: LV.t('Cristal Rosado'), plural: LV.t('Cristais Rosados'), cor: '#f39cff' },
+    brasa: { nome: LV.t('Brasa Viva'), plural: LV.t('Brasas Vivas'), cor: '#ff6b3d' },
   };
 
   LV.ESTILOS = { investida: LV.t('Corpo a corpo'), projetil: LV.t('À distância'), pulso: LV.t('Em área') };
@@ -198,13 +198,15 @@
 
   /* ---------- moedas dos Guardiões: uma por mapa, só caem do Guardião daquele mapa ---------- */
   LV.MOEDAS = [
-    { id: 'semente', nome: LV.t('Semente Antiga'), cor: '#9ff0b0', desc: LV.t('Semente guardada pela Mãe-Raiz desde antes das primeiras raízes.') },
-    { id: 'trufa', nome: LV.t('Trufa Real'), cor: '#e8b066', desc: LV.t('Iguaria da coroa do Rei Bolor. Cheira a terra e a ouro velho.') },
-    { id: 'perola', nome: LV.t('Pérola Afogada'), cor: '#9fd8ff', desc: LV.t('Pérola que a Sentinela guardava no fundo da cidade submersa.') },
-    { id: 'geodo', nome: LV.t('Geodo Cantante'), cor: '#f3a6ff', desc: LV.t('Geodo que ainda vibra com o canto da Matriarca.') },
-    { id: 'ticao', nome: LV.t('Tição Eterno'), cor: '#ff8a4a', desc: LV.t('Brasa arrancada do Coração Ígneo. Nunca esfria.') },
+    { id: 'semente', nome: LV.t('Semente Antiga'), plural: LV.t('Sementes Antigas'), cor: '#9ff0b0', desc: LV.t('Semente guardada pela Mãe-Raiz desde antes das primeiras raízes.') },
+    { id: 'trufa', nome: LV.t('Trufa Real'), plural: LV.t('Trufas Reais'), cor: '#e8b066', desc: LV.t('Iguaria da coroa do Rei Bolor. Cheira a terra e a ouro velho.') },
+    { id: 'perola', nome: LV.t('Pérola Afogada'), plural: LV.t('Pérolas Afogadas'), cor: '#9fd8ff', desc: LV.t('Pérola que a Sentinela guardava no fundo da cidade submersa.') },
+    { id: 'geodo', nome: LV.t('Geodo Cantante'), plural: LV.t('Geodos Cantantes'), cor: '#f3a6ff', desc: LV.t('Geodo que ainda vibra com o canto da Matriarca.') },
+    { id: 'ticao', nome: LV.t('Tição Eterno'), plural: LV.t('Tições Eternos'), cor: '#ff8a4a', desc: LV.t('Brasa arrancada do Coração Ígneo. Nunca esfria.') },
   ];
   LV.moeda = (id) => LV.MOEDAS.find((m) => m.id === id);
+  /* nome de moeda ou material para uma quantidade: 1 no singular, o resto no plural (o Musgo não tem plural) */
+  LV.nomeQtd = (o, q) => (Math.abs(+q) === 1 || !o.plural ? o.nome : o.plural);
   /* moedas que um Guardião solta: primeira vitória rende mais */
   LV.moedasChefe = (idx, primeira) => (primeira ? 8 + idx * 2 : 3 + idx);
 
@@ -361,7 +363,8 @@
     ['mineiro', 'olho', 'soldado', 'rastejante'],            // Cristais
     ['salamandra', 'brasamorta', 'vespa', 'fogofatuo'],      // Cinzas
   ];
-  const CHEFE_IMG = [['chefes/maeraiz', 210, true], ['chefes/reibolor', 196, false], ['chefes/sentinela', 220, true], ['chefes/matriarca', 176, false], ['chefes/coracao', 200, true]];
+  // [imagem, altura, olha para a esquerda, boca (canto da Matriarca, em fração da imagem olhando para a direita)]
+  const CHEFE_IMG = [['chefes/maeraiz', 210, true], ['chefes/reibolor', 215, false], ['chefes/sentinela', 225, true], ['chefes/matriarca', 186, false, { x: 0.68, y: 0.24 }], ['chefes/coracao', 215, true]];
   const CEN = [
     { plat: 'plat_raiz', alta: 'plat_raiz', pilar: false, props: ['cogumelos', 'lapide'], tinta: '#14463f', correntes: false },
     { plat: 'laje', alta: 'borda', pilar: true, props: ['cogumelos', 'lapide', 'poste'], tinta: '#5a3216', correntes: true },
@@ -374,7 +377,7 @@
     m.hostis = HOST[i];
     m.cen = CEN[i];
     m.killsChefe = KILLS_CHEFE[i];
-    Object.assign(m.chefe, { img: CHEFE_IMG[i][0], alt: CHEFE_IMG[i][1], flip: CHEFE_IMG[i][2] });
+    Object.assign(m.chefe, { img: CHEFE_IMG[i][0], alt: CHEFE_IMG[i][1], flip: CHEFE_IMG[i][2], canto: CHEFE_IMG[i][3] || null });
   });
 
   /* peças de cenário: topo = fração da altura onde fica o piso; cap = fração das pontas no fatiamento em 3 */

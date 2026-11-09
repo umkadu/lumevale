@@ -147,11 +147,17 @@
   #ab-txt.entra { animation: abTexto 0.9s ease-out; }
   @keyframes abTexto { from { opacity: 0; transform: translateY(8px); } }
   .ab-heroi { width: 110px; height: 110px; object-fit: contain; filter: drop-shadow(0 0 26px rgba(255, 210, 140, 0.55)); animation: pulo 2.4s ease-in-out infinite; }
+  .ab-criaturas { display: flex; gap: clamp(10px, 3vw, 26px); align-items: flex-end; justify-content: center; min-height: 88px; }
+  .ab-criaturas[hidden] { display: none; }
+  .ab-criaturas img { height: clamp(58px, 11vh, 92px); width: auto; animation: pulo 2.4s ease-in-out infinite; }
+  .ab-criaturas img:nth-child(2) { animation-delay: -0.6s; } .ab-criaturas img:nth-child(3) { animation-delay: -1.2s; } .ab-criaturas img:nth-child(4) { animation-delay: -1.8s; }
+  .ab-criaturas.luz img { filter: drop-shadow(0 0 16px rgba(255, 214, 150, 0.6)); }
+  .ab-criaturas.breu img { filter: drop-shadow(0 0 2px rgba(190, 165, 240, 0.7)) drop-shadow(0 0 10px rgba(150, 120, 210, 0.35)); animation-duration: 3.4s; }
   .ab-pontos { display: flex; gap: 8px; }
   .ab-pontos i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, 0.25); }
   .ab-pontos i.on { background: var(--ouro); box-shadow: 0 0 8px var(--ouro); }
   .ab-acoes { display: flex; gap: 10px; }
-  @media (max-height: 520px) { .ab-caixa { gap: 10px; margin-bottom: 0; } #ab-txt { font-size: 17px; } .ab-heroi { width: 72px; height: 72px; } }
+  @media (max-height: 520px) { .ab-caixa { gap: 10px; margin-bottom: 0; } #ab-txt { font-size: 17px; } .ab-heroi { width: 72px; height: 72px; } .ab-criaturas { min-height: 0; } .ab-criaturas img { height: 52px; } }
   .efeito-lore { margin: -4px 0 0; font: italic 15px var(--f-corpo); color: color-mix(in srgb, var(--acc) 75%, #fff); }
   .desbloqueios .link, .link { background: none; border: 0; padding: 0; color: var(--acc); font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
   .diario-m { width: min(560px, 100%); }
@@ -1018,6 +1024,7 @@
     <div class="ab-fundo" id="ab-fundo"></div>
     <div class="ab-caixa">
       <img class="ab-heroi" id="ab-heroi" src="img/heroi/parado.webp" alt="" hidden>
+      <div class="ab-criaturas" id="ab-criaturas" aria-hidden="true" hidden></div>
       <p id="ab-txt"></p>
       <div class="ab-pontos" id="ab-pontos" aria-hidden="true"></div>
       <div class="ab-acoes"><button class="btn" id="ab-pular" type="button">Pular</button><button class="btn pri" id="ab-seguir" type="button">Continuar</button></div>

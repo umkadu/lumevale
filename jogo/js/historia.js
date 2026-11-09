@@ -8,6 +8,8 @@
       abertura: [
         { fundo: 'raizes', txt: 'Em Lumevale, a luz não vem do céu. O <b>Lume</b> nasce no Coração, no fundo da terra, e sobe pelas raízes, pelas águas e pelos cristais. É ele que faz a mata crescer e os lampiões acenderem.' },
         { fundo: 'cinzas', txt: 'Há uma geração, o Lume parou de subir. Os rios ficaram mornos e cinzentos, as florestas secam por dentro e, das fendas, sobem os <b>Breus</b>: escuridão completa, sem nenhuma luz dentro. O povo chama isso de <b>Esmorecer</b>.' },
+        { fundo: 'cristais', criaturas: { tipo: 'luz', imgs: ['pets/fagulho_0', 'pets/gotim_0', 'pets/esporito_0', 'pets/lumagua_0'] }, txt: 'Nem tudo lá embaixo é escuro. Do Lume nascem as <b>Centelhas</b>, criaturas com uma pequena chama acesa por dentro. Assustadas com o Esmorecer, muitas atacam quem chega perto. Mas, quando a chama de uma Centelha enfraquece, a lanterna de um domador vira abrigo: ela aceita entrar e passa a lutar ao seu lado.' },
+        { fundo: 'ruinas', criaturas: { tipo: 'breu', imgs: ['inimigos/rastejante', 'inimigos/galho', 'inimigos/olho', 'inimigos/afogado'] }, txt: 'Um <b>Breu</b> é o contrário de uma Centelha. Ele nasce onde o Lume foi arrancado e não tem chama nenhuma, nada que a lanterna possa abrigar: só fome de luz. Por isso Breus não se domam. É preciso desfazê-los, e o Lume que eles engoliram se solta em gotas.' },
         { fundo: 'fungos', txt: '<b>Mestra Candeia</b>, a última grande domadora, desceu para curar o Coração. Nunca voltou. Em <b>Alvorada</b>, a última vila ainda acesa, o grande lampião começou a falhar.' },
         { fundo: 'raizes', heroi: true, txt: 'Você foi aprendiz de Candeia. Agora a lanterna é sua. Desça camada por camada, devolva a luz ao vale e descubra o que aconteceu com ela.' },
       ],
@@ -63,6 +65,7 @@
         '<b>Lumevale</b> é um vale onde a luz vem de baixo: o <b>Lume</b> nasce no Coração, no fundo da terra, e sobe como seiva. Os <b>Lumes</b> que você coleta são gotas dele, cristalizadas.',
         'No <b>Esmorecer</b>, o Lume parou de subir: os rios ficaram cinzentos, as florestas secam e surgiram os <b>Breus</b>, escuridão completa sem nenhuma luz dentro.',
         'Os <b>Domadores de Lume</b> cuidam da luz junto com as <b>Centelhas</b>, criaturas nascidas do Lume. A lanterna é um abrigo: com a luz fraca, a Centelha aceita entrar.',
+        'Os <b>Breus</b> nascem onde o Lume foi arrancado e não têm chama nenhuma, nada que a lanterna possa abrigar: por isso não se domam. Desfeitos, soltam em gotas o Lume que engoliram.',
         'Cada camada tem um <b>Guardião</b> que, doente, prende a luz e fecha o caminho. Vencê-lo solta a luz, mas ele volta a despertar enquanto o vale não sarar.',
         'Toda luz que se apaga deixa um <b>eco</b>. Ao renascer, o que você aprendeu fica no Santuário dos Ecos.',
         'Você foi aprendiz de <b>Mestra Candeia</b>, que desceu para curar o Coração e nunca voltou. Desça, devolva a luz a <b>Alvorada</b> e descubra o que aconteceu com ela.',
@@ -75,6 +78,8 @@
       abertura: [
         { fundo: 'raizes', txt: 'In Lumevale, light does not come from the sky. The <b>Lume</b> is born in the Heart, deep under the earth, and rises through roots, waters and crystals. It makes the woods grow and the lamps glow.' },
         { fundo: 'cinzas', txt: 'A generation ago, the Lume stopped rising. The rivers turned warm and grey, the forests wither from within and, from the cracks, the <b>Murks</b> crawl up: total darkness with no light inside. People call it the <b>Fading</b>.' },
+        { fundo: 'cristais', criaturas: { tipo: 'luz', imgs: ['pets/fagulho_0', 'pets/gotim_0', 'pets/esporito_0', 'pets/lumagua_0'] }, txt: 'Not everything down there is dark. From the Lume the <b>Glimmers</b> are born, creatures with a small flame lit inside. Frightened by the Fading, many attack anyone who comes near. But when a Glimmer’s flame grows weak, a tamer’s lantern becomes a shelter: it agrees to come in and fights at your side.' },
+        { fundo: 'ruinas', criaturas: { tipo: 'breu', imgs: ['inimigos/rastejante', 'inimigos/galho', 'inimigos/olho', 'inimigos/afogado'] }, txt: 'A <b>Murk</b> is the opposite of a Glimmer. It forms where the Lume was torn away and has no flame at all, nothing the lantern can shelter: only hunger for light. That is why Murks cannot be tamed. They must be undone, and the Lume they swallowed breaks free in drops.' },
         { fundo: 'fungos', txt: '<b>Master Candeia</b>, the last great tamer, went down to heal the Heart. She never returned. In <b>Daybreak</b>, the last village still lit, the great lamp has begun to flicker.' },
         { fundo: 'raizes', heroi: true, txt: 'You were Candeia’s apprentice. Now the lantern is yours. Go down layer by layer, bring the light back to the valley and find out what happened to her.' },
       ],
@@ -129,6 +134,7 @@
         '<b>Lumevale</b> is a valley where light comes from below: the <b>Lume</b> is born in the Heart, deep under the earth, and rises like sap. The <b>Lumes</b> you collect are drops of it, crystallized.',
         'In the <b>Fading</b>, the Lume stopped rising: the rivers turned grey, the forests wither and the <b>Murks</b> appeared, total darkness with no light inside.',
         '<b>Lume Tamers</b> care for the light together with the <b>Glimmers</b>, creatures born from the Lume. The lantern is a shelter: when its light is weak, a Glimmer agrees to come in.',
+        'The <b>Murks</b> form where the Lume was torn away and have no flame at all, nothing the lantern can shelter: that is why they cannot be tamed. Once undone, they release the Lume they swallowed in drops.',
         'Each layer has a <b>Guardian</b> that, sick, holds the light and seals the way. Beating it frees the light, but it awakens again while the valley is not healed.',
         'Every light that goes out leaves an <b>echo</b>. When you are reborn, what you learned stays in the Sanctuary of Echoes.',
         'You were the apprentice of <b>Master Candeia</b>, who went down to heal the Heart and never returned. Go down, bring the light back to <b>Daybreak</b> and find out what happened to her.',

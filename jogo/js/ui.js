@@ -26,7 +26,7 @@
     if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.10.0';
+  const VERSAO = '1.10.1';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -41,7 +41,7 @@
   };
 
   /* =================== HISTÓRIA =================== */
-  /* abertura: 4 telas antes do novo jogo (pode pular) */
+  /* abertura: telas da história antes do novo jogo (pode pular); algumas mostram criaturas */
   ui.abertura = function (fim) {
     const H = LV.historia(), telas = H.abertura, box = document.getElementById('abertura');
     let i = 0;
@@ -54,6 +54,12 @@
       txt.innerHTML = t.txt;
       txt.classList.remove('entra'); void txt.offsetWidth; txt.classList.add('entra');
       heroi.hidden = !t.heroi;
+      const cri = document.getElementById('ab-criaturas');
+      if (cri) {
+        cri.hidden = !t.criaturas;
+        cri.className = 'ab-criaturas' + (t.criaturas ? ' ' + t.criaturas.tipo : '');
+        cri.innerHTML = t.criaturas ? t.criaturas.imgs.map((n) => '<img src="img/' + n + '.webp" alt="">').join('') : '';
+      }
       pontos.innerHTML = telas.map((x, k) => '<i' + (k === i ? ' class="on"' : '') + '></i>').join('');
       seguir.textContent = i === telas.length - 1 ? H.comecar : H.continuar;
       try { seguir.focus({ preventScroll: true }); } catch (e) { /* ok */ }
@@ -1277,7 +1283,7 @@
     const H = LV.historia();
     let h = LV.t('<div class="eyebrow">Guardião derrotado</div><h2>') + esc(d.nome) + LV.t(' caiu</h2>');
     if (d.primeira && d.mapaIdx != null) h += '<p class="efeito-lore">' + H.efeito[d.mapaIdx] + '</p>';
-    if (d.moeda) h += '<p class="premio-moeda">' + iconeMoeda(d.moeda) + ' <b>+' + d.qMoeda + ' ' + d.moeda.nome + '</b> <span class="muted small">(' + fmt(S().moedas[d.moeda.id]) + LV.t(' no total) · use na Loja</span></p>');
+    if (d.moeda) h += '<p class="premio-moeda">' + iconeMoeda(d.moeda) + ' <b>+' + d.qMoeda + ' ' + LV.nomeQtd(d.moeda, d.qMoeda) + '</b> <span class="muted small">(' + fmt(S().moedas[d.moeda.id]) + LV.t(' no total) · use na Loja</span></p>');
     if (d.primeira && d.premio) {
       h += '<div class="premio"><img src="' + art.retrato(d.premio.sp, d.premio.est, 96) + LV.t('" alt="" width="96" height="96"><p>Das cinzas do Guardião surgiu <b>') + LV.nomePet(d.premio) + LV.t('</b> (Nv ') + d.premio.nivel + LV.t('). Ele agora faz parte da sua coleção.</p></div>');
     }

@@ -634,5 +634,14 @@
     "Vigia as galerias escuras das minas. Quando encontra uma luz, dispara contra ela sem piscar.": "It watches the dark tunnels of the mines. When it finds a light, it fires at it without blinking.",
     "Nasce da cinza fria perto do Coração. Corre rente ao chão e morde com dentes de carvão.": "Born from the cold ash near the Heart. It runs low to the ground and bites with charcoal teeth.",
     "Uma brasa que perdeu todo o calor. Pula de pedra em pedra e arremessa carvão apagado.": "An ember that lost all its heat. It hops from rock to rock and hurls dead coal.",
+    "Esporos Âmbar": "Amber Spores",
+    "Escamas de Maré": "Tide Scales",
+    "Cristais Rosados": "Rose Crystals",
+    "Brasas Vivas": "Living Embers",
+    "Sementes Antigas": "Ancient Seeds",
+    "Trufas Reais": "Royal Truffles",
+    "Pérolas Afogadas": "Drowned Pearls",
+    "Geodos Cantantes": "Singing Geodes",
+    "Tições Eternos": "Eternal Brands",
   });
 })();

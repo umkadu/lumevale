@@ -302,7 +302,7 @@
     const e = {
       tipo: 'chefe', mapa: W.idx, nome: c.nome, el: c.el, corpo: c.corpo, pal: c.pal, voa: !!c.voa, est: 2, s: c.s, alc: 100, estilo: 'chefe',
       id: W.seq++, lv, x: LV.clamp(x, 160, W.w - 160), y: c.voa ? G - 120 : G, sup: c.voa ? -1 : 0, casa: 0,
-      hp: Math.round(base.hp * 16), atk: Math.round(base.atk * 2), img: c.img, flip: !!c.flip, h: c.alt || 200,
+      hp: Math.round(base.hp * 16), atk: Math.round(base.atk * 2), img: c.img, flip: !!c.flip, h: c.alt || 200, canto: c.canto || null,
       cd: 2.2, face: -1, mov: 0, flash: 0, atkA: 0, nasc: 1.2, t0: 0, xp: base.xp * 15, lumes: base.lumes * 20, padrao: 0, carga: 0,
     };
     e.hpMax = e.hp;
@@ -330,7 +330,7 @@
     // moedas temáticas do Guardião (a única fonte delas)
     const md = LV.MOEDAS[W.idx], qMoeda = Math.max(1, Math.round(LV.moedasChefe(W.idx, primeira) * domStats().moedasMult));
     S.moedas[md.id] = (S.moedas[md.id] || 0) + qMoeda;
-    numero(e.x, topoDe(e) - 30, '+' + qMoeda + ' ' + md.nome, 'mat', md.cor);
+    numero(e.x, topoDe(e) - 30, '+' + qMoeda + ' ' + LV.nomeQtd(md, qMoeda), 'mat', md.cor);
     let premio = null;
     if (primeira) {
       const pr = W.def.chefe.premio;
@@ -1544,7 +1544,7 @@
       return;
     }
     if (d.tipo === 'lumes') { S.lumes += d.q; numero(W.tam.x, W.tam.y - W.tam.h - 6, '+' + LV.fmt(d.q), 'lumes'); }
-    else { S.mats[d.mat] = (S.mats[d.mat] || 0) + d.q; numero(W.tam.x, W.tam.y - W.tam.h - 20, '+' + d.q + ' ' + LV.MAT[d.mat].nome, 'mat', LV.MAT[d.mat].cor); }
+    else { S.mats[d.mat] = (S.mats[d.mat] || 0) + d.q; numero(W.tam.x, W.tam.y - W.tam.h - 20, '+' + d.q + ' ' + LV.nomeQtd(LV.MAT[d.mat], d.q), 'mat', LV.MAT[d.mat].cor); }
   }
 
   function updFx(dt) {
@@ -1662,8 +1662,8 @@
       let resto = lumes;
       for (let i = 0; i < n; i++) { const q = i === n - 1 ? resto : Math.max(1, Math.floor(lumes / n)); resto -= q; if (q > 0) itens.push({ tipo: 'lumes', q }); }
     }
-    for (const k in g.mats || {}) if (g.mats[k] > 0) itens.push({ tipo: 'mat', mat: k, q: g.mats[k], nome: LV.MAT[k].nome, cor: LV.MAT[k].cor });
-    for (const k in g.moedas || {}) if (g.moedas[k] > 0) { const m = LV.moeda(k); itens.push({ tipo: 'mat', mat: 'musgo', q: g.moedas[k], nome: m.nome, cor: m.cor }); }
+    for (const k in g.mats || {}) if (g.mats[k] > 0) itens.push({ tipo: 'mat', mat: k, q: g.mats[k], nome: LV.nomeQtd(LV.MAT[k], g.mats[k]), cor: LV.MAT[k].cor });
+    for (const k in g.moedas || {}) if (g.moedas[k] > 0) { const m = LV.moeda(k); itens.push({ tipo: 'mat', mat: 'musgo', q: g.moedas[k], nome: LV.nomeQtd(m, g.moedas[k]), cor: m.cor }); }
     for (let i = itens.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [itens[i], itens[j]] = [itens[j], itens[i]]; }
     itens.forEach((it, i) => {
       const a = (i / itens.length) * TAU * 2.3 + LV.rand(-0.3, 0.3), r = LV.rand(80, 260);
@@ -1793,6 +1793,7 @@
           art.glow(c, lx, ly, 30 + 40 * k, e.pal.g, 0.6 * k);
         } else desenharCriatura(c, e, { t: t + e.t0, flash, alpha, mov: e.atord > 0 ? 0 : e.mov, atk: e.atkA });
         c.restore();
+        if (e.canto && !(e.sugar > 0)) desenharCanto(c, e, t, alpha);
         desenharEstados(c, e, t);
         if (e.carga > 0) art.glow(c, e.x, alvoY(e), e.cargaMax > 1 ? 150 : 100, e.ataqueCor || e.pal.g, 0.38 * (1 - e.carga / (e.cargaMax || 0.75)) + 0.08);
       } else if (it.k === 'p') {
@@ -1841,6 +1842,23 @@
     }
   }
   /* avisos no chão, perigos ativos e estados dos aliados (preso, atordoado, envenenado) */
+  /* o canto da Matriarca: anéis de luz saindo da boca (mais fortes enquanto ela carrega um ataque) */
+  function desenharCanto(c, e, t, alpha) {
+    const w = larguraDe(e), f = (e.face < 0 ? -1 : 1) * (e.flip ? -1 : 1);
+    const mx = e.x + f * (e.canto.x - 0.5) * w, my = e.y - (1 - e.canto.y) * e.h;
+    const forte = e.carga > 0 ? 1 : 0.8, dir = f > 0 ? 0 : Math.PI;
+    c.save();
+    c.globalAlpha *= alpha == null ? 1 : alpha;
+    art.glow(c, mx, my, 30, '#f3d6ff', 0.35 * forte);
+    c.shadowColor = '#d9a8ff'; c.shadowBlur = 8;
+    for (let k = 0; k < 3; k++) {
+      const p = (t * 0.7 + k / 3) % 1, r = 10 + p * 78;
+      c.beginPath(); c.arc(mx, my, r, dir - 0.62, dir + 0.62);
+      c.strokeStyle = art.rgba('#f4dcff', (1 - p) * 0.9 * forte);
+      c.lineWidth = 1.5 + 3.5 * (1 - p); c.lineCap = 'round'; c.stroke();
+    }
+    c.restore();
+  }
   function desenharChefeFx(c, t) {
     for (const a of W.alertas || []) {
       const k = a.t / a.vida, pulso = 0.55 + 0.45 * Math.sin(t * 14);
