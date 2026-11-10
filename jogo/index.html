@@ -362,6 +362,22 @@
   .up-t { display: flex; gap: 8px; align-items: baseline; }
   .up-d { font-size: 13px; color: var(--apagado); grid-column: 1; }
   .up > .btn, .up > .maxed { grid-column: 2; grid-row: 1 / span 2; }
+  .up.up-img { grid-template-columns: 52px minmax(0, 1fr) auto; }
+  .up.up-img img { grid-row: 1 / span 2; width: 52px; height: 52px; object-fit: contain; }
+  .up.up-img .up-t, .up.up-img .up-d { grid-column: 2; }
+  .up.up-img > .btn, .up.up-img > .maxed { grid-column: 3; }
+  /* equipamento do domador (capas e lanternas) */
+  .premio-item img { width: auto; max-width: 110px; object-fit: contain; }
+  .equips { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+  .eq { display: grid; justify-items: center; align-content: start; text-align: center; gap: 4px; padding: 10px 8px; border: 1px solid var(--linha); background: rgba(255, 255, 255, 0.02); }
+  .eq img { height: 84px; width: auto; max-width: 100%; object-fit: contain; }
+  .eq.travado img { filter: grayscale(1) brightness(0.45); }
+  .eq.usando { border-color: color-mix(in srgb, var(--acc) 70%, transparent); background: color-mix(in srgb, var(--acc) 8%, transparent); }
+  .eq b { font-size: 14px; }
+  .eq small { font-size: 12px; color: var(--apagado); line-height: 1.3; }
+  .eq small.ef { color: var(--ouro); }
+  .eq .btn { padding: 4px 12px; font-size: 13px; }
+  .eq .uso { font: 700 11px var(--f-corpo); letter-spacing: 0.06em; text-transform: uppercase; color: var(--acc); padding: 5px 0; }
   .maxed { font: 12px var(--f-disp); color: var(--ouro); letter-spacing: 0.06em; }
 
   /* mapas */
@@ -887,7 +903,7 @@
     html.movel .ctrl { gap: 6px; }
     html.movel #h-vel { display: none; }
     html.movel .tab { font-size: 12.5px; padding-inline: 3px; letter-spacing: 0; }   /* as 7 abas cabem em pé */
-    html.movel #b-auto { padding: 6px 7px; font-size: 10px; max-width: 74px; white-space: normal; line-height: 1.15; }
+    html.movel #b-auto, html.movel #b-desafio { padding: 6px 7px; font-size: 10px; max-width: 74px; white-space: normal; line-height: 1.15; }
     html.movel .lant-btn { width: 46px; height: 46px; }
     html.movel .hud-dir { gap: 6px; }
     html.movel .engrenagem { width: 36px; height: 36px; padding: 6px; }
@@ -978,6 +994,7 @@
           <div id="mira" hidden aria-live="polite"><b id="mira-t">Clique numa criatura selvagem</b><small id="mira-s">Clique na lanterna ou aperte Esc para cancelar</small></div>
           <span class="vel" id="h-vel" hidden></span>
           <button class="hbtn" id="b-auto" aria-pressed="false"><svg class="cad" viewBox="0 0 12 14" aria-hidden="true"><path d="M3.5 6V4.4a2.5 2.5 0 0 1 5 0V6" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="6" width="8" height="6.5" rx="1" fill="currentColor"/></svg><span>Caçada auto</span></button>
+          <button class="hbtn" id="b-desafio" aria-pressed="false" hidden><svg class="cad" viewBox="0 0 12 14" aria-hidden="true"><path d="M3.5 6V4.4a2.5 2.5 0 0 1 5 0V6" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="6" width="8" height="6.5" rx="1" fill="currentColor"/></svg><span>Desafio auto</span></button>
           <button class="tbtn peq" id="t-descer" aria-label="Descer escada ou atravessar plataforma"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button class="tbtn" id="t-pular" aria-label="Pular ou subir escada"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 15 7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button class="lant-btn" id="b-lant" title="Lanterna de captura: congela o jogo para você escolher a criatura" aria-label="Lanterna de captura">

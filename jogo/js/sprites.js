@@ -16,6 +16,19 @@
     });
   };
   spr.get = (nome) => spr.imgs[nome] || null;
+  /* carrega sob demanda (capas do domador): devolve true quando a imagem já está pronta */
+  const pedidos = {};
+  spr.garantir = function (nome) {
+    if (spr.imgs[nome]) return true;
+    if (!pedidos[nome]) {
+      pedidos[nome] = 1;
+      const im = new Image();
+      im.decoding = 'async';
+      im.onload = () => { spr.imgs[nome] = im; };
+      im.src = 'img/' + nome + '.webp';
+    }
+    return false;
+  };
   spr.url = (nome) => 'img/' + nome + '.webp';
 
   /* silhueta branca usada no clarão de dano e na evolução */
@@ -51,7 +64,8 @@
   };
 
   /* Desenha um sprite de criatura.
-     o = { x, y, h, face, t, mov, voa, atk, flash, alpha, flip, sy, rot }
+     o = { x, y, h, face, t, mov, voa, atk, flash, alpha, flip, sy, rot, depois }
+     depois(c, dx, dy, dw, dh): desenha por cima com a mesma animação (ex.: lanterna equipada)
      terrestres: (x, y) = pés; voadores: (x, y) = centro */
   spr.desenhar = function (c, nome, o) {
     const im = spr.get(nome);
@@ -84,6 +98,7 @@
       c.globalAlpha *= Math.min(1, o.flash);
       c.drawImage(branco(nome, im), dx, dy, dw, dh);
     }
+    if (o.depois) { c.globalAlpha = o.alpha != null ? o.alpha : 1; o.depois(c, dx, dy, dw, dh); }
     c.restore();
     return true;
   };
@@ -92,7 +107,7 @@
   if (LV.art) {
     const retOrig = LV.art.retrato;
     LV.art.retrato = (sp, est, size) => (LV.SPECIES[sp] ? spr.url(LV.imgPet(sp, est)) : retOrig(sp, est, size));
-    LV.art.retratoDomador = () => spr.url(LV.HEROI.parado);
+    LV.art.retratoDomador = () => spr.url(LV.imgCapa(LV.game && LV.game.S && LV.game.capaAtual ? LV.game.capaAtual() : 'padrao'));
   }
 
   /* fatiamento em 3 partes na horizontal: pontas sem distorção, meio esticado */

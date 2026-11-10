@@ -26,7 +26,7 @@
     if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.12.0';
+  const VERSAO = '1.15.0';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -226,6 +226,17 @@
     el.tabs.addEventListener('click', (e) => { const b = e.target.closest('[data-aba]'); if (b) { ui.abrir(b.dataset.aba); som('clique'); } });
     el.pane.addEventListener('click', clique);
     iniciarArrasto();
+    const bDesafio = document.getElementById('b-desafio');
+    bDesafio.addEventListener('click', () => {
+      const r = game.acao.alternarDesafio();
+      if (r === 'bloqueado') {
+        const n = game.desafioAutoEtapas();
+        ui.toast(LV.t('O Desafio Automático deste mapa ainda não foi liberado. Compre a etapa ') + (game.W.idx + 1) + LV.t(' no Santuário') + (n < game.W.idx ? LV.t(' (as etapas são liberadas em ordem).') : '.'), 'ruim', true);
+        return;
+      }
+      ui.toast(r ? LV.t('Desafio automático ligado: ao completar a meta, o Guardião é desafiado sozinho.') : LV.t('Desafio automático desligado.'), r ? 'bom' : '', true);
+      hud(); som('clique');
+    });
     el.bAuto.addEventListener('click', () => {
       if (game.acao.alternar('auto') === 'bloqueado') { ui.toast(LV.t('A caçada automática desbloqueia a partir do mapa 2. Vença a ') + LV.MAPS[0].chefe.nome + '.', 'ruim', true); return; }
       hud(); som('clique'); sujo(['bolsa']);
@@ -381,6 +392,7 @@
     LV.on('chefeVencido', (d) => { ui.modalChefe(d); sujo(['mapas', 'equipe', 'loja', 'santuario', 'bolsa']); hud(); LV.salvarLogo(); });
     LV.on('compra', () => { sujo(['loja', 'equipe', 'domador']); LV.salvarLogo(); });
     LV.on('equipe', () => sujo(['equipe']));
+    LV.on('equipamento', () => sujo(['domador', 'loja']));
     LV.on('tutorial', (tu) => ui.tutorial(tu));
     LV.on('atributo', () => sujo(['domador']));
     LV.on('mapa', (i) => { document.documentElement.style.setProperty('--acc', LV.MAPS[i].pal.acento); sujo(['mapas']); ui.tituloMapa(i); });
@@ -684,8 +696,34 @@
       LV.t('<div><dt>XP dos pets</dt><dd>×') + ds.xpPet.toFixed(2).replace('.', LV.decSep) + '</dd></div>' +
       LV.t('<div><dt>Nível máximo dos pets</dt><dd>') + LV.F.capPet(d.nivel) + '</dd></div>' +
       LV.t('<div><dt>Ganho offline</dt><dd>até ') + ds.offlineH + 'h</dd></div>' +
-      LV.t('</dl><p class="nota">Cada nível do domador também dá +1% de dano e vida a todos os pets. A capa e a lanterna mudam a cada novo título.</p></section>');
+      LV.t('</dl><p class="nota">Cada nível do domador também dá +1% de dano e vida a todos os pets.</p></section>');
+    h += secaoEquip();
     return h;
+  }
+  /* equipamento: capas (e lanternas) — o que você tem, o que está usando e como liberar o resto */
+  function comoLiberar(k) {
+    if (k.conq) { const c = LV.conquista(k.conq); return c ? LV.t('Conquista “') + c.nome + '”: ' + c.desc : ''; }
+    if (k.loja) return k.loja.moeda ? LV.t('À venda na Loja (vale até renascer)') : LV.t('À venda na Loja');
+    if (k.chefe != null) return LV.t('Derrote ') + LV.MAPS[k.chefe].chefe.nome + LV.t(' nesta jornada');
+    return '';
+  }
+  function cartaoEquip(tipo, k, tem, usando, img) {
+    return '<div class="eq' + (usando ? ' usando' : '') + (tem ? '' : ' travado') + '"><img src="' + img + '" alt="" loading="lazy">' +
+      '<b>' + k.nome + '</b>' + (k.efeito ? '<small class="ef">' + k.efeito + '</small>' : '') +
+      '<small>' + (tem ? k.desc : ICON.cadeado + ' ' + comoLiberar(k)) + '</small>' +
+      (usando ? LV.t('<span class="uso">Em uso</span>') : tem ? '<button class="btn" data-act="equipar" data-tipo="' + tipo + '" data-id="' + k.id + LV.t('">Equipar</button>') : '') + '</div>';
+  }
+  function secaoEquip() {
+    const atual = game.capaAtual();
+    let h = LV.t('<section class="sec"><header class="sec-h"><h2>Capas</h2><span class="muted small">') + LV.CAPAS.filter((k) => game.temCapa(k.id)).length + ' / ' + LV.CAPAS.length + '</span></header>' +
+      LV.t('<p class="nota">As capas comuns são só visuais e ficam para sempre: saem das conquistas ou da Loja. As dos Guardiões caem na primeira vitória de cada jornada, mudam os status e somem ao renascer.</p><div class="equips">');
+    LV.CAPAS.forEach((k) => { h += cartaoEquip('capa', k, game.temCapa(k.id), atual === k.id, 'img/' + LV.imgCapa(k.id) + '.webp'); });
+    h += '</div></section>';
+    const lat = game.lanternaAtual();
+    h += LV.t('<section class="sec"><header class="sec-h"><h2>Lanternas</h2><span class="muted small">') + LV.LANTERNAS.filter((k) => game.temLanterna(k.id)).length + ' / ' + LV.LANTERNAS.length + '</span></header>' +
+      LV.t('<p class="nota">Cada lanterna muda o golpe do domador. As das conquistas ficam para sempre; as da Loja e dos Guardiões valem até renascer.</p><div class="equips">');
+    LV.LANTERNAS.forEach((k) => { h += cartaoEquip('lanterna', k, game.temLanterna(k.id), lat === k.id, 'img/' + LV.imgLanterna(k.id) + '.webp'); });
+    return h + '</div></section>';
   }
 
   /* =================== ABA: LOJA =================== */
@@ -697,6 +735,26 @@
         iconeMoeda(md) + '<b data-moeda="' + md.id + '">' + fmt(s.moedas[md.id] || 0) + '</b><small>' + (conhecida ? md.nome : '???') + '</small></span>';
     }).join('') + '</div>';
   }
+  /* capas visuais: compra única, ficam para sempre (mesmo depois de renascer) */
+  function secaoLojaVisual(s) {
+    let h = LV.t('<section class="sec"><header class="sec-h"><h2>Capas</h2></header><p class="nota">Só mudam a aparência do domador. Compra única: continuam suas depois de renascer.</p><div class="ups">');
+    LV.CAPAS.filter((k) => k.loja).forEach((k) => {
+      const tem = game.temCapa(k.id);
+      h += '<div class="up up-img"><img src="img/' + LV.imgCapa(k.id) + '.webp" alt="" loading="lazy"><div class="up-t"><b>' + k.nome + '</b></div><div class="up-d">' + k.desc + '</div>' +
+        (tem ? LV.t('<span class="maxed">Comprada</span>') : '<button class="btn" data-act="comprarCapa" data-id="' + k.id + '" data-custo="' + k.loja.lumes + '">' + ICON.lumes + ' ' + fmt(k.loja.lumes) + '</button>') + '</div>';
+    });
+    h += '</div></section>';
+    h += LV.t('<section class="sec"><header class="sec-h"><h2>Lanternas especiais</h2></header><p class="nota">Mudam o golpe da lanterna do domador. Valem só nesta jornada: somem ao renascer.</p><div class="ups">');
+    LV.LANTERNAS.filter((k) => k.loja).forEach((k) => {
+      const tem = game.temLanterna(k.id), md = LV.moeda(k.loja.moeda), mi = LV.MOEDAS.indexOf(md), conhecida = s.mapas[mi].chefe || (s.moedas[md.id] || 0) > 0;
+      let btn;
+      if (tem) btn = LV.t('<span class="maxed">Comprada</span>');
+      else if (!conhecida) btn = LV.t('<span class="trava-up" title="Derrote ') + esc(LV.MAPS[mi].chefe.nome) + LV.t(' para conseguir ') + md.nome + '">' + ICON.cadeado + ' ' + esc(LV.MAPS[mi].chefe.nome) + '</span>';
+      else btn = '<button class="btn" data-act="comprarLanterna" data-id="' + k.id + '" data-custo="' + k.loja.lumes + '" data-moeda-q="' + md.id + ':' + k.loja.q + '">' + ICON.lumes + ' ' + fmt(k.loja.lumes) + ' + ' + iconeMoeda(md) + k.loja.q + '</button>';
+      h += '<div class="up up-img"><img src="img/' + LV.imgLanterna(k.id) + '.webp" alt="" loading="lazy"><div class="up-t"><b>' + k.nome + '</b></div><div class="up-d">' + k.efeito + '</div>' + btn + '</div>';
+    });
+    return h + '</div></section>';
+  }
   function abaLoja() {
     const s = S(), preco = LV.F.precoLanterna(s.mapas.filter((m) => m.liberado).length);
     let h = LV.t('<section class="sec"><header class="sec-h"><h2>Lanternas de captura</h2><span class="muted">Você tem <b data-k="lant">') + s.lanternas + '</b></span></header>' +
@@ -704,6 +762,7 @@
       '<div class="row">' +
       '<button class="btn" data-act="lant" data-n="1" data-custo="' + preco + LV.t('">Comprar 1 · ') + ICON.lumes + ' ' + fmt(preco) + '</button>' +
       '<button class="btn" data-act="lant" data-n="10" data-custo="' + preco * 10 + LV.t('">Comprar 10 · ') + ICON.lumes + ' ' + fmt(preco * 10) + '</button></div></section>';
+    h += secaoLojaVisual(s);
     h += LV.t('<section class="sec"><header class="sec-h"><h2>Moedas dos Guardiões</h2></header>') + carteiraMoedas(s) +
       LV.t('<p class="nota">Só caem dos Guardiões. As primeiras melhorias pedem Sementes Antigas da Mãe-Raiz; os níveis seguintes pedem as moedas dos Guardiões mais fundos.</p></section>');
     h += LV.t('<section class="sec"><header class="sec-h"><h2>Melhorias</h2></header>') +
@@ -1038,6 +1097,20 @@
       ui.render(); hud(); LV.salvarLogo();
     }
     else if (a === 'pedirRenascer') ui.confirmarRenascer();
+    else if (a === 'equipar') { if (game.acao.equipar(b.dataset.tipo, b.dataset.id) === true) som('clique'); ui.render(); hud(); LV.salvarLogo(); }
+    else if (a === 'comprarLanterna') {
+      const r = game.acao.comprarLanterna(b.dataset.id);
+      if (r === true) { som('moeda'); ui.toast(LV.lanternaEq(b.dataset.id).nome + LV.t(' comprada e equipada'), 'bom', true); }
+      else if (r === 'moeda') ui.toast(LV.t('Faltam moedas do Guardião'), 'ruim', true);
+      else if (r === 'lumes') ui.toast(LV.t('Lumes insuficientes'), 'ruim', true);
+      ui.render(); LV.salvarLogo();
+    }
+    else if (a === 'comprarCapa') {
+      const r = game.acao.comprarCapa(b.dataset.id);
+      if (r === true) { som('moeda'); ui.toast(LV.capa(b.dataset.id).nome + LV.t(' comprada e equipada'), 'bom', true); }
+      else if (r === 'lumes') ui.toast(LV.t('Lumes insuficientes'), 'ruim', true);
+      ui.render(); LV.salvarLogo();
+    }
     else if (a === 'autoEscolher') ui.escolherAutoAttr();
     else if (a === 'autoReset') ui.confirmarResetAuto();
     else if (a === 'lant') { const r = game.acao.comprarLanternas(+b.dataset.n); if (r !== true) ui.toast(LV.t('Lumes insuficientes'), 'ruim', true); ui.render(); }
@@ -1144,6 +1217,13 @@
     el.bAuto.setAttribute('aria-pressed', String(s.op.auto && !travado));
     el.bAuto.setAttribute('aria-disabled', String(travado));
     if (travado) el.bAuto.dataset.dica = LV.t('Desbloqueia a partir do mapa 2'); else delete el.bAuto.dataset.dica;
+    // desafio automático: aparece depois da 1ª etapa comprada; travado nos mapas ainda não liberados
+    const bDes = document.getElementById('b-desafio'), etapas = game.desafioAutoEtapas(), desLib = game.desafioAutoLiberado();
+    bDes.hidden = !etapas || !!game.tutorial;
+    bDes.classList.toggle('travado', !desLib);
+    bDes.setAttribute('aria-pressed', String(game.desafioAutoLigado()));
+    bDes.setAttribute('aria-disabled', String(!desLib));
+    if (!desLib) bDes.dataset.dica = LV.t('Libere este mapa no Santuário'); else delete bDes.dataset.dica;
     const modo = s.op.modoPets, bModo = document.getElementById('b-modo');
     if (bModo.dataset.modo !== modo) {
       bModo.dataset.modo = modo;
@@ -1286,6 +1366,11 @@
     if (d.moeda) h += '<p class="premio-moeda">' + iconeMoeda(d.moeda) + ' <b>+' + d.qMoeda + ' ' + LV.nomeQtd(d.moeda, d.qMoeda) + '</b> <span class="muted small">(' + fmt(S().moedas[d.moeda.id]) + LV.t(' no total) · use na Loja</span></p>');
     if (d.primeira && d.premio) {
       h += '<div class="premio"><img src="' + art.retrato(d.premio.sp, d.premio.est, 96) + LV.t('" alt="" width="96" height="96"><p>Das cinzas do Guardião surgiu <b>') + LV.nomePet(d.premio) + LV.t('</b> (Nv ') + d.premio.nivel + LV.t('). Ele agora faz parte da sua coleção.</p></div>');
+    }
+    if (d.item) {
+      const k = LV.itemDef(d.item);
+      h += '<div class="premio premio-item"><img src="img/' + LV.imgItem(d.item) + LV.t('.webp" alt="" height="96"><p>O Guardião deixou cair <b>') + k.nome + '</b>: ' + k.efeito +
+        LV.t('. Já está equipado; troque na aba Domador. Vale até você renascer.</p></div>');
     }
     const novas = [];
     if (d.autoNova) novas.push([LV.t('Caçada automática liberada'), LV.t('Ligue no botão ao lado da lanterna.')]);
@@ -1568,6 +1653,8 @@
     const c = LV.conquista(id), r = game.acao.resgatarConquista(id);
     if (r === 'nao') return false;
     if (r && r.uid) ui.toast(LV.nomePet(r) + LV.t(' entrou para a sua coleção!'), 'bom');
+    if (c.rec.capa) ui.toast(LV.t('Nova capa: ') + LV.capa(c.rec.capa).nome + LV.t('. Equipe na aba Domador.'), 'bom');
+    if (c.rec.lanterna && LV.lanternaEq) ui.toast(LV.t('Nova lanterna: ') + LV.lanternaEq(c.rec.lanterna).nome + LV.t('. Equipe na aba Domador.'), 'bom');
     return c;
   }
 

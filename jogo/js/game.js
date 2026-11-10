@@ -21,12 +21,14 @@
     return {
       ecos: 0, ecosTotal: 0, renasc: 0, recorde: 1, up: Object.fromEntries(LV.META.map((u) => [u.id, 0])),
       best: {},                                  // bestiário: id -> { v: vista, k: derrotadas, c: capturadas }
-      tot: { kills: 0, capt: 0, evo: 0 },        // totais de todas as jornadas
+      tot: { kills: 0, capt: 0, evo: 0, brasa: 0, breus: 0 },   // totais de todas as jornadas (brasa: criaturas de brasa; breus: hostis)
       conq: {},                                  // conquistas: 1 = pronta para resgatar, 2 = resgatada
       autoAttr: [],                              // atributos que recebem os pontos sozinhos ao subir de nível (fixos)
       autoVagas: 0,                              // vagas de automação já pagas (continuam após redefinir)
       diario: [],                                // páginas do Diário de Candeia já encontradas (uma por Guardião)
       finalVisto: false,                         // o final (Coração Ígneo vencido) já foi mostrado
+      equip: { capa: 'padrao', lanterna: 'simples' },   // capa e lanterna escolhidas (se o item sumir, volta ao padrão)
+      compras: [],                               // itens visuais comprados na Loja (ficam para sempre)
     };
   }
   function novoEstado() {
@@ -41,6 +43,7 @@
       op: { auto: false, vel: 1, deus: false, modoPets: 'agressivo' },
       st: { kills: 0, capturas: 0, evolucoes: 0, chefes: 0, tempo: 0, taxa: 0 },
       meta: novoMeta(),       // sobrevive aos renascimentos
+      itens: [],              // itens desta jornada: 'lanterna:id' / 'capa:id' (Loja e Guardiões); somem ao renascer
       avisados: [],           // "uid:estágio" dos pets cuja evolução já foi anunciada
       inicial: false,
     };
@@ -80,7 +83,8 @@
     for (const sp in LV.SPECIES) { const b = o.meta.best[sp]; if (b && b.v && !o.meta.best[sp + '_0']) o.meta.best[sp + '_0'] = { v: true, k: 0, c: 0 }; }
     const st0 = s.st || {}, tt = sm.tot || {};
     // saves de antes do bestiário: os totais começam pelos números desta jornada
-    o.meta.tot = { kills: intOr(tt.kills, intOr(st0.kills, 0, 0, 1e12), 0, 1e12), capt: intOr(tt.capt, intOr(st0.capturas, 0, 0, 1e9), 0, 1e9), evo: intOr(tt.evo, intOr(st0.evolucoes, 0, 0, 1e9), 0, 1e9) };
+    o.meta.tot = { kills: intOr(tt.kills, intOr(st0.kills, 0, 0, 1e12), 0, 1e12), capt: intOr(tt.capt, intOr(st0.capturas, 0, 0, 1e9), 0, 1e9), evo: intOr(tt.evo, intOr(st0.evolucoes, 0, 0, 1e9), 0, 1e9),
+      brasa: intOr(tt.brasa, 0, 0, 1e12), breus: intOr(tt.breus, 0, 0, 1e12) };
     const sq = sm.conq && typeof sm.conq === 'object' ? sm.conq : {};
     LV.CONQUISTAS.forEach((c) => { const v = intOr(sq[c.id], 0, 0, 2); if (v) o.meta.conq[c.id] = v; });
     const ids = LV.ATTR.map((a) => a.id);
@@ -139,6 +143,13 @@
     o.mapas.forEach((m, i) => { if (m.chefe && !o.meta.diario.includes(i)) o.meta.diario.push(i); });
     o.meta.diario.sort((a, b) => a - b);
     o.meta.finalVisto = !!smh.finalVisto;
+    // equipamento: escolha guardada no Santuário; compras visuais da Loja ficam para sempre
+    const eq = smh.equip || {};
+    o.meta.equip = { capa: LV.capa(eq.capa) ? eq.capa : 'padrao', lanterna: typeof eq.lanterna === 'string' ? eq.lanterna : 'simples' };
+    o.itens = [...new Set(Array.isArray(s.itens) ? s.itens.filter((x) => typeof x === 'string') : [])].slice(0, 100);
+    // item de cada Guardião já vencido nesta jornada (inclui saves de antes dos itens)
+    o.mapas.forEach((m, i) => { const it = LV.ITEM_CHEFE[i]; if (m.chefe && it && !o.itens.includes(it.tipo + ':' + it.id)) o.itens.push(it.tipo + ':' + it.id); });
+    o.meta.compras = [...new Set(Array.isArray(smh.compras) ? smh.compras.filter((x) => typeof x === 'string') : [])].slice(0, 200);
     return o;
   }
   game.novoEstado = novoEstado;
@@ -150,7 +161,7 @@
   /* caçada automática: liberada ao chegar no mapa 2 ou pelo Santuário */
   function autoLiberadaEm(s) { return !!(s.mapas[1] && s.mapas[1].liberado) || ((s.meta && s.meta.up.trilha) || 0) > 0; }
   game.autoLiberada = () => !!S && autoLiberadaEm(S);
-  function multDano() { return (1 + 0.12 * S.up.garras) * (1 + 0.03 * S.dom.attr.forca) * (1 + 0.01 * (S.dom.nivel - 1)) * (1 + 0.08 * MU('ancestral')); }
+  function multDano() { return (1 + 0.12 * S.up.garras) * (1 + 0.03 * S.dom.attr.forca) * (1 + 0.01 * (S.dom.nivel - 1)) * (1 + 0.08 * MU('ancestral')) * (1 + (bonusCapa().dano || 0)); }
   function multVida() { return (1 + 0.12 * S.up.carapaca) * (1 + 0.04 * S.dom.attr.vigor) * (1 + 0.01 * (S.dom.nivel - 1)) * (1 + 0.08 * MU('ancestral')); }
   function multVel() { return (1 + 0.05 * S.up.ritmo) * (1 + 0.01 * S.dom.attr.vinculo); }
   function petStats(p) {
@@ -166,8 +177,8 @@
   function domStats() {
     const a = S.dom.attr, L = S.dom.nivel, mestre = 1 + 0.1 * MU('mestre');
     return {
-      hp: Math.round((100 + L * 14) * (1 + 0.04 * a.vigor)),
-      atk: Math.round((6 + L * 2.4) * (1 + 0.03 * a.forca) * (1 + 0.05 * S.up.garras)),
+      hp: Math.round((100 + L * 14) * (1 + 0.04 * a.vigor) * (1 + (bonusCapa().vida || 0))),
+      atk: Math.round((6 + L * 2.4) * (1 + 0.03 * a.forca) * (1 + 0.05 * S.up.garras) * (1 + (bonusCapa().dano || 0)) * (LV.lanternaEq(lanternaAtual()).mult || 1)),
       crit: Math.min(0.6, 0.05 + a.sorte * 0.004),
       sorteCap: a.sorte * 0.015 + 0.08 * MU('lanterneiro'),
       coleta: (1 + 0.08 * S.up.faro) * (1 + 0.02 * a.sorte),
@@ -179,7 +190,45 @@
       moedasMult: 1 + 0.25 * MU('fortuna'),
     };
   }
+  /* =================== EQUIPAMENTO (capas e lanternas) =================== */
+  /* depois de trocar de capa: vida máxima do domador e status dos pets mudam junto */
+  function aplicarEquip() {
+    if (!W) return;
+    const T = W.tam, r = T.hpMax ? T.hp / T.hpMax : 1;
+    T.hpMax = domStats().hp; if (T.caido <= 0) T.hp = Math.max(1, Math.round(T.hpMax * r));
+    montarPets();
+  }
+  /* uma capa é sua se veio de conquista resgatada, da Loja (compra única) ou do Guardião nesta jornada */
+  function temCapa(id, s) {
+    s = s || S; const k = LV.capa(id);
+    if (!k || !s) return false;
+    if (k.id === 'padrao') return true;
+    if (k.conq) return s.meta.conq[k.conq] === 2;
+    if (k.loja) return s.meta.compras.includes('capa:' + k.id);
+    return s.itens.includes('capa:' + k.id);      // dos Guardiões, nesta jornada
+  }
+  const capaAtual = () => (S && temCapa(S.meta.equip.capa) ? S.meta.equip.capa : 'padrao');
+  /* lanterna: das conquistas (para sempre), da Loja ou dos Guardiões (só nesta jornada) */
+  function temLanterna(id, s) {
+    s = s || S; const k = LV.lanternaEq(id);
+    if (!k || !s) return false;
+    if (k.id === 'simples') return true;
+    if (k.conq) return s.meta.conq[k.conq] === 2;
+    return s.itens.includes('lanterna:' + k.id);
+  }
+  const lanternaAtual = () => (S && temLanterna(S.meta.equip.lanterna) ? S.meta.equip.lanterna : 'simples');
+  game.temLanterna = (id) => temLanterna(id);
+  game.lanternaAtual = lanternaAtual;
+  game.temCapa = (id) => temCapa(id);
+  /* bônus da capa equipada (só as dos Guardiões têm) */
+  const bonusCapa = () => (S ? (LV.capa(capaAtual()).bonus || {}) : {});
+  game.bonusCapa = bonusCapa;
+  game.capaAtual = capaAtual;
   game.slots = () => slots();
+  /* desafio automático: etapas compradas no Santuário (cada uma libera mais um mapa, em ordem) */
+  game.desafioAutoEtapas = () => MU('autofarm');
+  game.desafioAutoLiberado = () => !!W && !game.tutorial && MU('autofarm') > W.idx;
+  game.desafioAutoLigado = () => !!W && !!W.desafioAuto && game.desafioAutoLiberado();
   game.petStats = petStats;
   game.domStats = domStats;
 
@@ -341,6 +390,14 @@
       if (S.ativos.length < slots()) { S.ativos.push(premio.uid); montarPets(); }
       if (W.idx + 1 < LV.MAPS.length) S.mapas[W.idx + 1].liberado = true;
     }
+    // item temático do Guardião: primeira vitória desta jornada; já entra equipado
+    let item = null;
+    const it = LV.ITEM_CHEFE[W.idx], chave = it ? it.tipo + ':' + it.id : null;
+    if (primeira && it && !S.itens.includes(chave)) {
+      S.itens.push(chave); S.meta.equip[it.tipo] = it.id; item = it;
+      aplicarEquip();
+      fx({ tipo: 'anel', x: W.tam.x, y: W.tam.y - 34, r0: 8, r1: 110, cor: '#ffe3a3', vida: 1 });
+    }
     const prox = W.idx + 1 < LV.MAPS.length && S.mapas[W.idx + 1].liberado ? W.idx + 1 : null;
     const autoNova = primeira && W.idx === 0 && !MU('trilha');
     // história: cada Guardião revela uma página do Diário de Candeia; o último mostra o final uma vez
@@ -348,7 +405,7 @@
     if (paginaNova) { S.meta.diario.push(W.idx); S.meta.diario.sort((a, b) => a - b); }
     const final = W.idx === LV.MAPS.length - 1 && !S.meta.finalVisto;
     if (final) S.meta.finalVisto = true;
-    emit('chefeVencido', { nome: e.nome, mapaIdx: W.idx, primeira, premio, proximoIdx: prox, proximo: prox != null ? LV.MAPS[prox].nome : null, moeda: md, qMoeda, autoNova, paginaNova, final });
+    emit('chefeVencido', { nome: e.nome, mapaIdx: W.idx, primeira, premio, item, proximoIdx: prox, proximo: prox != null ? LV.MAPS[prox].nome : null, moeda: md, qMoeda, autoNova, paginaNova, final });
     emit('chefe', false);
     som('brilho');
     if (LV.audio) LV.audio.tensao(false);
@@ -357,6 +414,7 @@
     if (!W.chefe) return;
     const e = W.chefe.e;
     e.fuga = 0.8; e.dash = null; W.chefe = null; W.spawn = 2; limparEfeitosChefe();
+    W.desafioEspera = 20;                       // desafio automático: um respiro antes de tentar de novo
     const txt = motivo === 'pets' ? LV.t('Todos os seus pets caíram. O desafio contra ') + e.nome + LV.t(' terminou.')
       : motivo === 'abandonou' ? LV.t('Você abandonou a batalha contra ') + e.nome + '.'
       : motivo === 'heroi' ? LV.t('Você caiu. ') + e.nome + LV.t(' venceu desta vez.')
@@ -479,7 +537,7 @@
     if (!a || a.hp <= 0) return;
     if (S.op.deus) { a.flash = 0.4; return; }
     const defesa = src ? game.buffs.defesa[chaveDe(src)] || 0 : 0;      // couraças das conquistas
-    const mult = (el && a.el ? LV.elemMult(el, a.el) : 1) * (a.reducao > 0 ? 1 - (a.reducaoK || 0.5) : 1) * (1 - defesa);
+    const mult = (el && a.el ? LV.elemMult(el, a.el) : 1) * (a.reducao > 0 ? 1 - (a.reducaoK || 0.5) : 1) * (1 - defesa) * (a === W.tam ? 1 - (bonusCapa().defesa || 0) : 1);
     let d = Math.max(1, Math.round(v * mult));
     if (a.escudo > 0) {
       const abs = Math.min(a.escudo, d);
@@ -567,6 +625,8 @@
   function matar(e) {
     e.hp = 0;
     contar(chaveDe(e), 'k'); contar(formaDe(e), 'k'); S.meta.tot.kills++;
+    if (e.el === 'brasa') S.meta.tot.brasa = (S.meta.tot.brasa || 0) + 1;
+    if (e.tipo === 'hostil') S.meta.tot.breus = (S.meta.tot.breus || 0) + 1;
     const ds = domStats();
     explosao(e.x, alvoY(e), e.pal.g, e.tipo === 'chefe' ? 70 : 16);
     fx({ tipo: 'anel', x: e.x, y: alvoY(e), r0: 6, r1: e.h * 0.7, cor: e.pal.g, vida: 0.45 });
@@ -1022,20 +1082,62 @@
     else { const e = foco || maisProximo(T, vivos, 420); if (e) T.face = Math.sign(e.x - T.x) || T.face; }
     T.mov = LV.lerp(T.mov, vx && (T.sup >= 0 || T.esc) ? 1 : 0, Math.min(1, dt * 10));
     const combate = vivos.some((e) => dist2(e, T) < 300);
-    T.hp = Math.min(T.hpMax, T.hp + T.hpMax * (combate ? 0.004 : 0.03) * dt);
+    T.hp = Math.min(T.hpMax, T.hp + T.hpMax * (combate ? 0.004 : 0.03) * (1 + (bonusCapa().regen || 0)) * dt);
     if (!(T.atordA > 0)) T.cd -= dt;
     if (T.cd <= 0) {
+      const Lk = LV.lanternaEq(lanternaAtual());
+      if (Lk.cura) {
+        // Lanterna de Cura: não ataca; pulso de cura no grupo a cada 4 s
+        T.cd = 4;
+        const time = W.pets.filter((p) => p.desm <= 0).concat([T]);
+        if (time.some((a) => a.hp < a.hpMax)) {
+          T.atk = 1;
+          const PL = poseHeroi(T, 'lanterna', capaAtual());
+          fx({ tipo: 'anel', x: T.x + PL.lx, y: T.y + PL.ly, r0: 6, r1: 70, cor: Lk.feixe, vida: 0.5 });
+          time.forEach((a) => curar(a, a.hpMax * Lk.cura));
+          som('brilho');
+        }
+        return;
+      }
       // o herói golpeia o alvo do clique; sozinho, só reage a ameaças (ou caça tudo na caçada automática)
       const e = foco && dist2(foco, T) < alcHeroi(foco) ? foco
         : foco ? null
         : maisProximo(T, autoOn ? vivos : vivos.filter(ameaca), ALC_HEROI, (x) => dist2(x, T) - (alcHeroi(x) - ALC_HEROI));
       if (e) {
         T.cd = foco ? 1.4 : 2; T.atk = 1;
-        const lx = T.x + T.face * T.h * 0.36, ly = T.y - T.h * 0.86;
-        fx({ tipo: 'feixe', x0: lx, y0: ly, x1: e.x, y1: alvoY(e), cor: '#ffd38a', vida: 0.25 });
-        fx({ tipo: 'anel', x: lx, y: ly, r0: 4, r1: 26, cor: '#ffd38a', vida: 0.3 });
-        dano(e, ds.atk, null, T);
+        const PL = poseHeroi(T, 'lanterna', capaAtual()), lx = T.x + PL.lx, ly = T.y + PL.ly;
+        golpeLanterna(T, e, Lk, lx, ly, ds.atk, vivos);
       } else T.cd = 0.3;
+    }
+  }
+  /* golpe da lanterna equipada */
+  function golpeLanterna(T, e, Lk, lx, ly, v, vivos) {
+    let alvos = [e];
+    if (Lk.fura) {
+      // feixe que atravessa: pega quem estiver na linha, depois do alvo, até Lk.fura criaturas
+      const dx = e.x - lx, dy = alvoY(e) - ly, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+      const linha = vivos.filter((o) => o !== e).map((o) => { const px = o.x - lx, py = alvoY(o) - ly, ao = px * ux + py * uy; return { o, ao, lado: Math.abs(px * uy - py * ux) }; })
+        .filter((q) => q.ao > 0 && q.ao < d + 320 && q.lado < 34).sort((a, b) => a.ao - b.ao).slice(0, Lk.fura - 1).map((q) => q.o);
+      alvos = alvos.concat(linha);
+      const far = Math.max(...alvos.map((o) => Math.hypot(o.x - lx, alvoY(o) - ly))) + 40;
+      fx({ tipo: 'feixe', x0: lx, y0: ly, x1: lx + ux * far, y1: ly + uy * far, cor: Lk.feixe, vida: 0.32, larg: 2.2 });
+      alvos.forEach((o) => faiscas(o.x, alvoY(o), Lk.cor, 6));
+    } else fx({ tipo: 'feixe', x0: lx, y0: ly, x1: e.x, y1: alvoY(e), cor: Lk.feixe, vida: 0.25, larg: Lk.mult ? 1.6 : 1 });
+    fx({ tipo: 'anel', x: lx, y: ly, r0: 4, r1: 26, cor: Lk.feixe, vida: 0.3 });
+    alvos.forEach((o) => {
+      dano(o, v, Lk.el || null, T);
+      if (Lk.lento && o.hp > 0) o.lento = Math.max(o.lento || 0, Lk.lento);
+      if (Lk.fraco && o.hp > 0) o.fraco = Math.max(o.fraco || 0, Lk.fraco);
+    });
+    if (Lk.lento) fx({ tipo: 'spr', img: 'hab/anelagua', x: e.x, y: alvoY(e), h: 60, ay: 0.5, cresce: [0.3, 1], vida: 0.4, gira: 0.8 });
+    if (Lk.area) {
+      // Lanterna Explosiva: explode no alvo, fere quem está perto e deixa todos queimando
+      const x = e.x, y = alvoY(e), r = Lk.area;
+      fx({ tipo: 'brilho', x, y, r: r * 1.1, cor: '#ff9a52', vida: 0.45 });
+      fx({ tipo: 'spr', img: 'hab/explosao', x, y, h: r * 1.3, ay: 0.5, cresce: [0.3, 1.05], vida: 0.55, flip: Math.random() < 0.5 });
+      explosao(x, y, '#ffb35c', 10); W.shake = Math.max(W.shake, 3); som('impacto');
+      vivos.filter((o) => o !== e && o.hp > 0 && Math.hypot(o.x - x, alvoY(o) - y) < r).forEach((o) => dano(o, v * 0.6, 'brasa', T));
+      vivos.filter((o) => o.hp > 0 && Math.hypot(o.x - x, alvoY(o) - y) < r).forEach((o) => aplicarDot(o, v * 0.25, 3, 'brasa', '#ff8a3d'));
     }
   }
 
@@ -1641,6 +1743,10 @@
     updAmb(dt);
     updAreas(dt);
     for (const a of W.pets.concat([W.tam])) if (a.escudoT > 0) { a.escudoT -= dt; if (a.escudoT <= 0) a.escudo = 0; }
+    if (!W.chefe && W.desafioAuto && game.desafioAutoLiberado()) {
+      W.desafioEspera = Math.max(0, (W.desafioEspera || 0) - dt);
+      if (W.desafioEspera <= 0 && S.mapas[W.idx].kills >= metaChefe(W.idx) && W.tam.caido <= 0 && !game.captura) desafiarChefe();
+    }
     if (!W.chefe) {
       // cada ninho repõe suas criaturas, uma de cada vez
       for (const z of W.zonas) {
@@ -1768,20 +1874,49 @@
     const ok = SPR().desenhar(c, e.img, Object.assign({ x: e.x, y: e.y, h: e.h, face: e.face, voa: e.voa, flip: e.flip }, o));
     if (!ok) art.drawCreature(c, Object.assign({ x: e.x, y: e.y, corpo: e.corpo, pal: e.pal, est: e.est, s: e.tipo === 'chefe' ? e.s : 1, face: e.face, boss: e.tipo === 'chefe' }, o));
   }
+  /* sprite do domador com a capa equipada: a capa é desenhada com a máscara do mesmo tamanho e no mesmo lugar
+     da capa padrão (medidas em LV.HEROI_MED), e a lanterna fica onde ela aparece em cada desenho */
+  function poseHeroi(T, pose, capa) {
+    const MB = LV.HEROI_MED && LV.HEROI_MED.base[pose];
+    const r = { nome: LV.HEROI[pose], h: T.h, dx: 0, M: MB, w: MB ? MB[6] * T.h : T.h };
+    if (capa && capa !== 'padrao') {
+      const nc = LV.imgCapa(capa, pose), MC = LV.HEROI_MED && LV.HEROI_MED[capa] && LV.HEROI_MED[capa][pose];
+      if (MC && MB && SPR().garantir(nc)) {
+        const hc = T.h * MB[2] / MC[2], wc = MC[6] * hc;
+        r.nome = nc; r.h = hc; r.w = wc; r.M = MC;
+        r.dx = (MB[0] - 0.5) * MB[6] * T.h - (MC[0] - 0.5) * wc;   // alinha o centro da máscara
+      }
+    }
+    // lanterna (centro do vidro) em relação aos pés, já virada para o lado do domador
+    r.lx = r.M ? (r.dx + (r.M[3] - 0.5) * r.w) * T.face : T.face * T.h * 0.36;
+    r.ly = r.M ? -(1 - r.M[4]) * r.h : -T.h * 0.84;
+    return r;
+  }
+  game.poseHeroi = poseHeroi;
   function desenharHeroi(c, T) {
     const rank = LV.rankIdx(S.dom.nivel), R = LV.RANKS[rank], t = W.t;
-    let q = LV.HEROI.parado;
-    if (T.sup < 0 && !T.esc) q = LV.HEROI.pulando;
-    else if (T.atk > 0.35) q = LV.HEROI.lanterna;
-    else if (T.mov > 0.3) q = Math.floor(t * 6.5) % 2 ? LV.HEROI.andando : LV.HEROI.parado;
+    let pose = 'parado';
+    if (T.sup < 0 && !T.esc) pose = 'pulando';
+    else if (T.atk > 0.35) pose = 'lanterna';
+    else if (T.mov > 0.3) pose = Math.floor(t * 6.5) % 2 ? 'andando' : 'parado';
+    const P = poseHeroi(T, pose, capaAtual());
     const caido = T.caido > 0;
-    const o = { x: T.x, y: T.y, h: T.h, face: T.face, t, mov: T.sup < 0 && !T.esc ? 0 : T.mov, flash: caido ? 0.5 : T.flash * 0.8, alpha: caido ? Math.max(0, (T.caido - 1.2) / 2) : 1 };
-    const ok = SPR().desenhar(c, q, o);
+    const o = { x: T.x + P.dx * T.face, y: T.y, h: P.h, face: T.face, t, mov: T.sup < 0 && !T.esc ? 0 : T.mov, flash: caido ? 0.5 : T.flash * 0.8, alpha: caido ? Math.max(0, (T.caido - 1.2) / 2) : 1 };
+    const Lk = LV.lanternaEq(lanternaAtual());
+    if (Lk.id !== 'simples' && SPR().get(LV.imgLanterna(Lk.id)) && P.M) {
+      // a lanterna equipada cobre a do desenho, no centro do vidro, acompanhando a animação do corpo
+      const im = SPR().get(LV.imgLanterna(Lk.id)), M = P.M;
+      o.depois = (cx, dx, dy, dw, dh) => {
+        const lh = dh * 0.27, lw = lh * im.naturalWidth / im.naturalHeight;
+        cx.drawImage(im, dx + M[3] * dw - lw / 2, dy + M[4] * dh - lh * Lk.ay, lw, lh);
+      };
+    }
+    const ok = SPR().desenhar(c, P.nome, o);
     if (!ok) { art.drawTamer(c, { x: T.x, y: T.y, face: T.face, t, mov: T.mov, rank, flash: o.flash, alpha: o.alpha, atk: T.atk }); return; }
     if (caido) return;
     const fl = 0.86 + 0.14 * Math.sin(t * 13) * Math.sin(t * 7.3) + T.atk * 0.5;
-    const lx = T.x + T.face * T.h * 0.36, ly = T.y - T.h * 0.84;
-    art.glow(c, lx, ly, 60 * fl * (1 + rank * 0.07), '#ffc47a', 0.42);
+    const lx = T.x + P.lx, ly = T.y + P.ly;
+    art.glow(c, lx, ly, 60 * fl * (1 + rank * 0.07), Lk.cor, 0.42);
     art.glow(c, lx, ly, 14, '#fff3d0', 0.7);
     if (rank >= 4) for (let k = 0; k < 3; k++) { const a = t * 1.5 + k * TAU / 3; art.glow(c, T.x + Math.cos(a) * 18, T.y - T.h * 0.75 + Math.sin(a) * 6, 8, R.brilho, 0.8); }
     if (rank >= 5) { c.beginPath(); c.ellipse(T.x, T.y - T.h - 6, 10, 3, 0, 0, TAU); c.strokeStyle = R.brilho; c.lineWidth = 1.6; c.stroke(); art.glow(c, T.x, T.y - T.h - 6, 18, R.brilho, 0.6); }
@@ -2266,8 +2401,8 @@
       } else if (f.tipo === 'feixe') {
         c.save(); c.globalCompositeOperation = 'lighter';
         c.beginPath(); c.moveTo(f.x0, f.y0); c.lineTo(f.x1, f.y1);
-        c.strokeStyle = art.rgba(f.cor, 0.8 * (1 - k)); c.lineWidth = 3 * (1 - k) + 1; c.stroke(); c.restore();
-        art.glow(c, f.x1, f.y1, 22, f.cor, 1 - k);
+        c.strokeStyle = art.rgba(f.cor, 0.8 * (1 - k)); c.lineWidth = (3 * (1 - k) + 1) * (f.larg || 1); c.stroke(); c.restore();
+        art.glow(c, f.x1, f.y1, 22 * (f.larg || 1), f.cor, 1 - k);
       } else if (f.tipo === 'onda') {
         const r = f.r1 * (1 - Math.pow(1 - k, 2));
         c.beginPath(); c.ellipse(f.x, f.y, Math.max(1, r), Math.max(1, r * 0.16), 0, 0, TAU);
@@ -2621,6 +2756,40 @@
       emit('equipe');
       return true;
     },
+    /* equipa uma capa (ou lanterna) que você já tem */
+    equipar(tipo, id) {
+      if (tipo === 'capa') { if (!temCapa(id)) return 'nao'; S.meta.equip.capa = id; }
+      else if (tipo === 'lanterna') { if (!temLanterna(id)) return 'nao'; S.meta.equip.lanterna = id; if (W) W.tam.cd = Math.min(W.tam.cd, 0.5); }
+      else return 'nao';
+      aplicarEquip();
+      emit('equipamento', { tipo, id });
+      return true;
+    },
+    /* compra única de capa visual na Loja (fica para sempre) */
+    comprarCapa(id) {
+      const k = LV.capa(id);
+      if (!k || !k.loja) return 'nao';
+      if (temCapa(id)) return 'ja';
+      if (S.lumes < k.loja.lumes) return 'lumes';
+      S.lumes -= k.loja.lumes;
+      S.meta.compras.push('capa:' + id);
+      S.meta.equip.capa = id;
+      emit('compra', 'capa'); emit('equipamento', { tipo: 'capa', id });
+      return true;
+    },
+    /* lanterna da Loja: Lumes + moedas do Guardião; vale até renascer */
+    comprarLanterna(id) {
+      const k = LV.lanternaEq(id);
+      if (!k || !k.loja) return 'nao';
+      if (temLanterna(id)) return 'ja';
+      if ((S.moedas[k.loja.moeda] || 0) < k.loja.q) return 'moeda';
+      if (S.lumes < k.loja.lumes) return 'lumes';
+      S.lumes -= k.loja.lumes; S.moedas[k.loja.moeda] -= k.loja.q;
+      S.itens.push('lanterna:' + id);
+      S.meta.equip.lanterna = id;
+      emit('compra', 'lanterna'); emit('equipamento', { tipo: 'lanterna', id });
+      return true;
+    },
     comprarUp(id) {
       const u = LV.upgrade(id);
       if (!u) return 'nao';
@@ -2802,6 +2971,11 @@
       if (W && W.chefe) falharChefe();
       iniciarMapa(i);
       return true;
+    },
+    alternarDesafio() {
+      if (!W || MU('autofarm') <= W.idx) return 'bloqueado';
+      W.desafioAuto = !W.desafioAuto; W.desafioEspera = 0;
+      return W.desafioAuto;
     },
     alternar(op) {
       if (op === 'auto' && !autoLiberadaEm(S)) return 'bloqueado';

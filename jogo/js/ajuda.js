@@ -58,7 +58,13 @@
       ]],
       ['Tamer and attributes', [
         'Each tamer level gives 3 points: <b>Strength</b> (damage), <b>Vigor</b> (health), <b>Luck</b> (capture, gathering, critical) and <b>Bond</b> (pet XP and attack speed).',
-        'Each tamer level also gives +1% damage and health to all pets. New titles change the cloak and the lantern.',
+        'Each tamer level also gives +1% damage and health to all pets.',
+      ]],
+      ['Cloaks and lanterns', [
+        'In the <b>Tamer</b> tab you choose the tamer’s cloak and lantern. Locked items show how to unlock them.',
+        '<b>Common cloaks</b> are purely visual and yours forever: they come from achievements or from the Shop (one-time purchase).',
+        '<b>Lanterns</b> change the lantern strike: piercing crystal beam, ember blast, tide that slows, shadow that weakens, or healing for the whole team (the Healing Lantern doesn’t attack). Achievement lanterns are permanent; Shop lanterns last until you rebirth.',
+        'Each <b>Guardian</b> drops a themed item on its first defeat of each journey (a cloak or a lantern with real bonuses). It comes equipped and is gone when you rebirth.',
       ]],
       ['Shop and Guardian coins', [
         'Upgrades cost Lumes plus coins that only Guardians drop (each Guardian has its own coin).',
@@ -69,10 +75,11 @@
         'The fight lasts 60 s and ends if every pet faints. During the challenge the tamer and the pets attack the Guardian on their own (pets in <b>Passive</b> mode stay out unless you order them with a right-click or long press).',
         'The goal never changes. Past the goal, 10% of kills are saved for the next summon.',
         'Each Guardian has a basic attack and two specials from its theme: roots, poison gas, anchor and water, light, chains and fire. Specials are announced first: circles and stripes on the ground show where they will hit. Some poison, root or stun the pets.',
-        'The first victory opens the next map and gives you a new pet. In the Maps tab, tap a map to preview it and travel (the game pauses while the preview is open).',
+        'The first victory opens the next map, gives you a new pet and a themed item (cloak or lantern). In the Maps tab, tap a map to preview it and travel (the game pauses while the preview is open).',
       ]],
       ['Auto-hunt', [
         'Unlocked after beating the first Guardian (or from the start with <b>Trail Memory</b>). The tamer walks to enemies, uses stairs and picks up drops by itself.',
+        '<b>Auto Challenge</b> (Sanctuary, one stage per map): when the kill goal is reached, the Guardian is challenged by itself. Turn it on with the button next to Auto-hunt; it starts off every time you enter a map, and after a defeat it waits 20 s before trying again.',
       ]],
       ['Rebirth and Sanctuary', [
         'After the first Guardian you can be reborn: you start over and earn <b>Echoes</b> (more for each Guardian beaten and for a high tamer level).',
@@ -132,7 +139,13 @@
       ]],
       ['Domador e atributos', [
         'Cada nível do domador dá 3 pontos: <b>Força</b> (dano), <b>Vigor</b> (vida), <b>Sorte</b> (captura, coleta e crítico) e <b>Vínculo</b> (XP dos pets e velocidade de ataque).',
-        'Cada nível do domador também dá +1% de dano e vida a todos os pets. Novos títulos mudam a capa e a lanterna.',
+        'Cada nível do domador também dá +1% de dano e vida a todos os pets.',
+      ]],
+      ['Capas e lanternas', [
+        'Na aba <b>Domador</b> você escolhe a capa e a lanterna do domador. Os itens trancados mostram como liberar.',
+        '<b>Capas comuns</b> são só visuais e ficam para sempre: saem das conquistas ou da Loja (compra única).',
+        'As <b>lanternas</b> mudam o golpe da lanterna: feixe de cristal que atravessa, explosão de brasa, maré que deixa lento, sombra que enfraquece ou cura para o grupo todo (a Lanterna de Cura não ataca). As das conquistas ficam para sempre; as da Loja valem até renascer.',
+        'Cada <b>Guardião</b> deixa um item temático na primeira vitória de cada jornada (uma capa ou lanterna com bônus de verdade). Ele já vem equipado e some ao renascer.',
       ]],
       ['Loja e moedas dos Guardiões', [
         'As melhorias custam Lumes e moedas que só os Guardiões soltam (cada Guardião tem a sua).',
@@ -143,10 +156,11 @@
         'A luta dura 60 s e acaba se todos os pets desmaiarem. Durante o desafio, o domador e os pets atacam o Guardião sozinhos (pets no modo <b>Passivo</b> ficam de fora, a não ser que você mande com o clique direito ou o toque longo).',
         'A meta é sempre a mesma. Depois dela, 10% dos abates ficam guardados para a próxima invocação.',
         'Cada Guardião tem um ataque básico e dois especiais do seu tema: raízes, gás venenoso, âncora e água, luz, correntes e fogo. Os especiais são avisados antes: círculos e faixas no chão mostram onde vão cair. Alguns envenenam, prendem ou atordoam os pets.',
-        'A primeira vitória abre o próximo mapa e dá um pet novo. Na aba Mapas, toque num mapa para ver a prévia e viajar (o jogo pausa enquanto a prévia está aberta).',
+        'A primeira vitória abre o próximo mapa, dá um pet novo e um item temático (capa ou lanterna). Na aba Mapas, toque num mapa para ver a prévia e viajar (o jogo pausa enquanto a prévia está aberta).',
       ]],
       ['Caçada automática', [
         'Liberada depois do primeiro Guardião (ou desde o início com <b>Memória da Trilha</b>). O domador anda sozinho até os inimigos, usa escadas e coleta o que cai.',
+        '<b>Desafio Automático</b> (Santuário, uma etapa por mapa): ao completar a meta de abates, o Guardião é desafiado sozinho. Ligue no botão ao lado da Caçada Auto; ele começa desligado sempre que você entra num mapa e, depois de uma derrota, espera 20 s antes de tentar de novo.',
       ]],
       ['Renascer e Santuário', [
         'Depois do primeiro Guardião você pode renascer: volta ao começo e ganha <b>Ecos</b> (mais Ecos a cada Guardião vencido e com o domador em nível alto).',
