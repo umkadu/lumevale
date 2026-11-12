@@ -71,7 +71,7 @@
       ]],
       ['Profile and titles', [
         (movel ? 'Tap' : 'Click') + ' the tamer’s portrait in the Tamer tab to open the <b>Profile</b>: name, look, title and your numbers (enemies defeated, Glimmers captured, rebirths and more).',
-        '<b>Titles</b> come from achievements (when you claim the reward) and each gives a bonus: more XP, damage, capture chance, chance for rare or Radiant Glimmers, less damage from ember creatures, more Echoes. The harder the achievement, the bigger the bonus. Equip one in the Profile; without a title, your level rank shows under your name.',
+        '<b>Titles</b> come from achievements (when you claim the reward) and each gives a bonus: more XP, damage, capture chance, chance for Radiant Glimmers, less damage from ember creatures, more Echoes. The harder the achievement, the bigger the bonus. Equip one in the Profile; without a title, your level rank shows under your name.',
       ]],
       ['Cloaks and lanterns', [
         'In the <b>Tamer</b> tab (Cloaks and Lanterns menus) you choose the tamer’s cloak and lantern. Locked items show how to unlock them.',
@@ -171,7 +171,7 @@
       ]],
       ['Perfil e títulos', [
         (movel ? 'Toque' : 'Clique') + ' no retrato do domador, na aba Domador, para abrir o <b>Perfil</b>: nome, aparência, título e os seus números (inimigos abatidos, Centelhas capturadas, renascimentos e mais).',
-        'Os <b>títulos</b> saem das conquistas (ao resgatar a recompensa) e cada um dá um bônus: mais XP, dano, chance de captura, chance de Centelhas raras ou Radiantes, menos dano de criaturas de brasa, mais Ecos. Quanto mais difícil a conquista, maior o bônus. Equipe um no Perfil; sem título, aparece a patente do nível embaixo do nome.',
+        'Os <b>títulos</b> saem das conquistas (ao resgatar a recompensa) e cada um dá um bônus: mais XP, dano, chance de captura, chance de Centelhas Radiantes, menos dano de criaturas de brasa, mais Ecos. Quanto mais difícil a conquista, maior o bônus. Equipe um no Perfil; sem título, aparece a patente do nível embaixo do nome.',
       ]],
       ['Capas e lanternas', [
         'Na aba <b>Domador</b> (menus Capas e Lanternas) você escolhe a capa e a lanterna do domador. Os itens trancados mostram como liberar.',

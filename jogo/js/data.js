@@ -326,7 +326,7 @@
   };
   LV.nomePet = (p) => p.apelido || LV.SPECIES[p.sp].nome[p.est];
   /* chance de captura com a vida cheia: ~30% nas primeiras áreas, caindo com o nível da criatura
-     (Nv 1: 30% · Nv 10: 22% · Nv 20: 15% · Nv 30: 11% · Nv 40: 8% · Nv 50+: 5%); espécies raras e formas evoluídas resistem mais */
+     (Nv 1: 30% · Nv 10: 22% · Nv 20: 15% · Nv 30: 11% · Nv 40: 8% · Nv 50+: 5%); espécies ariscas e formas evoluídas resistem mais */
   LV.chanceBaseCaptura = (sp, lv, est) => LV.clamp(0.3 * Math.pow(0.965, Math.max(0, lv - 1)), 0.045, 0.3) * (0.75 + 0.25 * (sp.cap / 0.3)) * (est ? 0.75 : 1);
   // chance no lançamento: sobe da chance base até o teto conforme a vida da criatura cai
   LV.chanceComVida = (base, hpf) => base + (Math.min(0.95, base + 0.55) - base) * Math.pow(1 - LV.clamp(hpf, 0, 1), 1.3);
@@ -795,19 +795,16 @@
   /* lanternas das conquistas novas */
   C.push({ id: 'brasa5000', cat: LV.t('Caçadas'), nome: LV.t('Domador de Chamas'), desc: LV.t('Derrote ') + (5000).toLocaleString(LV.locale) + LV.t(' criaturas de brasa'), meta: 5000, prog: (s) => s.meta.tot.brasa || 0, rec: { lanterna: 'explosiva' } });
   C.push({ id: 'breus2000', cat: LV.t('Breus'), nome: LV.t('Apagador de Breus'), desc: LV.t('Derrote ') + (2000).toLocaleString(LV.locale) + LV.t(' Breus'), meta: 2000, prog: (s) => s.meta.tot.breus || 0, rec: { lanterna: 'breu' } });
-  /* conquistas de captura rara (v1.17): dão títulos */
-  C.push({ id: 'raras25', cat: LV.t('Capturas'), nome: LV.t('Caçador de Raridades'), desc: LV.t('Capture 25 Centelhas raras (espécies difíceis ou formas evoluídas)'), meta: 25, prog: (s) => s.meta.tot.raras || 0, rec: { lumes: 8000 } });
+  /* conquista da Radiante achada numa captura (v1.17): dá título */
   C.push({ id: 'radiante1', cat: LV.t('Capturas'), nome: LV.t('Brilho Raro'), desc: LV.t('Capture uma Centelha Radiante'), meta: 1, prog: (s) => s.meta.tot.radCapt || 0, rec: { lanternas: 5 } });
   LV.conquista = (id) => C.find((c) => c.id === id);
-  /* Centelhas raras: espécies difíceis de capturar ou formas evoluídas encontradas na natureza */
-  LV.ehRara = (sp, est) => (LV.SPECIES[sp] ? LV.SPECIES[sp].cap < 0.27 : false) || est > 0;
-  /* chance de toda captura vir Radiante (v1.17) */
+  /* chance de toda captura vir Radiante (v1.17): a única Centelha rara do jogo */
   LV.CHANCE_RADIANTE = 0.005;
 
   /* =========================================================
      TÍTULOS (v1.17) — cada um sai de uma conquista (ao resgatar a recompensa) e dá um bônus.
      Só um fica equipado (no Perfil). Quanto mais difícil a conquista, maior o bônus.
-     b: xp, xpPet, vidaPet, danoPet, coleta, captura, captRara, radiante (pontos de chance), defBrasa, danoBreus, danoChefe, ecos
+     b: xp, xpPet, vidaPet, danoPet, coleta, captura, radiante (pontos de chance), defBrasa, danoBreus, danoChefe, ecos
      ========================================================= */
   LV.TITULOS = [
     { id: 'chama', nome: LV.t('Chama Nova'), conq: 'nivel10', b: { xp: 0.05 } },
@@ -818,7 +815,6 @@
     { id: 'renascido', nome: LV.t('Renascido'), conq: 'renasc1', b: { ecos: 0.05 } },
     { id: 'formas', nome: LV.t('Mestre das Formas'), conq: 'evo10', b: { xpPet: 0.1 } },
     { id: 'lanterneiro', nome: LV.t('Mestre das Lanternas'), conq: 'capt50', b: { captura: 0.06 } },
-    { id: 'raro', nome: LV.t('Olho para o Raro'), conq: 'raras25', b: { captRara: 0.1 } },
     { id: 'luzfundo', nome: LV.t('Luz das Profundezas'), conq: 'nivel60', b: { danoPet: 0.1 } },
     { id: 'coracao', nome: LV.t('Curandeiro do Coração'), conq: 'chefe4a', b: { danoChefe: 0.1 } },
     { id: 'apagador', nome: LV.t('Apagador de Breus'), conq: 'breus2000', b: { danoBreus: 0.12 } },
@@ -830,14 +826,13 @@
   LV.titulo = (id) => LV.TITULOS.find((t) => t.id === id);
   LV.TITULOS.forEach((t) => { const c = C.find((x) => x.id === t.conq); if (c) c.rec = Object.assign({}, c.rec, { titulo: t.id }); });
   LV.textoTitulo = function (b) {
-    const p = (v) => (Math.round(v * 1000) / 10).toLocaleString(LV.locale) + '%', t = [];
+    const p = (v) => (Math.round(v * 10000) / 100).toLocaleString(LV.locale) + '%', t = [];
     if (b.xp) t.push('+' + p(b.xp) + LV.t(' de XP do domador'));
     if (b.xpPet) t.push('+' + p(b.xpPet) + LV.t(' de XP das Centelhas'));
     if (b.danoPet) t.push('+' + p(b.danoPet) + LV.t(' de dano das Centelhas'));
     if (b.vidaPet) t.push('+' + p(b.vidaPet) + LV.t(' de vida das Centelhas'));
     if (b.coleta) t.push('+' + p(b.coleta) + LV.t(' de Lumes e materiais'));
     if (b.captura) t.push('+' + p(b.captura) + LV.t(' de chance de captura'));
-    if (b.captRara) t.push('+' + p(b.captRara) + LV.t(' de chance de captura de Centelhas raras'));
     if (b.radiante) t.push('+' + p(b.radiante) + LV.t(' de chance de a captura vir Radiante'));
     if (b.defBrasa) t.push('−' + p(b.defBrasa) + LV.t(' de dano recebido de criaturas de brasa'));
     if (b.danoBreus) t.push('+' + p(b.danoBreus) + LV.t(' de dano contra Breus'));

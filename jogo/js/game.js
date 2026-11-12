@@ -22,7 +22,7 @@
     return {
       ecos: 0, ecosTotal: 0, renasc: 0, recorde: 1, up: Object.fromEntries(LV.META.map((u) => [u.id, 0])),
       best: {},                                  // bestiário: id -> { v: vista, k: derrotadas, c: capturadas }
-      tot: { kills: 0, capt: 0, evo: 0, brasa: 0, breus: 0, raras: 0, radCapt: 0 },   // totais de todas as jornadas (brasa: criaturas de brasa; breus: hostis; raras e Radiantes capturadas)
+      tot: { kills: 0, capt: 0, evo: 0, brasa: 0, breus: 0, radCapt: 0 },   // totais de todas as jornadas (brasa: criaturas de brasa; breus: hostis; radCapt: Radiantes capturadas)
       conq: {},                                  // conquistas: 1 = pronta para resgatar, 2 = resgatada
       autoAttr: [],                              // atributos que recebem os pontos sozinhos ao subir de nível (fixos)
       autoVagas: 0,                              // vagas de automação já pagas (continuam após redefinir)
@@ -90,7 +90,7 @@
     const st0 = s.st || {}, tt = sm.tot || {};
     // saves de antes do bestiário: os totais começam pelos números desta jornada
     o.meta.tot = { kills: intOr(tt.kills, intOr(st0.kills, 0, 0, 1e12), 0, 1e12), capt: intOr(tt.capt, intOr(st0.capturas, 0, 0, 1e9), 0, 1e9), evo: intOr(tt.evo, intOr(st0.evolucoes, 0, 0, 1e9), 0, 1e9),
-      brasa: intOr(tt.brasa, 0, 0, 1e12), breus: intOr(tt.breus, 0, 0, 1e12), raras: intOr(tt.raras, 0, 0, 1e9), radCapt: intOr(tt.radCapt, 0, 0, 1e9) };
+      brasa: intOr(tt.brasa, 0, 0, 1e12), breus: intOr(tt.breus, 0, 0, 1e12), radCapt: intOr(tt.radCapt, 0, 0, 1e9) };
     const sq = sm.conq && typeof sm.conq === 'object' ? sm.conq : {};
     LV.CONQUISTAS.forEach((c) => { const v = intOr(sq[c.id], 0, 0, 2); if (v) o.meta.conq[c.id] = v; });
     const ids = LV.ATTR.map((a) => a.id);
@@ -1149,7 +1149,7 @@
     const sp = LV.SPECIES[e.sp];
     const base = LV.chanceBaseCaptura(sp, e.lv, e.est);
     const nivel = Math.pow(0.95, Math.max(0, e.lv - S.dom.nivel));
-    const extra = sk('olhar') + tit('captura') + (LV.ehRara(e.sp, e.est) ? tit('captRara') : 0);
+    const extra = sk('olhar') + tit('captura');
     return LV.clamp(LV.chanceComVida(base, e.hp / e.hpMax) * (1 + domStats().sorteCap) * nivel + extra, 0.02, 0.95);
   }
   game.mirarEm = function (x, y, raio) {
@@ -1269,7 +1269,6 @@
   function capturar(e, talento) {
     const pet = { uid: S.prox++, sp: e.sp, nivel: Math.max(1, Math.min(e.lv, F.capPet(S.dom.nivel))), xp: 0, est: e.est, apelido: null, hab: 1, bonus: talento || null };
     if (!e.tutorial && Math.random() < LV.CHANCE_RADIANTE + tit('radiante')) { pet.especial = true; pet.radCapt = true; S.meta.tot.radCapt = (S.meta.tot.radCapt || 0) + 1; }
-    if (LV.ehRara(e.sp, e.est)) S.meta.tot.raras = (S.meta.tot.raras || 0) + 1;
     conferirAtaques(pet, false);
     S.pets.push(pet); S.st.capturas++; contar(e.sp, 'c'); contar(formaDe(e), 'c'); S.meta.tot.capt++;
     e.capturado = true; e.hp = 0;
