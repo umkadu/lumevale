@@ -228,14 +228,14 @@
      as primeiras compras pedem Sementes Antigas (mapa 1), depois Trufas Reais (mapa 2) e assim por diante.
      tiers/qtd: faixa e quantidade de moedas fixas por nível (para melhorias de poucos níveis). */
   LV.UPGRADES = [
-    { id: 'garras', nome: LV.t('Garras Afiadas'), desc: LV.t('Dano dos pets'), base: 60, mult: 1.45, max: 25, passo: 5, efeito: (n) => '+' + n * 12 + LV.t('% de dano') },
-    { id: 'carapaca', nome: LV.t('Carapaça Rígida'), desc: LV.t('Vida dos pets'), base: 60, mult: 1.45, max: 25, passo: 5, efeito: (n) => '+' + n * 12 + LV.t('% de vida') },
+    { id: 'garras', nome: LV.t('Garras Afiadas'), desc: LV.t('Dano das Centelhas'), base: 60, mult: 1.45, max: 25, passo: 5, efeito: (n) => '+' + n * 12 + LV.t('% de dano') },
+    { id: 'carapaca', nome: LV.t('Carapaça Rígida'), desc: LV.t('Vida das Centelhas'), base: 60, mult: 1.45, max: 25, passo: 5, efeito: (n) => '+' + n * 12 + LV.t('% de vida') },
     { id: 'ritmo', nome: LV.t('Ritmo de Caça'), desc: LV.t('Velocidade de ataque'), base: 150, mult: 1.6, max: 15, passo: 3, efeito: (n) => '+' + n * 5 + LV.t('% de velocidade') },
     { id: 'faro', nome: LV.t('Faro de Coletor'), desc: LV.t('Lumes e materiais que caem'), base: 90, mult: 1.5, max: 20, passo: 4, efeito: (n) => '+' + n * 8 + LV.t('% de coleta') },
     { id: 'sabedoria', nome: LV.t('Tomo das Profundezas'), desc: LV.t('Experiência ganha'), base: 120, mult: 1.5, max: 20, passo: 4, efeito: (n) => '+' + n * 8 + LV.t('% de XP') },
     { id: 'ima', nome: LV.t('Lanterna Magnética'), desc: LV.t('Distância de coleta'), base: 80, mult: 1.9, max: 10, passo: 2, efeito: (n) => 150 + n * 35 + LV.t(' de alcance') },
     { id: 'descanso', nome: LV.t('Acampamento'), desc: LV.t('Tempo máximo de ganho offline'), base: 300, mult: 2.2, max: 10, passo: 2, efeito: (n) => 2 + n + LV.t('h de ganho offline') },
-    { id: 'laco', nome: LV.t('Laço Extra'), desc: LV.t('Vagas de pets em campo'), base: 4000, mult: 12, max: 2, tiers: [1, 3], qtd: [12, 18], efeito: (n) => 3 + n + LV.t(' pets em campo') },
+    { id: 'laco', nome: LV.t('Laço Extra'), desc: LV.t('Vagas de Centelhas em campo'), base: 4000, mult: 12, max: 2, tiers: [1, 3], qtd: [12, 18], efeito: (n) => 3 + n + LV.t(' Centelhas em campo') },
   ];
   LV.upgrade = (id) => LV.UPGRADES.find((u) => u.id === id);
   /* custo do próximo nível (n = nível atual): Lumes + moeda da faixa */
@@ -250,16 +250,16 @@
   LV.META = [
     { id: 'eco', nome: LV.t('Eco Ressonante'), desc: LV.t('Ecos ganhos ao renascer'), base: 4, mult: 1.55, max: 15, efeito: (n) => '+' + n * 20 + LV.t('% de Ecos') },
     { id: 'fortuna', nome: LV.t('Fortuna dos Guardiões'), desc: LV.t('Moedas que os Guardiões soltam'), base: 5, mult: 1.55, max: 15, efeito: (n) => '+' + n * 25 + LV.t('% de moedas') },
-    { id: 'ancestral', nome: LV.t('Força Ancestral'), desc: LV.t('Dano e vida de todos os pets'), base: 3, mult: 1.45, max: 25, efeito: (n) => '+' + n * 8 + LV.t('% de dano e vida') },
-    { id: 'mestre', nome: LV.t('Mestre das Trilhas'), desc: LV.t('XP do domador e dos pets'), base: 3, mult: 1.45, max: 20, efeito: (n) => '+' + n * 10 + LV.t('% de XP') },
+    { id: 'ancestral', nome: LV.t('Força Ancestral'), desc: LV.t('Dano e vida de todas as Centelhas'), base: 3, mult: 1.45, max: 25, efeito: (n) => '+' + n * 8 + LV.t('% de dano e vida') },
+    { id: 'mestre', nome: LV.t('Mestre das Trilhas'), desc: LV.t('XP do domador e das Centelhas'), base: 3, mult: 1.45, max: 20, efeito: (n) => '+' + n * 10 + LV.t('% de XP') },
     { id: 'heranca', nome: LV.t('Herança de Lume'), desc: LV.t('Lumes coletados e Lumes iniciais'), base: 4, mult: 1.5, max: 15, efeito: (n) => '+' + n * 6 + LV.t('% de Lumes · começa com ') + (n * 300).toLocaleString(LV.locale) },
     { id: 'lanterneiro', nome: LV.t('Lanterneiro'), desc: LV.t('Chance no lançamento e lanternas iniciais'), base: 5, mult: 1.6, max: 10, efeito: (n) => '+' + n * 8 + LV.t('% de chance · +') + n * 2 + LV.t(' lanternas') },
-    { id: 'primeiro', nome: LV.t('Primeiro Passo'), desc: LV.t('Nível inicial do pet escolhido'), base: 6, mult: 1.8, max: 5, efeito: (n) => LV.t('começa no nível ') + (1 + n * 3) },
+    { id: 'primeiro', nome: LV.t('Primeiro Passo'), desc: LV.t('Nível inicial da Centelha escolhida'), base: 6, mult: 1.8, max: 5, efeito: (n) => LV.t('começa no nível ') + (1 + n * 3) },
     { id: 'trilha', nome: LV.t('Memória da Trilha'), desc: LV.t('Caçada automática desde o primeiro mapa'), base: 8, mult: 1, max: 1, efeito: (n) => (n ? LV.t('liberada desde o início') : LV.t('só a partir do mapa 2')) },
     // auto-farm: cada etapa libera o desafio automático de mais um mapa (500 Ecos e x2,5 a cada etapa)
     { id: 'autofarm', nome: LV.t('Desafio Automático'), desc: LV.t('Ao completar a meta de abates, o Guardião é desafiado sozinho'), base: 500, mult: 2.5, max: 5,
       efeito: (n) => (n ? LV.t('liberado até ') + LV.MAPS[n - 1].nome : LV.t('nenhum mapa')) },
-    { id: 'vinculo', nome: LV.t('Vínculo Eterno'), desc: LV.t('Vaga extra de pet em campo, em todas as jornadas'), base: 150, mult: 1, max: 1, efeito: (n) => '+' + n + LV.t(' vaga permanente') },
+    { id: 'vinculo', nome: LV.t('Vínculo Eterno'), desc: LV.t('Vaga extra de Centelha em campo, em todas as jornadas'), base: 150, mult: 1, max: 1, efeito: (n) => '+' + n + LV.t(' vaga permanente') },
   ];
   LV.meta = (id) => LV.META.find((u) => u.id === id);
   /* atributos automáticos: cada vaga comprada escolhe um atributo que recebe os pontos ao subir de nível.
@@ -288,10 +288,10 @@
     return r;
   };
   LV.ATTR = [
-    { id: 'forca', nome: LV.t('Força'), desc: LV.t('+3% de dano dos pets e da lanterna') },
-    { id: 'vigor', nome: LV.t('Vigor'), desc: LV.t('+4% de vida dos pets e do domador') },
+    { id: 'forca', nome: LV.t('Força'), desc: LV.t('+3% de dano das Centelhas e da lanterna') },
+    { id: 'vigor', nome: LV.t('Vigor'), desc: LV.t('+4% de vida das Centelhas e do domador') },
     { id: 'sorte', nome: LV.t('Sorte'), desc: LV.t('+1,5% de captura, +2% de coleta e +0,4% de crítico') },
-    { id: 'vinculo', nome: LV.t('Vínculo'), desc: LV.t('+3% de XP dos pets e +1% de velocidade de ataque') },
+    { id: 'vinculo', nome: LV.t('Vínculo'), desc: LV.t('+3% de XP das Centelhas e +1% de velocidade de ataque') },
   ];
 
   /* ---------- fórmulas ---------- */
@@ -547,8 +547,8 @@
       case 'explosao': t = LV.t('Explode no alvo: ') + pc(v(a.mult)) + LV.t(' do ataque em todos num raio de ') + Math.round(v(a.raio)); break;
       case 'chuva': t = LV.t('Faz cair ') + v(a.qtd) + LV.t(' projéteis sobre os inimigos perto do domador: ') + pc(v(a.mult)) + LV.t(' do ataque cada'); break;
       case 'escudo': t = LV.t('Escudo em todos os aliados que absorve ') + pc(v(a.pct)) + LV.t(' da vida máxima de cada um por 6 s'); break;
-      case 'pulso': t = LV.t('Descarga em volta do pet: ') + pc(v(a.mult)) + LV.t(' do ataque num raio de ') + v(a.raio); break;
-      case 'cura': t = LV.t('Cura ') + pc(v(a.pct)) + LV.t(' da vida máxima do domador e de todos os pets'); break;
+      case 'pulso': t = LV.t('Descarga em volta de si: ') + pc(v(a.mult)) + LV.t(' do ataque num raio de ') + v(a.raio); break;
+      case 'cura': t = LV.t('Cura ') + pc(v(a.pct)) + LV.t(' da vida máxima do domador e de todas as Centelhas'); break;
       case 'nuvem': t = LV.t('Nuvem venenosa por 4 s: ') + pc(v(a.dps)) + LV.t(' do ataque por segundo e deixa os inimigos lentos'); break;
       case 'provocar': t = LV.t('Atrai os inimigos próximos por ') + s1(v(a.dur)) + LV.t(' s e reduz o dano que recebe em ') + pc(v(a.red)); break;
       case 'lanca': t = LV.t('Raio em linha reta: ') + pc(v(a.mult)) + LV.t(' do ataque em todos no caminho (alcance ') + Math.round(v(a.alc)) + ')'; break;
@@ -562,10 +562,10 @@
         if (a.dano) p.push('+' + pc(v(a.dano)) + LV.t(' de dano'));
         if (a.vel) p.push('+' + pc(v(a.vel)) + LV.t(' de velocidade de ataque'));
         if (a.red) p.push(pc(v(a.red)) + LV.t(' menos dano recebido'));
-        t = (a.tipo === 'furia' ? LV.t('Fortalece o próprio pet por ') : LV.t('Fortalece o domador e todos os pets por ')) + a.dur + ' s: ' + p.join(LV.t(', '));
+        t = (a.tipo === 'furia' ? LV.t('Fortalece a si mesmo por ') : LV.t('Fortalece o domador e todas as Centelhas por ')) + a.dur + ' s: ' + p.join(LV.t(', '));
         break;
       }
-      case 'guarda': t = LV.t('O domador e todos os pets recebem ') + pc(v(a.red)) + LV.t(' menos dano por ') + a.dur + ' s'; break;
+      case 'guarda': t = LV.t('O domador e todas as Centelhas recebem ') + pc(v(a.red)) + LV.t(' menos dano por ') + a.dur + ' s'; break;
       case 'garras': t = a.golpes + LV.t(' golpes rápidos: ') + pc(v(a.mult)) + LV.t(' do ataque cada'); break;
       case 'empurrao': t = LV.t('Rajada à frente: ') + pc(v(a.mult)) + LV.t(' do ataque e empurra os inimigos para longe'); break;
       case 'dreno': t = pc(v(a.mult)) + LV.t(' do ataque num alvo e recupera ') + pc(a.dreno) + LV.t(' do dano como vida'); break;
@@ -580,9 +580,9 @@
     const ex = [];
     if (a.atord && !['prisao', 'prisaoArea'].includes(a.tipo)) ex.push(LV.t('atordoa por ') + s1(v(a.atord)) + ' s');
     if (a.dot) ex.push(DOT_NOME[el] + LV.t(' por ') + a.dot.dur + ' s');
-    if (a.lento) ex.push(LV.t('deixa lento por ') + a.lento + ' s');
+    if (a.lento) ex.push(LV.t('causa lentidão por ') + s1(a.lento) + ' s');
     if (a.fraco) ex.push(LV.t('enfraquece (−30% de ataque) por ') + a.fraco + ' s');
-    if (a.vuln) ex.push(LV.t('deixa vulnerável (+') + pc(v(a.vuln)) + LV.t(' de dano recebido) por 4 s'));
+    if (a.vuln) ex.push(LV.t('causa vulnerabilidade (+') + pc(v(a.vuln)) + LV.t(' de dano recebido) por 4 s'));
     return t + (ex.length ? LV.t(', ') + ex.join(LV.t(', ')) : '') + '.';
   };
   LV.recargaAtq = (a, n) => a.cd * Math.max(0.6, 1 - 0.03 * (n - 1));
@@ -641,11 +641,12 @@
   LV.NPCS = {
     pavio: { nome: LV.t('Mestre Pavio'), papel: LV.t('Lanterneiro'), fala: LV.t('Lanterna boa é lanterna acesa. Leve quantas precisar para a descida.'), cor: '#ffc46b' },
     agulha: { nome: LV.t('Dona Agulha'), papel: LV.t('Costureira'), fala: LV.t('Uma capa nova não deixa ninguém mais forte, mas deixa mais bonito. Escolha com calma.'), cor: '#ff9ab8' },
-    bigorna: { nome: LV.t('Mestre Bigorna'), papel: LV.t('Ferreiro'), fala: LV.t('Traga as moedas dos Guardiões e eu reforço o que você e os seus pets têm.'), cor: '#ff8a52' },
+    bigorna: { nome: LV.t('Mestre Bigorna'), papel: LV.t('Ferreiro'), fala: LV.t('Traga as moedas dos Guardiões e eu reforço o que você e as suas Centelhas têm.'), cor: '#ff8a52' },
     escambo: { nome: LV.t('Velho Escambo'), papel: LV.t('Trocador'), fala: LV.t('Musgo por esporo, esporo por escama... Tudo tem o seu preço, e o meu é justo.'), cor: '#9ef08a' },
     iris: { nome: LV.t('Zeladora Íris'), papel: LV.t('Guardiã das Radiantes'), fala: LV.t('Toda Radiante que você conquistou deixa um rastro de luz. Mesmo depois de um renascimento, eu sei trazê-la de volta.'), cor: '#ffe27a' },
     santuario: { nome: LV.t('Santuário dos Ecos'), papel: LV.t('Melhorias permanentes'), estrutura: true, cor: '#c8b8ff' },
     portao: { nome: LV.t('Campo de Treino'), papel: LV.t('Teste o dano das Centelhas'), estrutura: true, cor: '#ffd27a' },
+    portal: { nome: LV.t('Vila de Alvorada'), papel: LV.t('Voltar à vila'), estrutura: true, cor: '#ffc46b' },
   };
   /* trocas do Velho Escambo: só entre materiais vizinhos (mapa a mapa).
      Descer (para o material do mapa seguinte) custa 5 por 1; subir (para o do mapa anterior) rende 2 por 1. */
@@ -720,7 +721,7 @@
   [[1, LV.t('Primeira lanterna'), { lanternas: 3 }], [10, LV.t('Colecionador'), { lanternas: 5 }], [50, LV.t('Mestre das lanternas'), { lanternas: 15, lumes: 5000 }]]
     .forEach(([n, nome, rec]) => C.push({ id: 'capt' + n, cat: LV.t('Capturas'), nome, desc: LV.t('Capture ') + n + (n === 1 ? LV.t(' criatura') : LV.t(' criaturas')), meta: n, prog: (s) => s.meta.tot.capt, rec }));
   [[1, LV.t('Metamorfose'), { lumes: 1500 }], [10, LV.t('Mestre das formas'), { lumes: 20000, lanternas: 5 }]]
-    .forEach(([n, nome, rec]) => C.push({ id: 'evo' + n, cat: LV.t('Capturas'), nome, desc: LV.t('Evolua ') + n + (n === 1 ? LV.t(' pet') : LV.t(' pets')), meta: n, prog: (s) => s.meta.tot.evo, rec }));
+    .forEach(([n, nome, rec]) => C.push({ id: 'evo' + n, cat: LV.t('Capturas'), nome, desc: LV.t('Evolua ') + n + (n === 1 ? LV.t(' Centelha') : LV.t(' Centelhas')), meta: n, prog: (s) => s.meta.tot.evo, rec }));
   [[10, LV.t('Aprendiz de Lume'), { lanternas: 3 }], [25, LV.t('Domador'), { lumes: 5000 }], [40, LV.t('Domador veterano'), { lanternas: 8, lumes: 20000 }], [60, LV.t('Mestre das profundezas'), { lumes: 150000, ecos: 5 }]]
     .forEach(([n, nome, rec]) => C.push({ id: 'nivel' + n, cat: LV.t('Domador'), nome, desc: LV.t('Alcance o nível ') + n + LV.t(' do domador'), meta: n, prog: (s) => Math.max(s.meta.recorde, s.dom.nivel), rec }));
   [[1, LV.t('Recomeço'), { ecos: 3 }], [5, LV.t('Eterno retorno'), { ecos: 15 }]]
@@ -759,7 +760,7 @@
     { id: 'brasao', nome: LV.t('Brasão da Sentinela'), desc: LV.t('O tabardo da guarda da cidade submersa, com o brasão da lanterna.'), chefe: 2, bonus: { defesa: 0.25 },
       efeito: LV.t('O domador recebe 25% menos dano') },
     { id: 'coracao', nome: LV.t('Manto do Coração'), desc: LV.t('Ainda quente por dentro. As rachaduras brilham como brasa.'), chefe: 4, bonus: { dano: 0.12 },
-      efeito: LV.t('+12% de dano do domador e dos pets') },
+      efeito: LV.t('+12% de dano do domador e das Centelhas') },
   ];
   LV.capa = (id) => LV.CAPAS.find((c) => c.id === id);
   /* =========================================================
@@ -774,7 +775,7 @@
     { id: 'cantante', nome: LV.t('Lanterna Cantante'), desc: LV.t('Cristal da Matriarca que ainda canta. O feixe atravessa tudo.'), chefe: 3, cor: '#ee9cff', feixe: '#f6c6ff', el: 'cristal', fura: 3, ay: 0.55,
       efeito: LV.t('Feixe de cristal que atravessa até 3 criaturas em linha') },
     { id: 'cura', nome: LV.t('Lanterna de Cura'), desc: LV.t('Uma luz verde e mansa que não fere ninguém.'), loja: { lumes: 15000, moeda: 'trufa', q: 10 }, cor: '#9dffb0', feixe: '#b8ffc4', cura: 0.08, ay: 0.58,
-      efeito: LV.t('Não ataca: a cada 4 s cura 8% da vida do domador e dos pets') },
+      efeito: LV.t('Não ataca: a cada 4 s cura 8% da vida do domador e das Centelhas') },
     { id: 'mares', nome: LV.t('Lanterna das Marés'), desc: LV.t('Guarda uma onda presa no vidro.'), loja: { lumes: 60000, moeda: 'perola', q: 12 }, cor: '#62c9ff', feixe: '#a8e6ff', el: 'mare', lento: 3, ay: 0.6,
       efeito: LV.t('Golpe de maré que deixa o alvo lento por 3 s') },
     { id: 'explosiva', nome: LV.t('Lanterna Explosiva'), desc: LV.t('Brasa viva presa num vidro rachado.'), conq: 'brasa5000', cor: '#ff8a3a', feixe: '#ffb070', el: 'brasa', area: 85, ay: 0.6,

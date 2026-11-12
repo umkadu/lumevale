@@ -434,7 +434,7 @@
     const e = W.chefe.e;
     e.fuga = 0.8; e.dash = null; W.chefe = null; W.spawn = 2; limparEfeitosChefe();
     W.desafioEspera = 20;                       // desafio automático: um respiro antes de tentar de novo
-    const txt = motivo === 'pets' ? LV.t('Todos os seus pets caíram. O desafio contra ') + e.nome + LV.t(' terminou.')
+    const txt = motivo === 'pets' ? LV.t('Todas as suas Centelhas caíram. O desafio contra ') + e.nome + LV.t(' terminou.')
       : motivo === 'abandonou' ? LV.t('Você abandonou a batalha contra ') + e.nome + '.'
       : motivo === 'heroi' ? LV.t('Você caiu. ') + e.nome + LV.t(' venceu desta vez.')
       : LV.t('O tempo acabou. ') + e.nome + LV.t(' recuou para as sombras.');
@@ -3002,7 +3002,7 @@
     N().desenhar(c, W.L, cam, vw, t);
     if (W.lugar) desenharLugar(c, cam, vw, t);
     desenharEntidades(c);
-    if (W.lugar === 'vila') rotulosNpc(c, cam, vw, t);
+    if (W.lugar) rotulosNpc(c, cam, vw, t);
     desenharEfeitos(c);
     c.restore();
     art.drawTile(c, bg.frente, 1.35, cam, vw);
@@ -3078,9 +3078,11 @@
   function iniciarLugar(id) {
     if (!LV.LUGARES[id] || !S) return false;
     if (W && W.chefe) falharChefe('abandonou');
-    const def = defLugar(id), ds = domStats();
+    const def = defLugar(id), ds = domStats(), de = W && W.lugar;
     const L = id === 'vila' ? N().gerarVila(def) : N().gerarTreino(def);
-    const x0 = L.entrada || 300;
+    // vindo do outro lugar, chega pela porta (portão da vila / portal do treino)
+    const porta = de && (L.npcs || []).find((n) => n.id === (id === 'vila' ? 'portao' : 'portal'));
+    const x0 = porta ? porta.x + 90 : L.entrada || 300;
     W = game.W = {
       idx: S.mapa, lugar: id, def, L, w: L.w, t: 0, cam: Math.max(0, x0 - 420), shake: 0,
       tam: { x: x0, y: G, vy: 0, sup: 0, esc: null, et: 0, ign: -1, ignT: 0, face: 1, hp: ds.hp, hpMax: ds.hp, cd: 1, mov: 0, manual: 0, alvoX: null, caido: 0, flash: 0, atk: 0, el: null, arVx: 0, escVx: 0, h: LV.HEROI.alt },
@@ -3092,7 +3094,7 @@
     montarPets();
     W.pets.forEach((p, i) => { p.x = x0 - 50 - i * 34; p.y = p.voa ? G - 64 : G; p.sup = p.voa ? -1 : 0; });
     if (id === 'treino') { criarBonecos(); W.dps = novoDps(); }
-    if (id === 'vila') W.npcs = (L.npcs || []).map((n) => Object.assign({ face: n.face || -1, t0: Math.random() * 10 }, n));
+    W.npcs = (L.npcs || []).map((n) => Object.assign({ face: n.face || -1, t0: Math.random() * 10 }, n));
     emit('lugar', id);
     if (LV.audio) LV.audio.musica(def.musica);
     return true;
@@ -3193,7 +3195,7 @@
   }
   /* clique na vila: acha o morador ou prédio sob o ponteiro */
   game.npcEm = function (x, y) {
-    if (!W || W.lugar !== 'vila') return null;
+    if (!W || !W.lugar) return null;
     let best = null, bd = Infinity;
     for (const n of W.npcs || []) {
       const alt = Math.max(n.h || 0, n.estr ? n.eh * 0.9 : 0), larg = n.estr ? Math.max(60, n.eh * 0.45) : 34;

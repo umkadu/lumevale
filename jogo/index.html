@@ -147,6 +147,9 @@
   #ab-txt.entra { animation: abTexto 0.9s ease-out; }
   @keyframes abTexto { from { opacity: 0; transform: translateY(8px); } }
   .ab-heroi { width: 110px; height: 110px; object-fit: contain; filter: drop-shadow(0 0 26px rgba(255, 210, 140, 0.55)); animation: pulo 2.4s ease-in-out infinite; }
+  .ab-candeia { height: clamp(150px, 34vh, 300px); width: auto; max-width: 80vw; object-fit: contain; filter: drop-shadow(0 0 28px rgba(255, 196, 120, 0.4)); animation: abCandeia 5s ease-in-out infinite; }
+  .ab-candeia[hidden] { display: none; }
+  @keyframes abCandeia { 50% { transform: translateY(-5px); filter: drop-shadow(0 0 40px rgba(255, 196, 120, 0.6)); } }
   .ab-criaturas { display: flex; gap: clamp(10px, 3vw, 26px); align-items: flex-end; justify-content: center; min-height: 88px; }
   .ab-criaturas[hidden] { display: none; }
   .ab-criaturas img { height: clamp(58px, 11vh, 92px); width: auto; animation: pulo 2.4s ease-in-out infinite; }
@@ -157,7 +160,7 @@
   .ab-pontos i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, 0.25); }
   .ab-pontos i.on { background: var(--ouro); box-shadow: 0 0 8px var(--ouro); }
   .ab-acoes { display: flex; gap: 10px; }
-  @media (max-height: 520px) { .ab-caixa { gap: 10px; margin-bottom: 0; } #ab-txt { font-size: 17px; } .ab-heroi { width: 72px; height: 72px; } .ab-criaturas { min-height: 0; } .ab-criaturas img { height: 52px; } }
+  @media (max-height: 520px) { .ab-caixa { gap: 10px; margin-bottom: 0; } #ab-txt { font-size: 17px; } .ab-heroi { width: 72px; height: 72px; } .ab-candeia { height: 104px; } .ab-criaturas { min-height: 0; } .ab-criaturas img { height: 52px; } }
   .efeito-lore { margin: -4px 0 0; font: italic 15px var(--f-corpo); color: color-mix(in srgb, var(--acc) 75%, #fff); }
   .desbloqueios .link, .link { background: none; border: 0; padding: 0; color: var(--acc); font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
   .diario-m { width: min(560px, 100%); }
@@ -215,7 +218,9 @@
   .tut-fim h2 { margin: 0; }
   .tut-fim-pet { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 16px; align-items: center; }
   .tut-fim-pet p { margin: 0 0 6px; }
-  .tut-fim-pet img { filter: drop-shadow(0 0 18px color-mix(in srgb, var(--acc) 50%, transparent)); animation: pulo 1.6s ease-in-out infinite; }
+  /* retratos das Centelhas: as ilustrações não são quadradas; nunca esticar (antes a do tutorial ficava achatada) */
+  img[src*="img/pets/"] { object-fit: contain; }
+  .tut-fim-pet img { width: 112px; height: 112px; object-fit: contain; filter: drop-shadow(0 0 18px color-mix(in srgb, var(--acc) 50%, transparent)); animation: pulo 1.6s ease-in-out infinite; }
   @keyframes pulo { 50% { transform: translateY(-6px); } }
   /* aviso de versão nova (app instalado pelo site): fica até o jogador tocar */
   .toast.atualizar { display: flex; align-items: center; gap: 10px; pointer-events: auto; border-left-color: var(--ouro); padding: 5px 6px 5px 12px; }
@@ -383,9 +388,10 @@
   .eq { display: grid; justify-items: center; align-content: start; text-align: center; gap: 4px; padding: 10px 8px; border: 1px solid var(--linha); background: rgba(255, 255, 255, 0.02); }
   .eq img { height: 84px; width: auto; max-width: 100%; object-fit: contain; }
   /* vila de Alvorada (v1.16): moradores, trocas e Radiantes */
-  .lugar-capa { height: 96px; background: #120c08 center 40% / cover no-repeat; border: 1px solid var(--linha); margin-bottom: 8px; }
-  .npcs { display: grid; gap: 6px; }
-  .npc-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 10px; border-left: 3px solid var(--c); background: rgba(255, 255, 255, 0.025); }
+  .mapa.lugar .mthumb { background-size: cover; background-position: center 40%; }
+  .ecos-prev { display: grid; gap: 2px; justify-items: start; padding: 10px 12px; margin-bottom: 8px; border: 1px solid var(--linha); background: rgba(185, 166, 255, 0.05); }
+  .ecos-prev b { font-size: 22px; }
+  .npc-m p.ecos-saldo { margin: 10px 0 0; }
   .npc-m { width: min(600px, 100%); }
   .npc-cab { display: flex; gap: 14px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--linha); }
   .npc-cab h2 { margin: 0; color: var(--c); }
@@ -896,6 +902,8 @@
   html.movel .chipPet:hover, html.movel .ini:hover { transform: none; }
   html.movel #tut { top: max(96px, calc(var(--seg-topo) + 84px)); padding: 7px 8px 7px 11px; gap: 8px; }
   html.movel #tut p { font-size: 13px; line-height: 1.35; }
+  /* no celular o aviso da mira vai para o alto da tela: perto dos botões ele cobria as criaturas no chão */
+  html.movel #mira { position: fixed; top: max(96px, calc(var(--seg-topo) + 84px)); left: 50%; right: auto; bottom: auto; transform: translateX(-50%); text-align: center; z-index: 5; }
   html.movel #aviso-pausa { padding: max(64px, calc(var(--seg-topo) + 56px)) 16px 80px; }
   html.movel .ap-caixa { padding: 12px 14px; gap: 6px; }
   html.movel .ap-caixa p { font-size: 14px; }
@@ -1020,7 +1028,7 @@
         </div>
         <div class="pets-col">
           <div class="modo-pets" id="modo-pets">
-            <button class="hbtn modo-btn" id="b-modo" aria-haspopup="menu" aria-expanded="false" title="Comando dos pets (teclas 1, 2 e 3)"><span class="modo-ic" id="h-modo-ic" aria-hidden="true"></span><span id="h-modo">Agressivo</span></button>
+            <button class="hbtn modo-btn" id="b-modo" aria-haspopup="menu" aria-expanded="false" title="Comando das Centelhas (teclas 1, 2 e 3)"><span class="modo-ic" id="h-modo-ic" aria-hidden="true"></span><span id="h-modo">Agressivo</span></button>
             <div class="modo-menu" id="modo-menu" role="menu" hidden>
               <button role="menuitemradio" data-modo="agressivo" aria-checked="true"><span class="modo-ic" data-ic="agressivo" aria-hidden="true"></span><span><b>Agressivo</b><small>Atacam todos os inimigos por perto</small></span><kbd>1</kbd></button>
               <button role="menuitemradio" data-modo="defensor" aria-checked="false"><span class="modo-ic" data-ic="defensor" aria-hidden="true"></span><span><b>Defensor</b><small>Atacam só quem atacar primeiro</small></span><kbd>2</kbd></button>
@@ -1073,13 +1081,14 @@
       <dl class="afk-grade" id="afk-grade"></dl>
       <div class="afk-pets" id="afk-pets"></div>
       <button class="btn-ini afk-btn" id="b-retomar">Retomar</button>
-      <p class="muted small afk-dica">Seus pets continuam caçando enquanto esta tela estiver aberta.</p>
+      <p class="muted small afk-dica">Suas Centelhas continuam caçando enquanto esta tela estiver aberta.</p>
     </div>
   </div>
   <div id="inicio" hidden><div class="inicio-caixa"></div></div>
   <div id="abertura" hidden role="dialog" aria-modal="true" aria-labelledby="ab-txt">
     <div class="ab-fundo" id="ab-fundo"></div>
     <div class="ab-caixa">
+      <img class="ab-candeia" id="ab-candeia" src="img/historia/candeia.webp" alt="" hidden>
       <img class="ab-heroi" id="ab-heroi" src="img/heroi/parado.webp" alt="" hidden>
       <div class="ab-criaturas" id="ab-criaturas" aria-hidden="true" hidden></div>
       <p id="ab-txt"></p>

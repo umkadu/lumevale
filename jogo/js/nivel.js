@@ -198,9 +198,10 @@
     const W = 1500, r = LV.rng(def.seed || 97);
     const sup = [{ id: 0, x0: 0, x1: W, y: G, tipo: 'chao' }];
     const props = [];
-    for (let px = 140; px < W - 100; px += 240 + r() * 200) if (px < 820 || px > 1300) props.push({ tipo: def.cen.props[Math.floor(r() * def.cen.props.length)], x: px, y: G + 2, s: 0.8 + r() * 0.4, flip: r() < 0.5, ph: r() * 10 });
+    for (let px = 140; px < W - 100; px += 240 + r() * 200) if ((px < 820 || px > 1300) && Math.abs(px - 430) > 130) props.push({ tipo: def.cen.props[Math.floor(r() * def.cen.props.length)], x: px, y: G + 2, s: 0.8 + r() * 0.4, flip: r() < 0.5, ph: r() * 10 });
     const L = { idx: 0, w: W, sup, esc: [], props, pilares: [], cen: def.cen, zonas: [], arestas: null, rotas: new Map(), def, bonecos: [950, 1060, 1170], entrada: 780,
-      deco: [{ img: 'treino/placa', x: 640, y: G + 2, h: 96 }] };
+      deco: [{ img: 'treino/placa', x: 640, y: G + 2, h: 96 }],
+      npcs: [{ id: 'portal', x: 430, y: G, sup: 0, estr: 'treino/portal', eh: 210 }] };
     construirArestas(L);
     return L;
   };
