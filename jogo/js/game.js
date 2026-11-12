@@ -22,7 +22,7 @@
     return {
       ecos: 0, ecosTotal: 0, renasc: 0, recorde: 1, up: Object.fromEntries(LV.META.map((u) => [u.id, 0])),
       best: {},                                  // bestiário: id -> { v: vista, k: derrotadas, c: capturadas }
-      tot: { kills: 0, capt: 0, evo: 0, brasa: 0, breus: 0 },   // totais de todas as jornadas (brasa: criaturas de brasa; breus: hostis)
+      tot: { kills: 0, capt: 0, evo: 0, brasa: 0, breus: 0, raras: 0, radCapt: 0 },   // totais de todas as jornadas (brasa: criaturas de brasa; breus: hostis; raras e Radiantes capturadas)
       conq: {},                                  // conquistas: 1 = pronta para resgatar, 2 = resgatada
       autoAttr: [],                              // atributos que recebem os pontos sozinhos ao subir de nível (fixos)
       autoVagas: 0,                              // vagas de automação já pagas (continuam após redefinir)
@@ -30,12 +30,13 @@
       finalVisto: false,                         // o final (Coração Ígneo vencido) já foi mostrado
       equip: { capa: 'padrao', lanterna: 'simples' },   // capa e lanterna escolhidas (se o item sumir, volta ao padrão)
       compras: [],                               // itens visuais comprados na Loja (ficam para sempre)
+      titulo: null,                              // título equipado (v1.17); sem título, aparece a patente do nível
     };
   }
   function novoEstado() {
     return {
       v: 3, criado: Date.now(), salvoEm: Date.now(),
-      dom: { nome: LV.t('Viajante'), nivel: 1, xp: 0, pontos: 0, attr: { forca: 0, vigor: 0, sorte: 0, vinculo: 0 } },
+      dom: { nome: LV.t('Viajante'), nivel: 1, xp: 0, pontos: 0, attr: { forca: 0, vigor: 0, sorte: 0, vinculo: 0 }, skillPts: 0, skills: {} },
       lumes: 0, mats: { musgo: 0, esporo: 0, escama: 0, cristal: 0, brasa: 0 }, lanternas: 5,
       moedas: Object.fromEntries(LV.MOEDAS.map((m) => [m.id, 0])),
       up: Object.fromEntries(LV.UPGRADES.map((u) => [u.id, 0])),
@@ -64,6 +65,10 @@
     o.dom.xp = numOr(sd.xp, 0, 0, 1e300);
     o.dom.pontos = intOr(sd.pontos, 0, 0, 1e7);
     LV.ATTR.forEach((a) => { o.dom.attr[a.id] = intOr((sd.attr || {})[a.id], 0, 0, 1e7); });
+    // skills do domador (v1.17): saves antigos ganham 1 ponto por nível já alcançado
+    o.dom.skills = {};
+    LV.SKILLS.forEach((k) => { const v = intOr((sd.skills || {})[k.id], 0, 0, LV.SKILL_MAX); if (v) o.dom.skills[k.id] = v; });
+    o.dom.skillPts = sd.skillPts == null ? o.dom.nivel - 1 : intOr(sd.skillPts, 0, 0, 1e6);
     o.lumes = numOr(s.lumes, 0, 0, 1e300);
     o.lanternas = intOr(s.lanternas, 5, 0, 1e7);
     Object.keys(o.mats).forEach((k) => { o.mats[k] = intOr((s.mats || {})[k], 0, 0, 1e12); });
@@ -85,7 +90,7 @@
     const st0 = s.st || {}, tt = sm.tot || {};
     // saves de antes do bestiário: os totais começam pelos números desta jornada
     o.meta.tot = { kills: intOr(tt.kills, intOr(st0.kills, 0, 0, 1e12), 0, 1e12), capt: intOr(tt.capt, intOr(st0.capturas, 0, 0, 1e9), 0, 1e9), evo: intOr(tt.evo, intOr(st0.evolucoes, 0, 0, 1e9), 0, 1e9),
-      brasa: intOr(tt.brasa, 0, 0, 1e12), breus: intOr(tt.breus, 0, 0, 1e12) };
+      brasa: intOr(tt.brasa, 0, 0, 1e12), breus: intOr(tt.breus, 0, 0, 1e12), raras: intOr(tt.raras, 0, 0, 1e9), radCapt: intOr(tt.radCapt, 0, 0, 1e9) };
     const sq = sm.conq && typeof sm.conq === 'object' ? sm.conq : {};
     LV.CONQUISTAS.forEach((c) => { const v = intOr(sq[c.id], 0, 0, 2); if (v) o.meta.conq[c.id] = v; });
     const ids = LV.ATTR.map((a) => a.id);
@@ -99,7 +104,7 @@
       if (!uid || vistos.has(uid)) uid = 0; else vistos.add(uid);
       mx = Math.max(mx, uid);
       const b = p.bonus && LV.TALENTOS[p.bonus.t] ? { t: p.bonus.t, v: numOr(p.bonus.v, 0.1, 0.01, 0.5) } : null;
-      return { uid, sp: p.sp, nivel: intOr(p.nivel, 1, 1, 999), xp: numOr(p.xp, 0, 0, 1e300), est: intOr(p.est, 0, 0, 2), hab: intOr(p.hab, 1, 1, LV.HAB_MAX || 10), atqs: Array.isArray(p.atqs) ? [...new Set(p.atqs.filter((id) => (LV.ATQ_SP[p.sp] || []).includes(id)))].slice(0, 2) : null, atqN: p.atqN == null ? null : intOr(p.atqN, 1, 0, 5), atqV: Array.isArray(p.atqV) ? p.atqV.filter((id) => (LV.ATQ_SP[p.sp] || []).includes(id)) : null, bonus: b, especial: !!p.especial, apelido: typeof p.apelido === 'string' && p.apelido.trim() ? p.apelido.trim().slice(0, 20) : null };
+      return { uid, sp: p.sp, nivel: intOr(p.nivel, 1, 1, 999), xp: numOr(p.xp, 0, 0, 1e300), est: intOr(p.est, 0, 0, 2), hab: intOr(p.hab, 1, 1, LV.HAB_MAX || 10), atqs: Array.isArray(p.atqs) ? [...new Set(p.atqs.filter((id) => (LV.ATQ_SP[p.sp] || []).includes(id)))].slice(0, 2) : null, atqN: p.atqN == null ? null : intOr(p.atqN, 1, 0, 5), atqV: Array.isArray(p.atqV) ? p.atqV.filter((id) => (LV.ATQ_SP[p.sp] || []).includes(id)) : null, bonus: b, especial: !!p.especial, radCapt: !!(p.especial && p.radCapt), apelido: typeof p.apelido === 'string' && p.apelido.trim() ? p.apelido.trim().slice(0, 20) : null };
     });
     o.pets.forEach((p) => { if (!p.uid) p.uid = ++mx; conferirAtaques(p, false); });
     o.prox = Math.max(intOr(s.prox, 1, 1, 1e9), mx + 1);
@@ -151,6 +156,7 @@
     // item de cada Guardião já vencido nesta jornada (inclui saves de antes dos itens)
     o.mapas.forEach((m, i) => { const it = LV.ITEM_CHEFE[i]; if (m.chefe && it && !o.itens.includes(it.tipo + ':' + it.id)) o.itens.push(it.tipo + ':' + it.id); });
     o.meta.compras = [...new Set(Array.isArray(smh.compras) ? smh.compras.filter((x) => typeof x === 'string') : [])].slice(0, 200);
+    o.meta.titulo = typeof smh.titulo === 'string' && LV.titulo(smh.titulo) ? smh.titulo : null;
     return o;
   }
   game.novoEstado = novoEstado;
@@ -162,8 +168,20 @@
   /* caçada automática: liberada ao chegar no mapa 2 ou pelo Santuário */
   function autoLiberadaEm(s) { return !!(s.mapas[1] && s.mapas[1].liberado) || ((s.meta && s.meta.up.trilha) || 0) > 0; }
   game.autoLiberada = () => !!S && autoLiberadaEm(S);
-  function multDano() { return (1 + 0.12 * S.up.garras) * (1 + 0.03 * S.dom.attr.forca) * (1 + 0.01 * (S.dom.nivel - 1)) * (1 + 0.08 * MU('ancestral')) * (1 + (bonusCapa().dano || 0)); }
-  function multVida() { return (1 + 0.12 * S.up.carapaca) * (1 + 0.04 * S.dom.attr.vigor) * (1 + 0.01 * (S.dom.nivel - 1)) * (1 + 0.08 * MU('ancestral')); }
+  /* título equipado (v1.17): só vale se a conquista dele já foi resgatada */
+  function temTitulo(id, s) { s = s || S; const T = LV.titulo(id); return !!(T && s && s.meta.conq[T.conq] === 2); }
+  game.temTitulo = (id) => temTitulo(id);
+  function tit(k) { const id = S && S.meta.titulo; return id && temTitulo(id) ? LV.titulo(id).b[k] || 0 : 0; }
+  game.bonusTitulo = tit;
+  /* skills ativas do domador (v1.17): estado fora do mundo, para a recarga não zerar ao trocar de mapa */
+  let SK = {};
+  function skNivel(id) { return (S && S.dom.skills && S.dom.skills[id]) || 0; }
+  function skAtiva(id) { const x = SK[id]; return !!(x && x.t > 0); }
+  /* força do efeito de uma skill ativa (0 se não está ativa); qual: 'v' ou 'v2' */
+  function sk(id, qual) { if (!skAtiva(id)) return 0; const k = LV.skill(id); return k[qual || 'v'](skNivel(id)); }
+  game.skillAtiva = skAtiva;
+  function multDano() { return (1 + tit('danoPet')) * (1 + 0.12 * S.up.garras) * (1 + 0.03 * S.dom.attr.forca) * (1 + 0.01 * (S.dom.nivel - 1)) * (1 + 0.08 * MU('ancestral')) * (1 + (bonusCapa().dano || 0)); }
+  function multVida() { return (1 + tit('vidaPet')) * (1 + 0.12 * S.up.carapaca) * (1 + 0.04 * S.dom.attr.vigor) * (1 + 0.01 * (S.dom.nivel - 1)) * (1 + 0.08 * MU('ancestral')); }
   function multVel() { return (1 + 0.05 * S.up.ritmo) * (1 + 0.01 * S.dom.attr.vinculo); }
   function petStats(p) {
     const sp = LV.SPECIES[p.sp], b = sp.base, em = F.estagioMult[p.est];
@@ -183,10 +201,10 @@
       atk: Math.round((6 + L * 2.4) * (1 + 0.03 * a.forca) * (1 + 0.05 * S.up.garras) * (1 + (bonusCapa().dano || 0)) * (LV.lanternaEq(lanternaAtual()).mult || 1)),
       crit: Math.min(0.6, 0.05 + a.sorte * 0.004),
       sorteCap: a.sorte * 0.015 + 0.08 * MU('lanterneiro'),
-      coleta: (1 + 0.08 * S.up.faro) * (1 + 0.02 * a.sorte),
+      coleta: (1 + 0.08 * S.up.faro) * (1 + 0.02 * a.sorte) * (1 + tit('coleta')),
       lumesMult: 1 + 0.06 * MU('heranca'),
-      xp: (1 + 0.08 * S.up.sabedoria) * mestre,
-      xpPet: (1 + 0.08 * S.up.sabedoria) * (1 + 0.03 * a.vinculo) * mestre,
+      xp: (1 + 0.08 * S.up.sabedoria) * mestre * (1 + tit('xp')),
+      xpPet: (1 + 0.08 * S.up.sabedoria) * (1 + 0.03 * a.vinculo) * mestre * (1 + tit('xpPet')),
       ima: 150 + 35 * S.up.ima,
       offlineH: 2 + S.up.descanso,
       moedasMult: 1 + 0.25 * MU('fortuna'),
@@ -462,7 +480,7 @@
     const d = S.dom;
     d.xp += n;
     let up = 0;
-    while (d.xp >= F.xpDom(d.nivel) && d.nivel < 999) { d.xp -= F.xpDom(d.nivel); d.nivel++; d.pontos += 3; up++; }
+    while (d.xp >= F.xpDom(d.nivel) && d.nivel < 999) { d.xp -= F.xpDom(d.nivel); d.nivel++; d.pontos += 3; d.skillPts = (d.skillPts || 0) + 1; up++; }
     // atributos automáticos (Santuário): os pontos novos vão sozinhos, revezando entre os atributos escolhidos
     const auto = (S.meta && S.meta.autoAttr) || [];
     if (up && auto.length) {
@@ -537,7 +555,9 @@
   function dano(e, v, el, fonte, quem) {
     if (!e || e.hp <= 0 || e.capt) return;
     const ds = domStats();
-    const mult = (el ? LV.elemMult(el, e.el) : 1) * (e.vuln > 0 ? 1 + (e.vulnK || 0.25) : 1) * (1 + (game.buffs.dano[chaveDe(e)] || 0));
+    const mult = (el ? LV.elemMult(el, e.el) : 1) * (e.vuln > 0 ? 1 + (e.vulnK || 0.25) : 1) * (1 + (game.buffs.dano[chaveDe(e)] || 0)) *
+      (e.tipo === 'hostil' ? 1 + tit('danoBreus') : e.tipo === 'chefe' ? 1 + tit('danoChefe') : 1);
+    if (e.boneco && fonte === W.tam) e.heroiT = W.t;     // no treino, o modo Defensor ataca o boneco que o domador bateu
     const status = fonte === 'status';
     const crit = !status && Math.random() < ds.crit;
     const d = Math.max(1, Math.round(v * mult * (crit ? 1.8 : 1)));
@@ -557,7 +577,9 @@
     if (!a || a.hp <= 0) return;
     if (S.op.deus) { a.flash = 0.4; return; }
     const defesa = src ? game.buffs.defesa[chaveDe(src)] || 0 : 0;      // couraças das conquistas
-    const mult = (el && a.el ? LV.elemMult(el, a.el) : 1) * (a.reducao > 0 ? 1 - (a.reducaoK || 0.5) : 1) * (1 - defesa) * (a === W.tam ? 1 - (bonusCapa().defesa || 0) : 1);
+    const deBrasa = ((src && src.el) || el) === 'brasa';
+    const mult = (el && a.el ? LV.elemMult(el, a.el) : 1) * (a.reducao > 0 ? 1 - (a.reducaoK || 0.5) : 1) * (1 - defesa) * (a === W.tam ? 1 - (bonusCapa().defesa || 0) : 1) *
+      (1 - sk('manto', 'v2')) * (deBrasa ? 1 - tit('defBrasa') : 1);
     let d = Math.max(1, Math.round(v * mult));
     if (a.escudo > 0) {
       const abs = Math.min(a.escudo, d);
@@ -651,17 +673,18 @@
     const ds = domStats();
     explosao(e.x, alvoY(e), e.pal.g, e.tipo === 'chefe' ? 70 : 16);
     fx({ tipo: 'anel', x: e.x, y: alvoY(e), r0: 6, r1: e.h * 0.7, cor: e.pal.g, vida: 0.45 });
-    const xp = Math.round(e.xp);
+    const xp = Math.round(e.xp * (1 + sk('colheita', 'v2')));
     ganharXPDom(xp * ds.xp);
     W.pets.forEach((p) => { if (p.ref) ganharXPPet(p.ref, xp * ds.xpPet * (p.desm > 0 ? 0.5 : 1)); });
-    const lum = Math.max(1, Math.round(e.lumes * ds.coleta * ds.lumesMult * LV.rand(0.85, 1.15)));
+    const colh = 1 + sk('colheita');
+    const lum = Math.max(1, Math.round(e.lumes * ds.coleta * ds.lumesMult * colh * LV.rand(0.85, 1.15)));
     const n = e.tipo === 'chefe' ? 12 : Math.min(4, 1 + Math.floor(lum / 15));
     for (let k = 0; k < n; k++) {
       const q = Math.floor(lum / n) + (k < lum % n ? 1 : 0);
       if (q > 0) W.drops.push({ x: e.x, y: alvoY(e), vx: LV.rand(-110, 110), vy: LV.rand(-340, -200), tipo: 'lumes', q, idade: 0, sup: -1 });
     }
     if (e.tipo === 'chefe' || Math.random() < 0.35 * (1 + S.dom.attr.sorte * 0.02)) {
-      const q = e.tipo === 'chefe' ? 12 + W.idx * 5 : Math.max(1, Math.round(LV.randi(1, 2) * ds.coleta));
+      const q = e.tipo === 'chefe' ? 12 + W.idx * 5 : Math.max(1, Math.round(LV.randi(1, 2) * ds.coleta * colh));
       W.drops.push({ x: e.x, y: alvoY(e), vx: LV.rand(-80, 80), vy: LV.rand(-360, -240), tipo: 'mat', mat: W.def.mat, q, idade: 0, sup: -1 });
     }
     for (let k = 0; k < (e.tipo === 'chefe' ? 12 : 3); k++) fx({ tipo: 'alma', x: e.x, y: alvoY(e), vx: LV.rand(-90, 90), vy: LV.rand(-160, -40), cor: e.pal.g, vida: 2.5 });
@@ -674,10 +697,9 @@
     if (W.tam.foco === e) W.tam.foco = null;
   }
   /* inimigo que representa ameaça: o Guardião, quem está perseguindo o grupo ou quem atacou há pouco */
-  const ameaca = (e) => e.tipo === 'chefe' || e.boneco || e.agrediu > 0 || !!e.persegue;
+  const ameaca = (e) => e.tipo === 'chefe' || (e.boneco ? W.t - (e.heroiT == null ? -99 : e.heroiT) < 5 : e.agrediu > 0 || !!e.persegue);
   /* alvos que os pets podem escolher sozinhos, conforme o modo de comando */
   function alvosDoModo(ini) {
-    if (W.lugar === 'treino') return ini;          // no treino os pets batem nos bonecos em qualquer modo
     const m = S.op.modoPets;
     if (m === 'passivo') return [];
     if (m === 'defensor') return ini.filter(ameaca);
@@ -1127,7 +1149,8 @@
     const sp = LV.SPECIES[e.sp];
     const base = LV.chanceBaseCaptura(sp, e.lv, e.est);
     const nivel = Math.pow(0.95, Math.max(0, e.lv - S.dom.nivel));
-    return LV.clamp(LV.chanceComVida(base, e.hp / e.hpMax) * (1 + domStats().sorteCap) * nivel, 0.02, 0.95);
+    const extra = sk('olhar') + tit('captura') + (LV.ehRara(e.sp, e.est) ? tit('captRara') : 0);
+    return LV.clamp(LV.chanceComVida(base, e.hp / e.hpMax) * (1 + domStats().sorteCap) * nivel + extra, 0.02, 0.95);
   }
   game.mirarEm = function (x, y, raio) {
     const C = game.captura;
@@ -1212,8 +1235,41 @@
     emit('lanternas', S.lanternas);
   };
   game.chanceCaptura = (e) => chanceCaptura(e);
+  /* skills do domador (v1.17): estado para o HUD e uso */
+  game.skillInfo = function (id) {
+    const k = LV.skill(id), n = skNivel(id), x = SK[id] || { t: 0, cd: 0 };
+    return { k, n, ativa: x.t > 0, t: x.t, dur: n ? k.dur(n) : 0, cd: x.cd, cdTot: n ? k.cd(n) : 0 };
+  };
+  game.usarSkill = function (id) {
+    const k = LV.skill(id), n = skNivel(id);
+    if (!k || !n || !S || !W) return 'nao';
+    if (game.tutorial) return 'tutorial';
+    const x = SK[id] || (SK[id] = { t: 0, cd: 0 });
+    if (x.cd > 0) return 'recarga';
+    const T = W.tam;
+    if (T.caido > 0) return 'caido';
+    x.t = k.dur(n); x.cd = k.cd(n);
+    if (id === 'manto') {
+      const cura = k.v(n);
+      [T].concat(W.pets).forEach((a) => {
+        if (a.hp <= 0 || a.desm > 0) return;
+        const v = Math.round(a.hpMax * cura);
+        a.hp = Math.min(a.hpMax, a.hp + v);
+        numero(a.x, topoDe(a) - 6, '+' + v, 'cura');
+      });
+    }
+    if (id === 'colheita') W.drops.forEach((d) => { if (!d.visual) d.atraido = true; });
+    fx({ tipo: 'anel', x: T.x, y: T.y - 34, r0: 8, r1: 150, cor: k.cor, vida: 0.7 });
+    faiscas(T.x, T.y - 40, k.cor, 18);
+    numero(T.x, topoDe(T) - 26, k.nome, 'txt', k.cor);
+    som('brilho');
+    emit('skillUsada', id);
+    return true;
+  };
   function capturar(e, talento) {
     const pet = { uid: S.prox++, sp: e.sp, nivel: Math.max(1, Math.min(e.lv, F.capPet(S.dom.nivel))), xp: 0, est: e.est, apelido: null, hab: 1, bonus: talento || null };
+    if (!e.tutorial && Math.random() < LV.CHANCE_RADIANTE + tit('radiante')) { pet.especial = true; pet.radCapt = true; S.meta.tot.radCapt = (S.meta.tot.radCapt || 0) + 1; }
+    if (LV.ehRara(e.sp, e.est)) S.meta.tot.raras = (S.meta.tot.raras || 0) + 1;
     conferirAtaques(pet, false);
     S.pets.push(pet); S.st.capturas++; contar(e.sp, 'c'); contar(formaDe(e), 'c'); S.meta.tot.capt++;
     e.capturado = true; e.hp = 0;
@@ -1222,6 +1278,7 @@
     const yc = N().chaoSob(W.L, e.x, e.y - 2);
     explosao(e.x, yc - 10, e.pal.g, 26);
     fx({ tipo: 'anel', x: e.x, y: yc - 10, r0: 4, r1: 60, cor: '#ffe3a3', vida: 0.6 });
+    if (pet.radCapt) { fx({ tipo: 'anel', x: e.x, y: yc - 10, r0: 6, r1: 120, cor: '#ffd36b', vida: 1.1 }); explosao(e.x, yc - 10, '#ffe7a0', 40); numero(e.x, yc - 60, LV.t('Radiante!'), 'txt', '#ffd36b'); }
     emit('captura', { pet, entrou });
     return pet;
   }
@@ -1477,7 +1534,7 @@
     const alvosHab = foco && !permitidos.includes(foco) ? permitidos.concat([foco]) : permitidos;
     W.pets.forEach((p, i) => {
       p.flash = Math.max(0, p.flash - dt * 4); p.atkA = Math.max(0, p.atkA - dt * 4); p.saltoCd = Math.max(0, p.saltoCd - dt);
-      p.atk = (p.atkBase || p.atk) * (1 + (p.bDano > 0 ? p.bDanoK || 0 : 0));     // fúria e gritos de guerra
+      p.atk = (p.atkBase || p.atk) * (1 + (p.bDano > 0 ? p.bDanoK || 0 : 0)) * (1 + sk('brado'));     // fúria, gritos de guerra e o Brado do domador
       if (p.salto) {
         const sl = p.salto;
         sl.t += dt;
@@ -1507,7 +1564,7 @@
       for (const id of LV.atqsEquipados(p.ref)) {
         const at = LV.ATQ[id], tot = LV.recargaAtq(at, habNivel(p));
         if (p.cds[id] == null) p.cds[id] = tot * 0.5;
-        p.cds[id] -= dt;
+        p.cds[id] -= dt * (1 + sk('ritmo', 'v2'));
         if (p.cds[id] <= 0 && p.gcd <= 0) { if (tentarAtaque(p, at, alvosHab)) { p.cds[id] = tot; p.gcd = 1; } else p.cds[id] = 0; }
       }
       if (foco) p.alvo = foco;
@@ -1532,7 +1589,7 @@
         p.cd -= dt;
         const dx = Math.abs(e.x - p.x), dy = Math.abs(alvoY(e) - alvoY(p));
         const alcance = p.estilo === 'investida' ? dx <= p.alc + raio + 12 && dy < 70 : Math.hypot(dx, dy) <= p.alc + raio + 30;
-        if (p.cd <= 0 && alcance) { atacarPet(p, e); p.cd = 1 / (p.spd * (1 + (p.bVel > 0 ? p.bVelK || 0 : 0))); }
+        if (p.cd <= 0 && alcance) { atacarPet(p, e); p.cd = 1 / (p.spd * (1 + (p.bVel > 0 ? p.bVelK || 0 : 0)) * (1 + sk('ritmo'))); }
       } else {
         tx = T.x + FORM[i % FORM.length] * T.face;
         alvoSup = tSup;
@@ -1972,7 +2029,7 @@
       // itens da volta do descanso: flutuam em volta do herói e são puxados um a um
       if (d.visual && !d.atraido) { d.y += Math.sin(W.t * 4 + d.x) * 6 * dt; if (d.idade >= 0) d.atraido = true; return true; }
       const dx = T.x - d.x, dy = T.y - 30 - d.y, dist = Math.hypot(dx, dy) || 1;
-      if (!d.atraido && d.idade > 0.45 && (dist < ds.ima || d.idade > 6) && T.caido <= 0) d.atraido = true;
+      if (!d.atraido && d.idade > 0.45 && (dist < ds.ima || d.idade > 6 || skAtiva('colheita')) && T.caido <= 0) d.atraido = true;
       if (d.atraido) {
         const sp = d.visual ? 650 + d.idade * 1100 : 280 + d.idade * 140;   // a volta do descanso é rápida
         d.x += (dx / dist) * sp * dt; d.y += (dy / dist) * sp * dt;
@@ -2059,6 +2116,7 @@
   game.step = function (dt) {
     if (!W || !S) return;
     W.t += dt; S.st.tempo += dt;
+    for (const id in SK) { const x = SK[id]; if (x.t > 0) x.t = Math.max(0, x.t - dt); if (x.cd > 0) x.cd = Math.max(0, x.cd - dt); }
     const ds = domStats();
     statusAliados(dt);
     updTamer(dt, ds);
@@ -2912,7 +2970,7 @@
       else if (n.tipo === 'dano') texto(c, n.txt, n.x, y, '#ff7a6b', 13);
       else if (n.tipo === 'lumes') texto(c, n.txt, n.x, y, '#f6d98a', 12);
       else if (n.tipo === 'mat') texto(c, n.txt, n.x, y, n.cor || '#ffffff', 12);
-      else if (n.tipo === 'txt') texto(c, n.txt, n.x, y, '#ffffff', 14);
+      else if (n.tipo === 'txt') texto(c, n.txt, n.x, y, n.cor || '#ffffff', 14);
       else if (n.tipo === 'hab') texto(c, n.txt + '!', n.x, y - 6, n.cor || '#ffffff', 14, 800);
       else if (n.tipo === 'cura') texto(c, n.txt, n.x, y, '#a8ff9a', 13, 800);
       else if (n.tipo === 'dot') texto(c, n.txt, n.x, y, n.cor || '#ffb35c', 11);
@@ -3029,7 +3087,7 @@
   /* =================== CARREGAR / OFFLINE =================== */
   game.carregar = function (s) {
     game.tutorial = null;
-    S = game.S = normalizar(s); recalcularBuffs();
+    S = game.S = normalizar(s); recalcularBuffs(); SK = {};
     iniciarMapa(S.mapa);
   };
 
@@ -3062,7 +3120,7 @@
     S.mapas.forEach((m, i) => { if (m.chefe) { base += LV.ECOS_CHEFE[i]; distintos++; } });
     base += Math.max(0, S.st.chefes - distintos);                       // vitórias repetidas
     base += Math.floor(Math.pow(Math.max(0, S.dom.nivel - 8), 1.25) / 3);
-    return Math.floor(base * (1 + 0.2 * MU('eco')));
+    return Math.floor(base * (1 + 0.2 * MU('eco')) * (1 + tit('ecos')));
   };
 
   /* =================== LUGARES (v1.16): Vila de Alvorada e Campo de Treino ===================
@@ -3218,7 +3276,7 @@
   /* Radiantes de conquista que você já resgatou e não tem mais (renasceu ou libertou) */
   game.radiantesPerdidos = function () {
     if (!S) return [];
-    return LV.CONQUISTAS.filter((c) => c.rec && c.rec.pet && S.meta.conq[c.id] === 2 && !S.pets.some((p) => p.especial && p.sp === c.rec.pet)).map((c) => c.rec.pet);
+    return LV.CONQUISTAS.filter((c) => c.rec && c.rec.pet && S.meta.conq[c.id] === 2 && !S.pets.some((p) => p.especial && !p.radCapt && p.sp === c.rec.pet)).map((c) => c.rec.pet);
   };
 
   /* =================== TUTORIAL (novo jogo) ===================
@@ -3408,7 +3466,7 @@
       n.lumes = 300 * meta.up.heranca;
       n.lanternas = 5 + 2 * meta.up.lanterneiro;
       n.inicial = true; n.aguardaInicial = true;    // o espaço continua salvo; o pet inicial é escolhido a seguir
-      S = game.S = n;
+      S = game.S = n; SK = {};
 
       iniciarMapa(0);
       emit('renascer', { ganho, total: meta.ecos });
@@ -3516,6 +3574,28 @@
       montarPets();
       if (W) W.tam.hpMax = domStats().hp;
       emit('atributo');
+      return true;
+    },
+    /* skills do domador (v1.17): liberar ou subir um nível com pontos de skill */
+    melhorarSkill(id) {
+      const k = LV.skill(id);
+      if (!k) return 'nao';
+      const n = skNivel(id);
+      if (n >= LV.SKILL_MAX) return 'max';
+      if (S.dom.nivel < k.nv) return 'nivel';
+      const c = LV.custoSkill(n);
+      if ((S.dom.skillPts || 0) < c) return 'pontos';
+      S.dom.skillPts -= c; S.dom.skills[id] = n + 1;
+      emit('skill', id);
+      return true;
+    },
+    /* título do Perfil (v1.17); null tira o título e volta a mostrar a patente */
+    equiparTitulo(id) {
+      if (id && !temTitulo(id)) return 'nao';
+      S.meta.titulo = id || null;
+      montarPets();
+      if (W) W.tam.hpMax = domStats().hp;
+      emit('titulo', id);
       return true;
     },
     /* ir à Vila de Alvorada ou ao Campo de Treino (v1.16) */

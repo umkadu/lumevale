@@ -35,7 +35,7 @@
         '<b>A/D</b> or arrows: walk · <b>Space</b>: jump · <b>W/S</b>: stairs and dropping through platforms.',
         'Click the scenery to walk there. <b>Left-click</b> a creature: only the tamer attacks. <b>Right-click</b>: the tamer and the Glimmers attack together.',
         'Stairs: jump and land on a staircase to climb it. Walking sideways or dropping down, you pass through it.',
-        '<b>Q</b>: lantern (capture) · <b>1, 2, 3</b>: Glimmer mode · <b>O</b>: Bestiary · <b>C</b>: Achievements · <b>Esc</b>: Settings.',
+        '<b>Q</b>: lantern (capture) · <b>1, 2, 3</b>: Glimmer mode · <b>4 to 8</b>: tamer skills · <b>O</b>: Bestiary · <b>C</b>: Achievements · <b>Esc</b>: Settings.',
         'Journal tabs: <b>E</b> Team · <b>T</b> Tamer · <b>M</b> Maps · <b>R</b> Sanctuary · <b>B</b> Satchel · <b>H</b> Help. Press the same key again to close.',
       ]],
       ['Glimmers in the field', [
@@ -61,22 +61,32 @@
       ['Tamer and attributes', [
         'Each tamer level gives 3 points: <b>Strength</b> (damage), <b>Vigor</b> (health), <b>Luck</b> (capture, gathering, critical) and <b>Bond</b> (Glimmer XP and attack speed).',
         'Each tamer level also gives +1% damage and health to all Glimmers.',
-        'Next to each attribute: <b>+1</b>, <b>+5</b>, <b>+½</b> (half of your free points) and <b>+All</b>.',
+        'The <b>Tamer</b> tab shows the tamer’s data and current bonuses; below are the <b>Stats</b>, <b>Skills</b>, <b>Cloaks</b> and <b>Lanterns</b> menus (only one opens at a time).',
+        'In Stats, the button at the top picks how many points each <b>+</b> adds: 1, 5, 10 or 100 (with fewer free points, it adds all of them).',
+      ]],
+      ['Tamer skills', [
+        'Each tamer level gives <b>1 skill point</b>. Unlocking a skill costs 1 point; its next levels cost 1 (up to 4), 2 (up to 7) and 3 (up to 10). Skills reset when you are reborn.',
+        '<b>Command Shout</b> (level 3): more damage for every Glimmer · <b>Sure Gaze</b> (level 5): higher lantern capture chance · <b>Lume Rhythm</b> (level 10): Glimmers attack faster and recharge special attacks faster · <b>Mantle of Light</b> (level 15): heals the group and reduces damage taken · <b>Golden Harvest</b> (level 20): pulls every drop and gives more Lumes, materials and XP.',
+        'Use them with the round buttons ' + (movel ? 'above the controls' : 'at the bottom of the screen (or keys <b>4 to 8</b>)') + '. Each one lasts a few seconds and then recharges.',
+      ]],
+      ['Profile and titles', [
+        (movel ? 'Tap' : 'Click') + ' the tamer’s portrait in the Tamer tab to open the <b>Profile</b>: name, look, title and your numbers (enemies defeated, Glimmers captured, rebirths and more).',
+        '<b>Titles</b> come from achievements (when you claim the reward) and each gives a bonus: more XP, damage, capture chance, chance for rare or Radiant Glimmers, less damage from ember creatures, more Echoes. The harder the achievement, the bigger the bonus. Equip one in the Profile; without a title, your level rank shows under your name.',
       ]],
       ['Cloaks and lanterns', [
-        'In the <b>Tamer</b> tab you choose the tamer’s cloak and lantern. Locked items show how to unlock them.',
+        'In the <b>Tamer</b> tab (Cloaks and Lanterns menus) you choose the tamer’s cloak and lantern. Locked items show how to unlock them.',
         '<b>Common cloaks</b> are purely visual and yours forever: they come from achievements or from Madam Needle, the village tailor (one-time purchase).',
         '<b>Lanterns</b> change the lantern strike: piercing crystal beam, ember blast, tide that slows, shadow that weakens, or healing for the whole team (the Healing Lantern doesn’t attack). Achievement lanterns are permanent; the ones bought in the village last until you rebirth. Each lantern fires its own projectile.',
         'Each <b>Guardian</b> drops a themed item on its first defeat of each journey (a cloak or a lantern with real bonuses). It comes equipped and is gone when you rebirth.',
       ]],
       ['Daybreak Village', [
         'Go to <b>Daybreak Village</b> from the <b>Maps</b> tab (the Daybreak section, at the top). Click a villager to walk over and talk. Only the tamer and the Glimmer in the first slot go to the village.',
-        '<b>Master Wick</b> sells capture and special lanterns · <b>Madam Needle</b> sells cloaks · <b>Master Anvil</b> sells upgrades for Lumes plus Guardian coins (each Guardian drops its own) · <b>Old Barter</b> trades materials between neighboring depths (5 for 1 going deeper, 1 for 2 going up) · <b>Keeper Iris</b> brings back achievement Radiants you lost when reborn (2,000 Lumes each) · the <b>Sanctuary of Echoes</b> sells permanent upgrades and is where you are reborn.',
+        '<b>Master Wick</b> sells capture and special lanterns · <b>Madam Needle</b> sells cloaks · <b>Master Anvil</b> sells upgrades for Lumes plus Guardian coins (each Guardian drops its own) · <b>Old Barter</b> trades materials between neighboring depths (5 for 1 going deeper, 1 for 2 going up) · <b>Keeper Iris</b> brings back achievement Radiants you lost when reborn (50,000 Lumes each) · the <b>Sanctuary of Echoes</b> sells permanent upgrades and is where you are reborn.',
         'Upgrades and lanterns bought in the village are lost when you are reborn.',
       ]],
       ['Training Ground', [
         'Through the village gate (or the Maps tab) you reach the <b>Training Ground</b>: three dummies that never fall and a <b>damage per second</b> meter at the top of the screen, split by tamer and Glimmer. The portal on the left takes you back to the village.',
-        'Glimmers attack the dummies in any mode. Use it to compare attacks, specialties and lanterns. Nothing is earned or lost there.',
+        'Glimmers follow the command mode: <b>Aggressive</b> attacks the dummies, <b>Defender</b> only the dummy you hit, <b>Passive</b> doesn’t attack. Use it to compare attacks, specialties, skills and lanterns. Nothing is earned or lost there.',
       ]],
       ['Guardians and maps', [
         'Defeat creatures on the map until the goal (' + metas + ') and tap <b>Challenge Guardian</b>.',
@@ -95,7 +105,8 @@
         'You lose Glimmers, levels, Lumes, materials, coins, village upgrades and lanterns, Guardian items and maps. You keep Echoes, the Sanctuary, achievements, visual cloaks and the Bestiary.',
       ]],
       ['Achievements and Bestiary', [
-        'Achievements give capture lanterns, Lumes, Echoes, bonuses against creatures, cloaks, special lanterns and even Radiant Glimmers. Claim them at the trophy. They last forever.',
+        'Achievements give capture lanterns, Lumes, Echoes, bonuses against creatures, cloaks, special lanterns, titles and even Radiant Glimmers. Claim them at the trophy. They last forever.',
+        'Any capture has a small chance (<b>0.5%</b>) of being a <b>Radiant</b> (+30% health and attack, +10% speed, golden glow). Radiants found this way don’t come back with Keeper Iris: only achievement Radiants do.',
         'The Bestiary records every form you have met and where it lives.',
       ]],
       ['Away from the game', [
@@ -124,7 +135,7 @@
         '<b>A/D</b> ou setas: andar · <b>Espaço</b>: pular · <b>W/S</b>: escadas e atravessar plataformas.',
         'Clique no cenário para ir até lá. <b>Clique esquerdo</b> numa criatura: só o domador ataca. <b>Clique direito</b>: o domador e as Centelhas atacam juntos.',
         'Escadas: pule e caia em cima de uma escada para subir por ela. Andando de lado ou descendo, você passa direto.',
-        '<b>Q</b>: lanterna (captura) · <b>1, 2, 3</b>: modo das Centelhas · <b>O</b>: Bestiário · <b>C</b>: Conquistas · <b>Esc</b>: Configurações.',
+        '<b>Q</b>: lanterna (captura) · <b>1, 2, 3</b>: modo das Centelhas · <b>4 a 8</b>: skills do domador · <b>O</b>: Bestiário · <b>C</b>: Conquistas · <b>Esc</b>: Configurações.',
         'Abas do Diário: <b>E</b> Equipe · <b>T</b> Domador · <b>M</b> Mapas · <b>R</b> Santuário · <b>B</b> Bolsa · <b>H</b> Ajuda. Apertar a mesma tecla de novo fecha.',
       ]],
       ['Centelhas em campo', [
@@ -150,22 +161,32 @@
       ['Domador e atributos', [
         'Cada nível do domador dá 3 pontos: <b>Força</b> (dano), <b>Vigor</b> (vida), <b>Sorte</b> (captura, coleta e crítico) e <b>Vínculo</b> (XP das Centelhas e velocidade de ataque).',
         'Cada nível do domador também dá +1% de dano e vida a todas as Centelhas.',
-        'Ao lado de cada atributo: <b>+1</b>, <b>+5</b>, <b>+½</b> (metade dos pontos livres) e <b>+Tudo</b>.',
+        'A aba <b>Domador</b> mostra os dados e os bônus atuais do domador; embaixo ficam os menus <b>Status</b>, <b>Skills</b>, <b>Capas</b> e <b>Lanternas</b> (só um abre de cada vez).',
+        'Em Status, o botão no alto escolhe quantos pontos cada <b>+</b> adiciona: 1, 5, 10 ou 100 (com menos pontos livres, adiciona todos).',
+      ]],
+      ['Skills do domador', [
+        'Cada nível do domador dá <b>1 ponto de skill</b>. Liberar uma skill custa 1 ponto; os níveis seguintes custam 1 (até o 4), 2 (até o 7) e 3 (até o 10). Ao renascer, as skills voltam a zero.',
+        '<b>Brado de Comando</b> (nível 3): mais dano para todas as Centelhas · <b>Olhar Certeiro</b> (nível 5): mais chance de captura da lanterna · <b>Ritmo do Lume</b> (nível 10): as Centelhas atacam mais rápido e recarregam os ataques especiais mais rápido · <b>Manto de Luz</b> (nível 15): cura o grupo e reduz o dano recebido · <b>Colheita Dourada</b> (nível 20): puxa tudo o que caiu e dá mais Lumes, materiais e XP.',
+        'Use pelos botões redondos ' + (movel ? 'acima dos controles' : 'no canto de baixo da tela (ou pelas teclas <b>4 a 8</b>)') + '. Cada uma dura alguns segundos e depois recarrega.',
+      ]],
+      ['Perfil e títulos', [
+        (movel ? 'Toque' : 'Clique') + ' no retrato do domador, na aba Domador, para abrir o <b>Perfil</b>: nome, aparência, título e os seus números (inimigos abatidos, Centelhas capturadas, renascimentos e mais).',
+        'Os <b>títulos</b> saem das conquistas (ao resgatar a recompensa) e cada um dá um bônus: mais XP, dano, chance de captura, chance de Centelhas raras ou Radiantes, menos dano de criaturas de brasa, mais Ecos. Quanto mais difícil a conquista, maior o bônus. Equipe um no Perfil; sem título, aparece a patente do nível embaixo do nome.',
       ]],
       ['Capas e lanternas', [
-        'Na aba <b>Domador</b> você escolhe a capa e a lanterna do domador. Os itens trancados mostram como liberar.',
+        'Na aba <b>Domador</b> (menus Capas e Lanternas) você escolhe a capa e a lanterna do domador. Os itens trancados mostram como liberar.',
         '<b>Capas comuns</b> são só visuais e ficam para sempre: saem das conquistas ou da Dona Agulha, a costureira da vila (compra única).',
         'As <b>lanternas</b> mudam o golpe da lanterna: feixe de cristal que atravessa, explosão de brasa, maré que deixa lento, sombra que enfraquece ou cura para o grupo todo (a Lanterna de Cura não ataca). As das conquistas ficam para sempre; as compradas na vila valem até renascer. Cada lanterna dispara um tiro próprio.',
         'Cada <b>Guardião</b> deixa um item temático na primeira vitória de cada jornada (uma capa ou lanterna com bônus de verdade). Ele já vem equipado e some ao renascer.',
       ]],
       ['Vila de Alvorada', [
         'Vá até a <b>Vila de Alvorada</b> pela aba <b>Mapas</b> (seção Alvorada, no topo). Clique num morador para ir até ele e conversar. Na vila só vão o domador e a Centelha da primeira vaga.',
-        '<b>Mestre Pavio</b> vende lanternas de captura e especiais · <b>Dona Agulha</b> vende capas · <b>Mestre Bigorna</b> vende melhorias por Lumes e moedas dos Guardiões (cada Guardião solta a sua) · <b>Velho Escambo</b> troca materiais de profundezas vizinhas (5 por 1 para baixo, 1 por 2 para cima) · <b>Zeladora Íris</b> traz de volta os Radiantes das conquistas que você perdeu ao renascer (2.000 Lumes cada) · o <b>Santuário dos Ecos</b> vende as melhorias permanentes e é onde você renasce.',
+        '<b>Mestre Pavio</b> vende lanternas de captura e especiais · <b>Dona Agulha</b> vende capas · <b>Mestre Bigorna</b> vende melhorias por Lumes e moedas dos Guardiões (cada Guardião solta a sua) · <b>Velho Escambo</b> troca materiais de profundezas vizinhas (5 por 1 para baixo, 1 por 2 para cima) · <b>Zeladora Íris</b> traz de volta os Radiantes das conquistas que você perdeu ao renascer (50.000 Lumes cada) · o <b>Santuário dos Ecos</b> vende as melhorias permanentes e é onde você renasce.',
         'As melhorias e as lanternas compradas na vila se perdem ao renascer.',
       ]],
       ['Campo de Treino', [
         'Pelo portão da vila (ou pela aba Mapas) você chega ao <b>Campo de Treino</b>: três bonecos que nunca caem e um medidor de <b>dano por segundo</b> no alto da tela, separado por domador e Centelha. O portal à esquerda leva de volta à vila.',
-        'As Centelhas atacam os bonecos em qualquer modo. Use para comparar ataques, especialidades e lanternas. Lá não se ganha nem se perde nada.',
+        'As Centelhas seguem o modo de comando: <b>Agressivo</b> ataca os bonecos, <b>Defensor</b> só o boneco que você bater, <b>Passivo</b> não ataca. Use para comparar ataques, especialidades, skills e lanternas. Lá não se ganha nem se perde nada.',
       ]],
       ['Guardiões e mapas', [
         'Derrote criaturas do mapa até a meta (' + metas + ') e toque em <b>Desafiar Guardião</b>.',
@@ -184,7 +205,8 @@
         'Você perde Centelhas, níveis, Lumes, materiais, moedas, melhorias e lanternas da vila, itens dos Guardiões e mapas. Ficam os Ecos, o Santuário, as conquistas, as capas visuais e o Bestiário.',
       ]],
       ['Conquistas e Bestiário', [
-        'Conquistas dão lanternas de captura, Lumes, Ecos, bônus contra criaturas, capas, lanternas especiais e até Centelhas Radiantes. Resgate no troféu. Valem para sempre.',
+        'Conquistas dão lanternas de captura, Lumes, Ecos, bônus contra criaturas, capas, lanternas especiais, títulos e até Centelhas Radiantes. Resgate no troféu. Valem para sempre.',
+        'Toda captura tem uma chance pequena (<b>0,5%</b>) de vir <b>Radiante</b> (+30% de vida e ataque, +10% de velocidade e brilho dourado). As Radiantes encontradas assim não voltam pela Zeladora Íris: só as das conquistas.',
         'O Bestiário registra cada forma que você encontrou e onde ela vive.',
       ]],
       ['Fora do jogo', [

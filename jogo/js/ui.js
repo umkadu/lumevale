@@ -26,7 +26,7 @@
     if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.16.1';
+  const VERSAO = '1.17.0';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -262,6 +262,7 @@
     });
     document.addEventListener('pointerdown', (e) => { if (!menuModo.hidden && !e.target.closest('#modo-pets')) fecharMenuModo(); });
     el.bChefe.addEventListener('click', () => { if (game.desafiarChefe()) hud(); });
+    $('#h-skills').addEventListener('click', (e) => { const b = e.target.closest('[data-sk]'); if (b) ui.usarSkill(b.dataset.sk); });
     $('#b-sair').addEventListener('click', () => { som('clique'); game.acao.sairLugar(); LV.salvarLogo(); });
     $('#b-dps-zerar').addEventListener('click', () => { som('clique'); game.acao.zerarDps(); hud(); });
     el.bAband.addEventListener('click', () => { game.abandonarChefe(); hud(); som('clique'); });
@@ -391,9 +392,14 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ui.modalAberto && ui.modalAberto.fechavel !== false) { ui.fecharModal(); e.stopPropagation(); } });
 
     LV.on('toast', (d) => ui.toast(d.t, d.tipo, d.curto));
-    LV.on('nivel', (n) => { ui.toast(LV.t('Nível ') + n + LV.t('! +3 pontos de atributo'), 'bom'); sujo(['domador', 'equipe', 'vila']); });
+    LV.on('nivel', (n) => { ui.toast(LV.t('Nível ') + n + LV.t('! +3 pontos de atributo e +1 ponto de skill'), 'bom'); sujo(['domador', 'equipe', 'vila']); });
+    LV.on('skill', () => { sujo(['domador']); hud(); });
+    LV.on('titulo', () => { sujo(['domador', 'equipe']); hud(); });
     LV.on('podeEvoluir', (p) => { ui.toast(LV.nomePet(p) + LV.t(' já pode evoluir: nível, materiais e Lumes estão completos. Veja na aba Equipe.'), 'bom'); sujo(['equipe']); });
-    LV.on('captura', (d) => { if (game.tutorial) return; ui.toast(LV.t('Capturou ') + LV.nomePet(d.pet) + LV.t(' (Nv ') + d.pet.nivel + ')' + (d.entrou ? LV.t(', já em campo') : LV.t(', foi para a coleção')), 'bom'); sujo(['equipe', 'bolsa']); LV.salvarLogo(); });
+    LV.on('captura', (d) => {
+      if (game.tutorial) return;
+      if (d.pet.radCapt) { ui.toast(LV.t('Uma Centelha Radiante! ') + LV.nomePet(d.pet) + LV.t(' tem +30% de vida e ataque e +10% de velocidade.'), 'chefe'); som('nivel'); }
+      ui.toast(LV.t('Capturou ') + LV.nomePet(d.pet) + LV.t(' (Nv ') + d.pet.nivel + ')' + (d.entrou ? LV.t(', já em campo') : LV.t(', foi para a coleção')), 'bom'); sujo(['equipe', 'bolsa']); LV.salvarLogo(); });
     LV.on('evolucao', (d) => { ui.modalEvolucao(d); som('evolucao'); sujo(['equipe']); LV.salvarLogo(); });
     LV.on('chefeVencido', (d) => { ui.modalChefe(d); sujo(['mapas', 'equipe', 'vila', 'santuario', 'bolsa']); hud(); LV.salvarLogo(); });
     LV.on('compra', () => { sujo(['vila', 'equipe', 'domador']); ui.npcAtualizar(); LV.salvarLogo(); });
@@ -460,6 +466,7 @@
   ui.abrir = function (aba) {
     if (!ABAS.some((x) => x[0] === aba)) aba = 'equipe';
     ui.aba = aba; ui.confirmar = null;
+    if (aba === 'domador') ui.domSub = null;      // ao abrir a aba, todos os submenus começam fechados
     el.tabs.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.aba === aba)));
     ui.render();
     el.pane.scrollTop = 0;
@@ -626,6 +633,7 @@
       '<h3>' + esc(LV.nomePet(p)) + '</h3><div class="dsub">' + elChip(sp.el) + espChip(p.sp) + LV.t(' <span class="muted">Forma ') + (p.est + 1) + LV.t(' de 3 · ') + LV.ESTILOS[st.estilo] + '</span></div>' +
       (LV.especDe(p.sp) ? '<p class="nota esp-nota">' + LV.especDe(p.sp).nome + ': ' + LV.especDe(p.sp).desc + '</p>' : '') +
       '<p class="desc">' + esc(sp.desc) + '</p>' +
+      (p.especial ? '<p class="nota rad-nota">★ ' + LV.t('Radiante: +30% de vida e ataque e +10% de velocidade.') + ' ' + (p.radCapt ? LV.t('Encontrada numa captura: a Zeladora Íris não traz de volta se você a perder.') : LV.t('Veio de uma conquista: a Zeladora Íris traz de volta se você a perder.')) + '</p>' : '') +
       (p.bonus ? LV.t('<p class="talento-l">★ Talento <b>') + LV.TALENTOS[p.bonus.t].nome + '</b>: ' + LV.TALENTOS[p.bonus.t].desc(p.bonus.v) + '</p>' : '') + '</div></div>';
     h += '<div class="cadeia">';
     for (let i = 0; i < 3; i++) {
@@ -687,27 +695,37 @@
     return h;
   }
 
-  /* =================== ABA: DOMADOR =================== */
+  /* =================== ABA: DOMADOR (v1.17: dados do domador + submenus Status, Skills, Capas e Lanternas) =================== */
+  const QTD_PONTOS = [1, 5, 10, 100];
+  ui.qtdPontos = 1;
+  try { const q = +localStorage.getItem('lumevale.qtdPontos'); if (QTD_PONTOS.includes(q)) ui.qtdPontos = q; } catch (e) { /* sem armazenamento */ }
+  ui.domSub = null;                         // submenu aberto (só um por vez); fecha todos ao abrir a aba
+  /* título equipado (ou null) e o texto que aparece embaixo do nome: o título ou, sem ele, a patente do nível */
+  function tituloEq() { const id = S() && S().meta.titulo; return id && game.temTitulo(id) ? LV.titulo(id) : null; }
+  function nomeSobNome() { const T = tituloEq(); return T ? T.nome : LV.RANKS[LV.rankIdx(S().dom.nivel)].nome; }
+  ui.nomeSobNome = nomeSobNome;
+  const SETA = '<svg class="sub-seta" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  /* ícones das skills (traço em currentColor) */
+  const ICON_SK = {
+    brado: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h3l6 4V6L7 10Z" fill="currentColor"/><path d="M16 9.5c1 .7 1.6 1.6 1.6 2.5s-.6 1.8-1.6 2.5M18.4 7c1.8 1.3 2.8 3 2.8 5s-1 3.7-2.8 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+    olhar: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" fill="currentColor"/><path d="M12 2v2.5M12 19.5V22" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+    ritmo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 5 13.5h6L9.5 22 19 9.5h-6.2Z" fill="currentColor"/></svg>',
+    manto: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 19.5 5v6c0 4.6-3.1 8.4-7.5 10.5C7.6 19.4 4.5 15.6 4.5 11V5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 8v7M8.5 11.5h7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
+    colheita: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 18 11 12 21 6 11Z" fill="currentColor"/><path d="M3.5 7.5 5 9M20.5 7.5 19 9M12 1v0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  };
+  ui.ICON_SK = ICON_SK;
   function abaDomador() {
-    const s = S(), d = s.dom, ds = game.domStats(), ri = LV.rankIdx(d.nivel), R = LV.RANKS[ri], prox = LV.RANKS[ri + 1];
-    let h = '<section class="sec"><div class="dom-top"><img src="' + art.retratoDomador(ri, 120) + '" alt="" width="120" height="120"><div>' +
-      '<div class="eyebrow">' + R.nome + '</div><h2 class="dnome">' + esc(d.nome) + '</h2>' +
+    const s = S(), d = s.dom, ds = game.domStats(), ri = LV.rankIdx(d.nivel), R = LV.RANKS[ri], prox = LV.RANKS[ri + 1], T = tituloEq();
+    let h = '<section class="sec"><div class="dom-top"><button class="dom-ret" data-act="perfil" title="' + LV.t('Abrir o perfil') + '" aria-label="' + LV.t('Abrir o perfil do domador') + '">' +
+      '<img src="' + art.retratoDomador(ri, 120) + '" alt="" width="120" height="120"><span class="dom-ret-l">' + LV.t('Perfil') + '</span></button><div>' +
+      '<div class="eyebrow">' + (T ? LV.t('Título') : LV.t('Patente')) + '</div><div class="dom-tit">' + (T ? T.nome : R.nome) + '</div>' +
+      '<h2 class="dnome">' + esc(d.nome) + '</h2>' +
       LV.t('<div class="dom-lv">Nível <b data-k="nivel">') + d.nivel + '</b></div>' +
       barra('xp', d.xp / LV.F.xpDom(d.nivel), 'data-k="xpbar"') +
       '<div class="muted small"><span data-k="xptxt">' + fmt(d.xp) + '</span> / ' + fmt(LV.F.xpDom(d.nivel)) + ' XP</div>' +
-      (prox ? LV.t('<div class="muted small">Próximo título: ') + prox.nome + LV.t(' no nível ') + prox.nv + '</div>' : LV.t('<div class="muted small">Título máximo alcançado</div>')) +
+      (T ? '<div class="small tit-b">' + LV.textoTitulo(T.b) + '</div>' : '') +
+      (prox ? '<div class="muted small">' + LV.t('Próxima patente: ') + prox.nome + LV.t(' no nível ') + prox.nv + '</div>' : '<div class="muted small">' + LV.t('Patente máxima alcançada') + '</div>') +
       '</div></div></section>';
-    const autos = s.meta.autoAttr.map((a) => LV.ATTR.find((x) => x.id === a).nome);
-    h += LV.t('<section class="sec"><header class="sec-h"><h2>Atributos</h2><span class="pts">Pontos livres: <b data-k="pontos">') + d.pontos + '</b></span></header>' +
-      (autos.length ? LV.t('<p class="nota">Automático (Santuário): ') + autos.join(', ') + LV.t('. Os pontos de cada novo nível vão sozinhos para eles.</p>') : '') + '<div class="attrs">';
-    LV.ATTR.forEach((a) => {
-      h += '<div class="attr"><div><b>' + a.nome + '</b> <span class="aval">' + d.attr[a.id] + '</span><div class="muted small">' + a.desc + '</div></div>' +
-        '<div class="abtns"><button class="btn sq" data-act="ponto" data-attr="' + a.id + LV.t('" data-n="1" data-pts="1" aria-label="Adicionar 1 ponto em ') + a.nome + '">+1</button>' +
-        '<button class="btn sq" data-act="ponto" data-attr="' + a.id + LV.t('" data-n="5" data-pts="5" aria-label="Adicionar 5 pontos em ') + a.nome + '">+5</button>' +
-        '<button class="btn sq" data-act="ponto" data-attr="' + a.id + LV.t('" data-n="metade" data-pts="1" title="Metade dos pontos livres" aria-label="Adicionar metade dos pontos livres em ') + a.nome + LV.t('">+½</button>') +
-        '<button class="btn sq" data-act="ponto" data-attr="' + a.id + LV.t('" data-n="tudo" data-pts="1" title="Todos os pontos livres" aria-label="Adicionar todos os pontos livres em ') + a.nome + LV.t('">+Tudo</button>') + '</div></div>';
-    });
-    h += '</div></section>';
     h += LV.t('<section class="sec"><header class="sec-h"><h2>Bônus atuais</h2></header><dl class="stats">') +
       LV.t('<div><dt>Vida do domador</dt><dd>') + fmt(ds.hp) + '</dd></div>' +
       LV.t('<div><dt>Golpe da lanterna</dt><dd>') + fmt(ds.atk) + '</dd></div>' +
@@ -718,10 +736,52 @@
       LV.t('<div><dt>Nível máximo das Centelhas</dt><dd>') + LV.F.capPet(d.nivel) + '</dd></div>' +
       LV.t('<div><dt>Ganho offline</dt><dd>até ') + ds.offlineH + 'h</dd></div>' +
       LV.t('</dl><p class="nota">Cada nível do domador também dá +1% de dano e vida a todas as Centelhas.</p></section>');
-    h += secaoEquip();
+    const nCapas = LV.CAPAS.filter((k) => game.temCapa(k.id)).length, nLant = LV.LANTERNAS.filter((k) => game.temLanterna(k.id)).length;
+    h += '<div class="subs">' +
+      sub('status', LV.t('Status'), d.pontos ? '<span class="sub-n">' + d.pontos + LV.t(' livres') + '</span>' : '', subStatus) +
+      sub('skills', LV.t('Skills'), d.skillPts ? '<span class="sub-n">' + d.skillPts + (d.skillPts === 1 ? LV.t(' ponto') : LV.t(' pontos')) + '</span>' : '', subSkills) +
+      sub('capas', LV.t('Capas'), '<span class="muted small">' + nCapas + ' / ' + LV.CAPAS.length + '</span>', subCapas) +
+      sub('lanternas', LV.t('Lanternas'), '<span class="muted small">' + nLant + ' / ' + LV.LANTERNAS.length + '</span>', subLanternas) + '</div>';
     return h;
   }
-  /* equipamento: capas (e lanternas) — o que você tem, o que está usando e como liberar o resto */
+  /* um submenu em sanfona: só o aberto monta o conteúdo */
+  function sub(id, nome, info, corpo) {
+    const ab = ui.domSub === id;
+    return '<section class="sub' + (ab ? ' aberta' : '') + '" data-sub="' + id + '"><button class="sub-h" data-act="sub" data-sub="' + id + '" aria-expanded="' + ab + '">' +
+      '<span class="sub-nome">' + nome + '</span><span class="sub-info">' + info + '</span>' + SETA + '</button>' +
+      (ab ? '<div class="sub-corpo">' + corpo() + '</div>' : '') + '</section>';
+  }
+  function subStatus() {
+    const s = S(), d = s.dom, q = ui.qtdPontos;
+    const autos = s.meta.autoAttr.map((a) => LV.ATTR.find((x) => x.id === a).nome);
+    let h = '<div class="qtd-row"><span class="pts">' + LV.t('Pontos livres: ') + '<b data-k="pontos">' + d.pontos + '</b></span>' +
+      '<button class="btn qtd" data-act="qtd" title="' + LV.t('Quantos pontos cada + adiciona (1, 5, 10 ou 100)') + '">' + LV.t('Adicionar ') + '<b>' + q + '</b>' + LV.t(' por clique') + '</button></div>' +
+      (autos.length ? LV.t('<p class="nota">Automático (Santuário): ') + autos.join(', ') + LV.t('. Os pontos de cada novo nível vão sozinhos para eles.</p>') : '') + '<div class="attrs">';
+    LV.ATTR.forEach((a) => {
+      h += '<div class="attr"><div><b>' + a.nome + '</b> <span class="aval">' + d.attr[a.id] + '</span><div class="muted small">' + a.desc + '</div></div>' +
+        '<button class="btn sq mais" data-act="ponto" data-attr="' + a.id + '" data-pts="1" aria-label="' + LV.t('Adicionar pontos em ') + a.nome + '">+</button></div>';
+    });
+    return h + '</div>';
+  }
+  function subSkills() {
+    const d = S().dom;
+    let h = '<div class="qtd-row"><span class="pts">' + LV.t('Pontos de skill: ') + '<b data-k="skpts">' + (d.skillPts || 0) + '</b></span><span class="muted small">' + LV.t('1 por nível do domador') + '</span></div>' +
+      '<p class="nota">' + (LV.movel ? LV.t('Use as skills liberadas pelos botões redondos acima dos controles.') : LV.t('Use as skills liberadas pelos botões no canto de baixo da tela ou pelas teclas 4 a 8.')) +
+      LV.t(' Liberar custa 1 ponto; os níveis seguintes custam 1 (até o 4), 2 (até o 7) e 3 (até o 10). Ao renascer, as skills voltam a zero.') + '</p><div class="skls">';
+    LV.SKILLS.forEach((k) => {
+      const n = (d.skills || {})[k.id] || 0, trav = d.nivel < k.nv, c = LV.custoSkill(n);
+      let btn;
+      if (n >= LV.SKILL_MAX) btn = '<span class="maxed">' + LV.t('Máximo') + '</span>';
+      else if (trav) btn = '<span class="muted small">' + ICON.cadeado + LV.t(' Nível ') + k.nv + '</span>';
+      else btn = '<button class="btn" data-act="skill" data-id="' + k.id + '" data-skpts="' + c + '">' + (n ? LV.t('Melhorar') : LV.t('Liberar')) + ' · ' + c + ' pt</button>';
+      h += '<div class="skl sk-' + k.id + (n ? '' : ' nova') + (trav ? ' trav' : '') + '"><span class="sk-ic">' + ICON_SK[k.id] + '</span><div class="skl-txt">' +
+        '<div class="skl-t"><b>' + k.nome + '</b><span class="muted small">' + (n ? LV.t('Nv ') + n + '/' + LV.SKILL_MAX : LV.t('Não liberada')) + (LV.movel ? '' : LV.t(' · tecla ') + k.tecla) + '</span></div>' +
+        '<p class="small">' + LV.descSkill(k, n || 1) + '</p>' +
+        (n && n < LV.SKILL_MAX ? '<p class="small acc">' + LV.t('No nível ') + (n + 1) + ': ' + k.desc(n + 1, k) + '</p>' : '') + '</div>' + btn + '</div>';
+    });
+    return h + '</div>';
+  }
+  /* equipamento: capas e lanternas — o que você tem, o que está usando e como liberar o resto */
   function comoLiberar(k) {
     if (k.conq) { const c = LV.conquista(k.conq); return c ? LV.t('Conquista “') + c.nome + '”: ' + c.desc : ''; }
     if (k.loja) return k.loja.moeda ? LV.t('À venda na Vila (vale até renascer)') : LV.t('À venda na Vila');
@@ -734,17 +794,64 @@
       '<small>' + (tem ? k.desc : ICON.cadeado + ' ' + comoLiberar(k)) + '</small>' +
       (usando ? LV.t('<span class="uso">Em uso</span>') : tem ? '<button class="btn" data-act="equipar" data-tipo="' + tipo + '" data-id="' + k.id + LV.t('">Equipar</button>') : '') + '</div>';
   }
-  function secaoEquip() {
+  function subCapas() {
     const atual = game.capaAtual();
-    let h = LV.t('<section class="sec"><header class="sec-h"><h2>Capas</h2><span class="muted small">') + LV.CAPAS.filter((k) => game.temCapa(k.id)).length + ' / ' + LV.CAPAS.length + '</span></header>' +
-      LV.t('<p class="nota">As capas comuns são só visuais e ficam para sempre: saem das conquistas ou da costureira da Vila. As dos Guardiões caem na primeira vitória de cada jornada, mudam os status e somem ao renascer.</p><div class="equips">');
+    let h = LV.t('<p class="nota">As capas comuns são só visuais e ficam para sempre: saem das conquistas ou da costureira da Vila. As dos Guardiões caem na primeira vitória de cada jornada, mudam os status e somem ao renascer.</p><div class="equips">');
     LV.CAPAS.forEach((k) => { h += cartaoEquip('capa', k, game.temCapa(k.id), atual === k.id, 'img/' + LV.imgCapa(k.id) + '.webp'); });
-    h += '</div></section>';
+    return h + '</div>';
+  }
+  function subLanternas() {
     const lat = game.lanternaAtual();
-    h += LV.t('<section class="sec"><header class="sec-h"><h2>Lanternas</h2><span class="muted small">') + LV.LANTERNAS.filter((k) => game.temLanterna(k.id)).length + ' / ' + LV.LANTERNAS.length + '</span></header>' +
-      LV.t('<p class="nota">Cada lanterna muda o golpe do domador. As das conquistas ficam para sempre; as da Vila e dos Guardiões valem até renascer.</p><div class="equips">');
+    let h = LV.t('<p class="nota">Cada lanterna muda o golpe do domador. As das conquistas ficam para sempre; as da Vila e dos Guardiões valem até renascer.</p><div class="equips">');
     LV.LANTERNAS.forEach((k) => { h += cartaoEquip('lanterna', k, game.temLanterna(k.id), lat === k.id, 'img/' + LV.imgLanterna(k.id) + '.webp'); });
-    return h + '</div></section>';
+    return h + '</div>';
+  }
+
+  /* =================== PERFIL DO DOMADOR (v1.17): resumo e títulos =================== */
+  function htmlPerfil() {
+    const s = S(), d = s.dom, m = s.meta, T = tituloEq(), R = LV.RANKS[LV.rankIdx(d.nivel)];
+    const chefes = LV.MAPS.reduce((a, x, i) => a + (((m.best['chefe' + i] || {}).k) || 0), 0);
+    const conqFeitas = LV.CONQUISTAS.filter((c) => m.conq[c.id] === 2).length;
+    const item = (rot, v, sub) => '<div><dt>' + rot + '</dt><dd>' + v + (sub ? ' <small class="muted">' + sub + '</small>' : '') + '</dd></div>';
+    let h = '<div class="pf-cab"><img class="pf-heroi" src="img/' + LV.imgCapa(game.capaAtual()) + '.webp" alt=""><div>' +
+      '<div class="eyebrow">' + LV.t('Perfil do domador') + '</div><h2>' + esc(d.nome) + '</h2>' +
+      '<div class="pf-tit">' + (T ? T.nome : R.nome) + '</div>' +
+      '<div class="muted small">' + LV.t('Nível ') + d.nivel + ' · ' + LV.t('Patente: ') + R.nome + ' · ' + LV.capa(game.capaAtual()).nome + '</div>' +
+      (T ? '<div class="small tit-b">' + LV.textoTitulo(T.b) + '</div>' : '') + '</div></div>';
+    h += '<dl class="stats pf-st">' +
+      item(LV.t('Inimigos abatidos'), fmt(Math.max(m.tot.kills, s.st.kills)), s.st.kills < m.tot.kills ? LV.t('nesta jornada: ') + fmt(s.st.kills) : '') +
+      item(LV.t('Centelhas capturadas'), fmt(m.tot.capt)) +
+      item(LV.t('Renascimentos'), fmt(m.renasc)) +
+      item(LV.t('Evoluções'), fmt(m.tot.evo)) +
+      item(LV.t('Breus apagados'), fmt(m.tot.breus || 0)) +
+      item(LV.t('Guardiões vencidos'), fmt(chefes)) +
+      item(LV.t('Radiantes na coleção'), fmt(s.pets.filter((p) => p.especial).length)) +
+      item(LV.t('Conquistas'), conqFeitas + ' / ' + LV.CONQUISTAS.length) +
+      item(LV.t('Maior nível'), Math.max(m.recorde, d.nivel)) +
+      item(LV.t('Tempo nesta jornada'), LV.fmtTempo(s.st.tempo)) + '</dl>';
+    const tem = LV.TITULOS.filter((t) => game.temTitulo(t.id)).length;
+    h += '<section class="pf-tits"><header class="sec-h"><h2>' + LV.t('Títulos') + '</h2><span class="muted small">' + tem + ' / ' + LV.TITULOS.length + '</span></header>' +
+      '<p class="nota">' + LV.t('Cada título sai de uma conquista (ao resgatar a recompensa) e dá um bônus. Só um fica equipado; quanto mais difícil a conquista, maior o bônus.') + '</p><div class="tits">';
+    const linha = (id, nome, ef, eq, ok, trava) => '<div class="tit' + (eq ? ' usando' : '') + (ok ? '' : ' trav') + '"><div><b>' + nome + '</b>' + (ef ? '<small class="ef">' + ef + '</small>' : '') + (trava ? '<small>' + ICON.cadeado + ' ' + trava + '</small>' : '') + '</div>' +
+      (eq ? '<span class="uso">' + LV.t('Em uso') + '</span>' : ok ? '<button class="btn mini" data-act="titulo" data-id="' + id + '">' + LV.t('Equipar') + '</button>' : '') + '</div>';
+    h += linha('', LV.t('Sem título'), LV.t('Mostra a patente do nível (') + R.nome + ')', !T, true, '');
+    LV.TITULOS.forEach((t) => {
+      const ok = game.temTitulo(t.id), c = LV.conquista(t.conq);
+      const pronta = c && m.conq[c.id] === 1;
+      h += linha(t.id, t.nome, LV.textoTitulo(t.b), T && T.id === t.id, ok, ok ? '' : (c ? LV.t('Conquista “') + c.nome + '”: ' + c.desc + (pronta ? LV.t(' (pronta: resgate em Conquistas)') : '') : ''));
+    });
+    return h + '</div></section><div class="row end"><button class="btn" data-m="fechar">' + LV.t('Fechar') + '</button></div>';
+  }
+  ui.abrirPerfil = function () {
+    if (!S()) return;
+    if (ui.modalAberto) { if (ui.modalAberto.tipo === 'perfil') return; ui.fecharModal(); }
+    ui.modal(htmlPerfil(), { cls: 'perfil-m', tipo: 'perfil' });
+  };
+  function perfilAtualizar() {
+    if (!ui.modalAberto || ui.modalAberto.tipo !== 'perfil') return;
+    const sc = el.mbox.scrollTop;
+    el.mbox.innerHTML = htmlPerfil();
+    el.mbox.scrollTop = sc;
   }
 
   /* =================== LOJA (v1.16: as seções viraram as conversas com os moradores da vila) =================== */
@@ -824,7 +931,7 @@
     };
     return '<section class="sec"><header class="sec-h"><h2>' + LV.t('Alvorada') + '</h2><span class="muted">' + LV.t('Sem inimigos') + '</span></header><div class="mapas">' +
       cartao('vila', LV.t('Lanternas, capas, melhorias, trocas, Radiantes e o Santuário dos Ecos. Clique num morador para falar com ele.'), LV.t('Ir para a Vila')) +
-      cartao('treino', LV.t('As Centelhas atacam os bonecos em qualquer modo e o medidor no alto da tela mostra o dano de cada uma.'), LV.t('Ir para o treino')) +
+      cartao('treino', LV.t('As Centelhas seguem o modo de comando (no Passivo, não atacam; no Defensor, atacam o boneco que você bater) e o medidor no alto da tela mostra o dano de cada uma.'), LV.t('Ir para o treino')) +
       '</div></section>';
   }
   const OFERTA_NPC = {
@@ -856,7 +963,7 @@
   function secaoRadiantes(s) {
     const lista = game.radiantesPerdidos(), taxa = LV.TAXA_RADIANTE;
     let h = '<section class="sec"><header class="sec-h"><h2>' + LV.t('Radiantes para recuperar') + '</h2></header><p class="nota">' +
-      LV.t('Os Radiantes vêm das conquistas de captura (20 da mesma espécie). Se você renasceu ou libertou um deles, a Zeladora traz de volta, no nível que o resgate daria agora. Taxa: ') +
+      LV.t('Os Radiantes vêm das conquistas de captura (20 da mesma espécie). Se você renasceu ou libertou um deles, a Zeladora traz de volta, no nível que o resgate daria agora. Os Radiantes encontrados por sorte numa captura não voltam. Taxa: ') +
       ICON.lumes + ' ' + fmt(taxa) + LV.t(' Lumes cada.') + '</p>';
     if (!lista.length) return h + '<p class="muted small">' + LV.t('Nenhum Radiante para recuperar agora. Os que você já tem continuam com você.') + '</p></section>';
     h += '<div class="ups">';
@@ -1248,8 +1355,30 @@
       ui.render(); LV.salvarLogo();
     }
     else if (a === 'ponto') {
-      const livres = S().dom.pontos, n = b.dataset.n === 'tudo' ? livres : b.dataset.n === 'metade' ? Math.max(1, Math.ceil(livres / 2)) : +b.dataset.n;
-      game.acao.ponto(b.dataset.attr, n); ui.render();
+      // adiciona a quantidade do seletor (1, 5, 10 ou 100); com menos pontos livres, adiciona todos
+      game.acao.ponto(b.dataset.attr, Math.min(ui.qtdPontos, S().dom.pontos)); ui.render();
+    }
+    else if (a === 'qtd') {
+      ui.qtdPontos = QTD_PONTOS[(QTD_PONTOS.indexOf(ui.qtdPontos) + 1) % QTD_PONTOS.length];
+      try { localStorage.setItem('lumevale.qtdPontos', String(ui.qtdPontos)); } catch (err) { /* sem armazenamento */ }
+      som('clique'); ui.render();
+    }
+    else if (a === 'sub') {
+      const id = b.dataset.sub;
+      ui.domSub = ui.domSub === id ? null : id;
+      som('clique'); ui.render();
+      if (ui.domSub) requestAnimationFrame(() => { const x = el.pane.querySelector('.sub[data-sub="' + id + '"]'); if (x) x.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });
+    }
+    else if (a === 'skill') {
+      const r = game.acao.melhorarSkill(b.dataset.id), k = LV.skill(b.dataset.id);
+      if (r === true) { som('nivel'); ui.toast(k.nome + LV.t(' agora no nível ') + S().dom.skills[k.id], 'bom', true); hud(); }
+      else ui.toast(r === 'pontos' ? LV.t('Pontos de skill insuficientes') : r === 'nivel' ? LV.t('O domador precisa do nível ') + k.nv : r === 'max' ? LV.t('Skill no nível máximo') : LV.t('Não foi possível'), 'ruim', true);
+      ui.render(); LV.salvarLogo();
+    }
+    else if (a === 'perfil') { som('clique'); ui.abrirPerfil(); }
+    else if (a === 'titulo') {
+      if (game.acao.equiparTitulo(b.dataset.id || null) === true) { som('brilho'); ui.toast(b.dataset.id ? LV.t('Título equipado: ') + LV.titulo(b.dataset.id).nome : LV.t('Sem título: aparece a patente do nível'), 'bom', true); }
+      perfilAtualizar(); hud(); ui.render(); LV.salvarLogo();
     }
     else if (a === 'up') {
       const r = game.acao.comprarUp(b.dataset.id);
@@ -1361,6 +1490,7 @@
     p.querySelectorAll('[data-ecos]').forEach((b) => { b.disabled = s.meta.ecos < +b.dataset.ecos; });
     p.querySelectorAll('b[data-moeda]').forEach((x) => { const v = fmt(s.moedas[x.dataset.moeda] || 0); if (x.textContent !== v) x.textContent = v; });
     p.querySelectorAll('[data-pts]').forEach((b) => { b.disabled = s.dom.pontos < 1; });
+    p.querySelectorAll('[data-skpts]').forEach((b) => { b.disabled = (s.dom.skillPts || 0) < +b.dataset.skpts; });
     p.querySelectorAll('[data-evo]').forEach((b) => { const pet = s.pets.find((x) => x.uid === +b.dataset.evo); b.disabled = !(pet && game.podeEvoluir(pet).ok); });
     p.querySelectorAll('[data-chefe]').forEach((b) => { b.disabled = !(s.mapas[s.mapa].kills >= game.metaChefe() && !(game.W && game.W.chefe)); });
     p.querySelectorAll('[data-pet-hp]').forEach((i) => { const rt = petRT(+i.dataset.petHp); if (rt) i.style.width = (LV.clamp(rt.hp / rt.hpMax, 0, 1) * 100).toFixed(1) + '%'; });
@@ -1370,7 +1500,7 @@
     p.querySelectorAll('[data-pet-st]').forEach((i) => { const rt = petRT(+i.dataset.petSt); i.textContent = rt && rt.desm > 0 ? LV.t('desmaiado') : rt && rt.alvo ? LV.t('lutando') : LV.t('seguindo'); });
     const k = (n) => p.querySelector('[data-k="' + n + '"]');
     const set = (n, v) => { const x = k(n); if (x && x.textContent !== String(v)) x.textContent = v; };
-    set('nivel', s.dom.nivel); set('pontos', s.dom.pontos); set('xptxt', fmt(s.dom.xp)); set('lumes', fmt(s.lumes)); set('lant', s.lanternas);
+    set('nivel', s.dom.nivel); set('pontos', s.dom.pontos); set('skpts', s.dom.skillPts || 0); set('xptxt', fmt(s.dom.xp)); set('lumes', fmt(s.lumes)); set('lant', s.lanternas);
     set('kills', fmt(s.st.kills)); set('tempo', LV.fmtTempo(s.st.tempo)); set('ecos', fmt(s.meta.ecos));
     set('mkills', Math.min(s.mapas[s.mapa].kills, game.metaChefe()));
     const xb = k('xpbar'); if (xb) xb.style.width = (LV.clamp(s.dom.xp / LV.F.xpDom(s.dom.nivel), 0, 1) * 100).toFixed(1) + '%';
@@ -1395,7 +1525,7 @@
     if (!s || !W) return;
     const d = s.dom, R = LV.RANKS[LV.rankIdx(d.nivel)];
     el.lv.textContent = d.nivel;
-    el.rank.textContent = R.nome;
+    const sob = nomeSobNome(); if (el.rank.textContent !== sob) el.rank.textContent = sob;
     el.nome.textContent = d.nome;
     el.xp.style.width = (LV.clamp(d.xp / LV.F.xpDom(d.nivel), 0, 1) * 100).toFixed(1) + '%';
     el.hp.style.width = (LV.clamp(W.tam.hp / W.tam.hpMax, 0, 1) * 100).toFixed(1) + '%';
@@ -1455,6 +1585,7 @@
       el.pets.innerHTML = W.pets.map((p) => '<div class="chipPet" data-u="' + p.uid + '"><img src="' + art.retrato(p.ref.sp, p.est, 64) + '" alt="" width="34" height="34"><span class="cl">' + p.ref.nivel + '</span><div class="bar hp mini"><i></i></div><div class="bar habil mini"><b></b></div></div>').join('');
     }
     el.lant2.textContent = s.lanternas;
+    barraSkills(lugar);
     W.pets.forEach((p) => {
       const c = el.pets.querySelector('[data-u="' + p.uid + '"]');
       if (c && LV.ATQ_SP[p.ref.sp]) {
@@ -1471,6 +1602,39 @@
     });
   }
   ui.hud = hud;
+  /* skills do domador no HUD (v1.17): um botão por skill liberada, com recarga e tempo ativo */
+  let chaveSk = '';
+  function barraSkills(lugar) {
+    const box = document.getElementById('h-skills'), s = S();
+    if (!box) return;
+    const lib = LV.SKILLS.filter((k) => (s.dom.skills || {})[k.id]);
+    const ver = lib.length && !game.tutorial && lugar !== 'vila';
+    if (box.hidden === !!ver) box.hidden = !ver;
+    if (!ver) return;
+    const chave = lib.map((k) => k.id).join(',') + (LV.movel ? 'm' : '');
+    if (chave !== chaveSk) {
+      chaveSk = chave;
+      box.innerHTML = lib.map((k) => '<button class="skb sk-' + k.id + '" data-sk="' + k.id + '" title="' + k.nome + (LV.movel ? '' : LV.t(' (tecla ') + k.tecla + ')') + '" aria-label="' + k.nome + '">' +
+        '<span class="sk-ic">' + ICON_SK[k.id] + '</span><i class="sk-cd"></i><span class="sk-t"></span>' + (LV.movel ? '' : '<kbd>' + k.tecla + '</kbd>') + '</button>').join('');
+    }
+    lib.forEach((k) => {
+      const b = box.querySelector('[data-sk="' + k.id + '"]');
+      if (!b) return;
+      const x = game.skillInfo(k.id), rec = !x.ativa && x.cd > 0;
+      b.classList.toggle('ativa', x.ativa);
+      b.classList.toggle('recarga', rec);
+      const frac = x.ativa ? x.t / (x.dur || 1) : rec ? x.cd / (x.cdTot || 1) : 0;
+      b.style.setProperty('--p', (frac * 100).toFixed(1) + '%');
+      const t = x.ativa ? Math.ceil(x.t) + 's' : rec ? Math.ceil(x.cd) + 's' : '';
+      const tt = b.querySelector('.sk-t'); if (tt.textContent !== t) tt.textContent = t;
+    });
+  }
+  ui.usarSkill = function (id) {
+    const r = game.usarSkill(id), k = LV.skill(id);
+    if (r === true) { hud(); return true; }
+    if (r === 'recarga') ui.toast(k.nome + LV.t(' recarregando: ') + Math.ceil(game.skillInfo(id).cd) + ' s', 'ruim', true);
+    return r;
+  };
   /* medidor de dano por segundo do Campo de Treino */
   function painelDps(on) {
     const p = document.getElementById('dps');
@@ -1884,6 +2048,7 @@
     if (r && r.uid) ui.toast(LV.nomePet(r) + LV.t(' entrou para a sua coleção!'), 'bom');
     if (c.rec.capa) ui.toast(LV.t('Nova capa: ') + LV.capa(c.rec.capa).nome + LV.t('. Equipe na aba Domador.'), 'bom');
     if (c.rec.lanterna && LV.lanternaEq) ui.toast(LV.t('Nova lanterna: ') + LV.lanternaEq(c.rec.lanterna).nome + LV.t('. Equipe na aba Domador.'), 'bom');
+    if (c.rec.titulo) { ui.toast(LV.t('Novo título: ') + LV.titulo(c.rec.titulo).nome + LV.t('. Equipe no Perfil (aba Domador, clique no retrato).'), 'bom'); perfilAtualizar(); }
     return c;
   }
 

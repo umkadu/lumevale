@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#06080c"><title>Lumevale</title><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../icones/icone-192.png"><link rel="apple-touch-icon" href="../icones/apple-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Lumevale"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><style>:root{color-scheme:dark}html,body{background:#06080c}body{margin:0;font:14px system-ui,sans-serif;overscroll-behavior:none}img{max-width:100%}[hidden]{display:none!important}</style><script>window.LV_PWA={sw:"../sw.js",escopo:"../"}</script></head><body><title>Lumevale</title>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#06080c"><meta name="color-scheme" content="dark"><title>Lumevale</title><link rel="manifest" href="../manifest.webmanifest"><link rel="icon" href="../icones/icone-192.png"><link rel="apple-touch-icon" href="../icones/apple-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Lumevale"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><style>:root{color-scheme:dark}html,body{background:#06080c}body{margin:0;font:14px system-ui,sans-serif;overscroll-behavior:none}img{max-width:100%}[hidden]{display:none!important}</style><script>window.LV_PWA={sw:"../sw.js",escopo:"../"}</script></head><body><title>Lumevale</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="fontes/fontes.css">
 <style>
@@ -986,6 +986,77 @@
     .slot img { width: 38px; height: 38px; }
     #toasts { top: 112px; }
   }
+  /* ---------- v1.17: as cores são sempre as do jogo (temas de alto contraste e cores forçadas do sistema apagavam chips, modos e ataques) ---------- */
+  :root { forced-color-adjust: none; }
+
+  /* ---------- v1.17: aba Domador em submenus (Status, Skills, Capas, Lanternas) ---------- */
+  .dom-ret { position: relative; display: grid; padding: 0; background: none; border: 1px solid transparent; cursor: pointer; color: inherit; }
+  .dom-ret:hover, .dom-ret:focus-visible { border-color: var(--linha2); }
+  .dom-ret-l { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); font: 700 10px var(--f-corpo); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ouro); background: rgba(6, 8, 12, 0.78); padding: 1px 7px; border: 1px solid rgba(240, 207, 134, 0.35); white-space: nowrap; }
+  .dom-tit { font: 15px var(--f-disp); color: var(--ouro); letter-spacing: 0.03em; }
+  .tit-b { color: var(--ouro); margin-top: 3px; }
+  .subs { display: grid; gap: 6px; padding-block: 12px 8px; border-top: 1px solid var(--linha); }
+  .sub { border: 1px solid var(--linha); background: rgba(255, 255, 255, 0.015); scroll-margin-top: 8px; }
+  .sub.aberta { border-color: color-mix(in srgb, var(--acc) 45%, transparent); }
+  .sub-h { width: 100%; display: flex; align-items: center; gap: 10px; padding: 11px 12px; background: none; border: 0; color: var(--tinta); cursor: pointer; text-align: left; }
+  .sub-h:hover { background: rgba(255, 255, 255, 0.03); }
+  .sub-nome { font: 18px var(--f-disp); letter-spacing: 0.04em; flex: 1; }
+  .sub-info { display: flex; align-items: center; gap: 6px; }
+  .sub-n { font: 700 11px var(--f-corpo); color: #06080c; background: var(--acc); padding: 1px 7px; letter-spacing: 0.03em; }
+  .sub-seta { width: 14px; height: 14px; color: var(--apagado); transition: transform .15s; flex: none; }
+  .sub.aberta .sub-seta { transform: rotate(180deg); color: var(--acc); }
+  .sub-corpo { padding: 2px 12px 12px; display: grid; gap: 10px; }
+  .qtd-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .btn.qtd b { color: var(--acc); font-variant-numeric: tabular-nums; min-width: 3ch; display: inline-block; text-align: center; }
+  .btn.mais { font-size: 19px; line-height: 1; min-width: 46px; }
+  .skls { display: grid; gap: 8px; }
+  .skl { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 10px; border: 1px solid var(--linha); background: rgba(255, 255, 255, 0.02); }
+  .skl .sk-ic { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); background: color-mix(in srgb, var(--c) 12%, transparent); }
+  .skl .sk-ic svg { width: 22px; height: 22px; }
+  .skl.nova .sk-ic { opacity: 0.7; }
+  .skl.trav { opacity: 0.55; }
+  .skl-t { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+  .skl-t b { color: var(--c); }
+  .skl p { margin: 3px 0 0; }
+  .sk-brado { --c: #ff8a6b; }
+  .sk-olhar { --c: #ffe27a; }
+  .sk-ritmo { --c: #7fd8ff; }
+  .sk-manto { --c: #a8f0c0; }
+  .sk-colheita { --c: #f0cf86; }
+  @media (max-width: 420px) { .skl { grid-template-columns: 36px minmax(0, 1fr); } .skl > .btn, .skl > span:last-child { grid-column: 2; justify-self: start; } }
+  /* barra de skills no HUD */
+  .skillbar { display: flex; gap: 6px; pointer-events: auto; }
+  .skb { position: relative; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; padding: 0; cursor: pointer; overflow: hidden;
+    color: var(--c); background: rgba(6, 8, 12, 0.72); border: 1.5px solid color-mix(in srgb, var(--c) 60%, transparent); box-shadow: 0 0 14px color-mix(in srgb, var(--c) 22%, transparent); transition: transform .12s, box-shadow .12s; }
+  .skb:hover { transform: scale(1.06); }
+  .skb .sk-ic { position: relative; z-index: 1; display: grid; }
+  .skb svg { width: 22px; height: 22px; }
+  .skb .sk-cd { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(4, 5, 8, 0.8) var(--p, 0%), transparent 0); pointer-events: none; }
+  .skb.ativa { border-color: var(--c); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 35%, transparent), 0 0 22px color-mix(in srgb, var(--c) 55%, transparent); }
+  .skb.ativa .sk-cd { background: conic-gradient(color-mix(in srgb, var(--c) 32%, transparent) var(--p, 0%), transparent 0); }
+  .skb.recarga .sk-ic { opacity: 0.4; }
+  .skb .sk-t { position: absolute; z-index: 2; left: 0; right: 0; bottom: 3px; text-align: center; font: 800 10.5px var(--f-corpo); color: #fff; text-shadow: 0 1px 3px #000, 0 0 6px #000; pointer-events: none; }
+  .skb kbd { position: absolute; z-index: 2; top: 2px; right: 6px; font: 700 9px var(--f-mono); color: var(--apagado); text-shadow: 0 1px 2px #000; }
+  html.movel .skillbar { position: absolute; right: 0; bottom: calc(100% + 10px); }
+  html.movel .skb { width: 42px; height: 42px; }
+  /* perfil do domador */
+  .perfil-m { width: min(620px, 100%); }
+  .pf-cab { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 14px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--linha); }
+  .pf-heroi { width: 110px; height: 130px; object-fit: contain; filter: drop-shadow(0 0 18px rgba(255, 196, 122, 0.25)); }
+  .pf-cab h2 { margin: 2px 0; }
+  .pf-tit { font: 17px var(--f-disp); color: var(--ouro); letter-spacing: 0.03em; }
+  .pf-st { padding-block: 8px; }
+  .pf-tits { display: grid; gap: 8px; }
+  .tits { display: grid; gap: 4px; }
+  .tit { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 10px; border: 1px solid var(--linha); }
+  .tit b { display: block; }
+  .tit small { display: block; font-size: 12px; color: var(--apagado); line-height: 1.3; }
+  .tit small.ef { color: var(--ouro); }
+  .tit.usando { border-color: color-mix(in srgb, var(--acc) 60%, transparent); background: color-mix(in srgb, var(--acc) 7%, transparent); }
+  .tit.trav { opacity: 0.55; }
+  .tit .uso { font: 700 11px var(--f-corpo); letter-spacing: 0.06em; text-transform: uppercase; color: var(--acc); }
+  @media (max-width: 560px) { .pf-cab { grid-template-columns: 80px minmax(0, 1fr); } .pf-heroi { width: 80px; height: 100px; } }
+
 </style>
 
 <div id="app">
@@ -1040,6 +1111,7 @@
         <div class="ctrl">
           <div id="mira" hidden aria-live="polite"><b id="mira-t">Clique numa criatura selvagem</b><small id="mira-s">Clique na lanterna ou aperte Esc para cancelar</small></div>
           <span class="vel" id="h-vel" hidden></span>
+          <div class="skillbar" id="h-skills" hidden></div>
           <button class="hbtn" id="b-auto" aria-pressed="false"><svg class="cad" viewBox="0 0 12 14" aria-hidden="true"><path d="M3.5 6V4.4a2.5 2.5 0 0 1 5 0V6" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="6" width="8" height="6.5" rx="1" fill="currentColor"/></svg><span>Caçada auto</span></button>
           <button class="hbtn" id="b-desafio" aria-pressed="false" hidden><svg class="cad" viewBox="0 0 12 14" aria-hidden="true"><path d="M3.5 6V4.4a2.5 2.5 0 0 1 5 0V6" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="6" width="8" height="6.5" rx="1" fill="currentColor"/></svg><span>Desafio auto</span></button>
           <button class="tbtn peq" id="t-descer" aria-label="Descer escada ou atravessar plataforma"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>

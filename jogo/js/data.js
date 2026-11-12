@@ -652,7 +652,7 @@
      Descer (para o material do mapa seguinte) custa 5 por 1; subir (para o do mapa anterior) rende 2 por 1. */
   LV.TROCA = { ordem: ['musgo', 'esporo', 'escama', 'cristal', 'brasa'], sobe: 5, desce: 2 };
   /* taxa da Zeladora Íris para trazer de volta um Radiante de conquista que você não tem mais */
-  LV.TAXA_RADIANTE = 2000;
+  LV.TAXA_RADIANTE = 50000;
 
   /* cenários pintados (Gemini), um por mapa: desenhados atrás de tudo com parallax lento */
   LV.FUNDOS = LV.MAPS.map((m) => 'fundos/' + m.tema);
@@ -795,7 +795,84 @@
   /* lanternas das conquistas novas */
   C.push({ id: 'brasa5000', cat: LV.t('Caçadas'), nome: LV.t('Domador de Chamas'), desc: LV.t('Derrote ') + (5000).toLocaleString(LV.locale) + LV.t(' criaturas de brasa'), meta: 5000, prog: (s) => s.meta.tot.brasa || 0, rec: { lanterna: 'explosiva' } });
   C.push({ id: 'breus2000', cat: LV.t('Breus'), nome: LV.t('Apagador de Breus'), desc: LV.t('Derrote ') + (2000).toLocaleString(LV.locale) + LV.t(' Breus'), meta: 2000, prog: (s) => s.meta.tot.breus || 0, rec: { lanterna: 'breu' } });
+  /* conquistas de captura rara (v1.17): dão títulos */
+  C.push({ id: 'raras25', cat: LV.t('Capturas'), nome: LV.t('Caçador de Raridades'), desc: LV.t('Capture 25 Centelhas raras (espécies difíceis ou formas evoluídas)'), meta: 25, prog: (s) => s.meta.tot.raras || 0, rec: { lumes: 8000 } });
+  C.push({ id: 'radiante1', cat: LV.t('Capturas'), nome: LV.t('Brilho Raro'), desc: LV.t('Capture uma Centelha Radiante'), meta: 1, prog: (s) => s.meta.tot.radCapt || 0, rec: { lanternas: 5 } });
   LV.conquista = (id) => C.find((c) => c.id === id);
+  /* Centelhas raras: espécies difíceis de capturar ou formas evoluídas encontradas na natureza */
+  LV.ehRara = (sp, est) => (LV.SPECIES[sp] ? LV.SPECIES[sp].cap < 0.27 : false) || est > 0;
+  /* chance de toda captura vir Radiante (v1.17) */
+  LV.CHANCE_RADIANTE = 0.005;
+
+  /* =========================================================
+     TÍTULOS (v1.17) — cada um sai de uma conquista (ao resgatar a recompensa) e dá um bônus.
+     Só um fica equipado (no Perfil). Quanto mais difícil a conquista, maior o bônus.
+     b: xp, xpPet, vidaPet, danoPet, coleta, captura, captRara, radiante (pontos de chance), defBrasa, danoBreus, danoChefe, ecos
+     ========================================================= */
+  LV.TITULOS = [
+    { id: 'chama', nome: LV.t('Chama Nova'), conq: 'nivel10', b: { xp: 0.05 } },
+    { id: 'colecionador', nome: LV.t('Colecionador'), conq: 'capt10', b: { captura: 0.03 } },
+    { id: 'guia', nome: LV.t('Guia de Centelhas'), conq: 'nivel25', b: { vidaPet: 0.05 } },
+    { id: 'firme', nome: LV.t('Lanterna Firme'), conq: 'nivel40', b: { danoPet: 0.05 } },
+    { id: 'trilhas', nome: LV.t('Caçador das Trilhas'), conq: 'abates1000', b: { coleta: 0.08 } },
+    { id: 'renascido', nome: LV.t('Renascido'), conq: 'renasc1', b: { ecos: 0.05 } },
+    { id: 'formas', nome: LV.t('Mestre das Formas'), conq: 'evo10', b: { xpPet: 0.1 } },
+    { id: 'lanterneiro', nome: LV.t('Mestre das Lanternas'), conq: 'capt50', b: { captura: 0.06 } },
+    { id: 'raro', nome: LV.t('Olho para o Raro'), conq: 'raras25', b: { captRara: 0.1 } },
+    { id: 'luzfundo', nome: LV.t('Luz das Profundezas'), conq: 'nivel60', b: { danoPet: 0.1 } },
+    { id: 'coracao', nome: LV.t('Curandeiro do Coração'), conq: 'chefe4a', b: { danoChefe: 0.1 } },
+    { id: 'apagador', nome: LV.t('Apagador de Breus'), conq: 'breus2000', b: { danoBreus: 0.12 } },
+    { id: 'chamas', nome: LV.t('Domador de Chamas'), conq: 'brasa5000', b: { defBrasa: 0.15 } },
+    { id: 'eterno', nome: LV.t('Eterno Retorno'), conq: 'renasc5', b: { ecos: 0.12 } },
+    { id: 'brilho', nome: LV.t('Portador do Brilho'), conq: 'radiante1', b: { radiante: 0.0025 } },
+    { id: 'lenda', nome: LV.t('Lenda das Profundezas'), conq: 'abates5000', b: { danoPet: 0.12, vidaPet: 0.12 } },
+  ];
+  LV.titulo = (id) => LV.TITULOS.find((t) => t.id === id);
+  LV.TITULOS.forEach((t) => { const c = C.find((x) => x.id === t.conq); if (c) c.rec = Object.assign({}, c.rec, { titulo: t.id }); });
+  LV.textoTitulo = function (b) {
+    const p = (v) => (Math.round(v * 1000) / 10).toLocaleString(LV.locale) + '%', t = [];
+    if (b.xp) t.push('+' + p(b.xp) + LV.t(' de XP do domador'));
+    if (b.xpPet) t.push('+' + p(b.xpPet) + LV.t(' de XP das Centelhas'));
+    if (b.danoPet) t.push('+' + p(b.danoPet) + LV.t(' de dano das Centelhas'));
+    if (b.vidaPet) t.push('+' + p(b.vidaPet) + LV.t(' de vida das Centelhas'));
+    if (b.coleta) t.push('+' + p(b.coleta) + LV.t(' de Lumes e materiais'));
+    if (b.captura) t.push('+' + p(b.captura) + LV.t(' de chance de captura'));
+    if (b.captRara) t.push('+' + p(b.captRara) + LV.t(' de chance de captura de Centelhas raras'));
+    if (b.radiante) t.push('+' + p(b.radiante) + LV.t(' de chance de a captura vir Radiante'));
+    if (b.defBrasa) t.push('−' + p(b.defBrasa) + LV.t(' de dano recebido de criaturas de brasa'));
+    if (b.danoBreus) t.push('+' + p(b.danoBreus) + LV.t(' de dano contra Breus'));
+    if (b.danoChefe) t.push('+' + p(b.danoChefe) + LV.t(' de dano contra Guardiões'));
+    if (b.ecos) t.push('+' + p(b.ecos) + LV.t(' de Ecos ao renascer'));
+    return t.join(' · ');
+  };
+
+  /* =========================================================
+     SKILLS DO DOMADOR (v1.17) — ativas, com recarga, usadas pelos botões do HUD (ou teclas 4 a 8).
+     Cada nível do domador dá 1 ponto de skill. Liberar custa 1 ponto; subir de nível custa 1 (até o 4), 2 (até o 7) e 3 (até o 10).
+     nv: nível do domador para liberar. v / v2: força do efeito no nível n.
+     ========================================================= */
+  LV.SKILL_MAX = 10;
+  LV.custoSkill = (n) => (n < 4 ? 1 : n < 7 ? 2 : 3);
+  const pcS = (v) => Math.round(v * 100) + '%', sgS = (v) => (Math.round(v * 10) / 10).toLocaleString(LV.locale) + ' s';
+  LV.SKILLS = [
+    { id: 'brado', nome: LV.t('Brado de Comando'), nv: 3, tecla: '4', cor: '#ff8a6b',
+      dur: (n) => 8 + 0.4 * (n - 1), cd: (n) => 60 - 2 * (n - 1), v: (n) => 0.2 + 0.04 * (n - 1),
+      desc: (n, k) => LV.t('Todas as Centelhas causam +') + pcS(k.v(n)) + LV.t(' de dano por ') + sgS(k.dur(n)) + '.' },
+    { id: 'olhar', nome: LV.t('Olhar Certeiro'), nv: 5, tecla: '5', cor: '#ffe27a',
+      dur: (n) => 10 + 0.5 * (n - 1), cd: (n) => 120 - 4 * (n - 1), v: (n) => 0.08 + 0.02 * (n - 1),
+      desc: (n, k) => LV.t('+') + pcS(k.v(n)) + LV.t(' de chance de captura da lanterna por ') + sgS(k.dur(n)) + LV.t(' (o tempo para enquanto você mira).') },
+    { id: 'ritmo', nome: LV.t('Ritmo do Lume'), nv: 10, tecla: '6', cor: '#7fd8ff',
+      dur: (n) => 8 + 0.4 * (n - 1), cd: (n) => 75 - 2.5 * (n - 1), v: (n) => 0.2 + 0.03 * (n - 1), v2: (n) => 0.5 + 0.05 * (n - 1),
+      desc: (n, k) => LV.t('As Centelhas atacam ') + pcS(k.v(n)) + LV.t(' mais rápido e os ataques especiais recarregam ') + pcS(k.v2(n)) + LV.t(' mais rápido por ') + sgS(k.dur(n)) + '.' },
+    { id: 'manto', nome: LV.t('Manto de Luz'), nv: 15, tecla: '7', cor: '#a8f0c0',
+      dur: (n) => 6 + 0.3 * (n - 1), cd: (n) => 90 - 3 * (n - 1), v: (n) => 0.15 + 0.02 * (n - 1), v2: (n) => 0.25 + 0.02 * (n - 1),
+      desc: (n, k) => LV.t('Cura ') + pcS(k.v(n)) + LV.t(' da vida do domador e de todas as Centelhas e reduz o dano recebido em ') + pcS(k.v2(n)) + LV.t(' por ') + sgS(k.dur(n)) + '.' },
+    { id: 'colheita', nome: LV.t('Colheita Dourada'), nv: 20, tecla: '8', cor: '#f0cf86',
+      dur: (n) => 20 + (n - 1), cd: (n) => 150 - 5 * (n - 1), v: (n) => 0.3 + 0.07 * (n - 1), v2: (n) => 0.15 + 0.03 * (n - 1),
+      desc: (n, k) => LV.t('Puxa todos os itens do chão. Por ') + sgS(k.dur(n)) + LV.t(': +') + pcS(k.v(n)) + LV.t(' de Lumes e materiais e +') + pcS(k.v2(n)) + LV.t(' de XP do domador e das Centelhas.') },
+  ];
+  LV.skill = (id) => LV.SKILLS.find((k) => k.id === id);
+  LV.descSkill = (k, n) => k.desc(Math.max(1, n), k) + LV.t(' Recarga ') + sgS(k.cd(Math.max(1, n))) + '.';
   LV.CAT_CONQ = [LV.t('Caçadas'), LV.t('Capturas'), LV.t('Domador'), LV.t('Guardiões'), LV.t('Breus'), LV.t('Selvagens')];
   /* pet Radiante (recompensa): +30% de vida e ataque, +10% de velocidade e um brilho dourado */
   LV.RADIANTE = { hp: 1.3, atk: 1.3, spd: 1.1 };
@@ -808,6 +885,7 @@
     if (r.pet) t.push(LV.SPECIES[r.pet].nome[0] + LV.t(' Radiante (+30% vida e ataque)'));
     if (r.capa) t.push(LV.t('Capa: ') + LV.capa(r.capa).nome);
     if (r.lanterna && LV.lanternaEq) t.push(LV.t('Lanterna: ') + LV.lanternaEq(r.lanterna).nome);
+    if (r.titulo && LV.titulo) t.push(LV.t('Título: ') + LV.titulo(r.titulo).nome);
     if (r.buff) {
       const nome = LV.nomeAlvo(r.buff.alvo);
       t.push((r.buff.tipo === 'dano' ? '+' + Math.round(r.buff.v * 100) + LV.t('% de dano contra ') : '−' + Math.round(r.buff.v * 100) + LV.t('% de dano recebido de ')) + nome);

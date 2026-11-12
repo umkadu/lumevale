@@ -332,6 +332,9 @@
       if (e.key === 'Escape' && !ui.inicioVisivel() && !ui.modalAberto && game.slot && !game.captura) { ui.abrirConfig(true); return; }
       if ((e.key === 'q' || e.key === 'Q') && !fora(e) && !ui.modalAberto && !ui.inicioVisivel() && game.slot) { document.getElementById('b-lant').click(); return; }
       if (['1', '2', '3'].includes(e.key) && !fora(e) && !ui.modalAberto && !ui.inicioVisivel() && game.slot) { ui.escolherModo(['agressivo', 'defensor', 'passivo'][+e.key - 1]); return; }
+      // skills do domador (v1.17): teclas 4 a 8
+      const skT = !e.repeat && LV.SKILLS.find((k) => k.tecla === e.key);
+      if (skT && !fora(e) && !ui.modalAberto && !ui.inicioVisivel() && game.slot) { if ((game.S.dom.skills || {})[skT.id]) ui.usarSkill(skT.id); return; }
       if (fora(e) || ui.modalAberto || ui.inicioVisivel() || e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key.toLowerCase();
       if (['a', 'd', 'arrowleft', 'arrowright'].includes(k)) { teclas.add(k); dir(); e.preventDefault(); }
