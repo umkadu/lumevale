@@ -26,7 +26,7 @@
     if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.15.6';
+  const VERSAO = '1.15.8';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -392,6 +392,7 @@
     LV.on('chefeVencido', (d) => { ui.modalChefe(d); sujo(['mapas', 'equipe', 'loja', 'santuario', 'bolsa']); hud(); LV.salvarLogo(); });
     LV.on('compra', () => { sujo(['loja', 'equipe', 'domador']); LV.salvarLogo(); });
     LV.on('equipe', () => sujo(['equipe']));
+    LV.on('novoAtaque', (d) => { ui.toast(LV.nomePet(d.pet) + LV.t(' aprendeu ') + LV.ATQ[d.id].nome + (d.equipado ? LV.t(' (já equipado)') : LV.t('. Equipe na aba Equipe.')), 'bom'); sujo(['equipe']); });
     LV.on('equipamento', () => sujo(['domador', 'loja']));
     LV.on('tutorial', (tu) => ui.tutorial(tu));
     LV.on('atributo', () => sujo(['domador']));
@@ -631,19 +632,28 @@
       LV.t('<div><dt>Alcance</dt><dd>') + st.alc + '</dd></div>' +
       '<div><dt>XP</dt><dd><span data-pet-xptxt="' + p.uid + '">' + fmt(p.xp) + '</span> <small class="muted">/ ' + fmt(LV.F.xpPet(p.nivel)) + '</small></dd></div>' +
       '</dl>';
-    if (p.nivel >= cap) h += LV.t('<p class="nota">Pets só passam ') + 10 + LV.t(' níveis acima do domador. Suba o nível do domador para continuar.</p>');
-    const hb = LV.HAB[p.sp], hn = p.hab || 1;
-    if (hb) {
+    if (p.nivel >= cap) h += LV.t('<p class="nota">Pets só passam ') + LV.F.capPet(0) + LV.t(' níveis acima do domador. Suba o nível do domador para continuar.</p>');
+    // ataques especiais: 5 por espécie, até 2 equipados; o nível vale para todos
+    const hn = p.hab || 1, lista = LV.ATQ_SP[p.sp] || [], eqs = LV.atqsEquipados(p);
+    if (lista.length) {
       const s1 = (v) => (Math.round(v * 10) / 10).toLocaleString(LV.locale);
-      h += LV.t('<div class="hab"><div class="hab-t"><span class="eyebrow">Habilidade especial</span><b style="color:') + LV.EL[sp.el].cor + '">' + hb.nome + '</b>' +
-        LV.t('<span class="muted small">Nv ') + hn + '/' + LV.HAB_MAX + LV.t(' · recarga ') + s1(LV.habRecarga(p.sp, hn)) + ' s</span></div>' +
-        '<p class="small">' + hb.desc(hn) + '</p>';
+      h += LV.t('<div class="hab"><div class="hab-t"><span class="eyebrow">Ataques especiais</span>') +
+        LV.t('<span class="muted small">Nv ') + hn + '/' + LV.HAB_MAX + LV.t(' · equipados ') + eqs.length + '/2</span></div>' +
+        LV.t('<p class="nota">Até 2 ficam equipados. Os outros se liberam com o nível e as evoluções do pet.</p><div class="atqs">');
+      lista.forEach((id, i) => {
+        const at = LV.ATQ[id], lib = LV.atqLiberado(p, i), eq = eqs.includes(id);
+        h += '<div class="atq' + (eq ? ' eq' : '') + (lib ? '' : ' trav') + '"><div class="atq-t"><b style="color:' + (lib ? LV.EL[sp.el].cor : 'inherit') + '">' + at.nome + '</b>' +
+          (lib ? (eq ? '<button class="btn mini sel" data-act="atq" data-uid="' + p.uid + '" data-id="' + id + LV.t('" title="Tirar">Equipado</button>') : '<button class="btn mini" data-act="atq" data-uid="' + p.uid + '" data-id="' + id + LV.t('">Equipar</button>'))
+            : '<span class="muted small">' + ICON.cadeado + LV.t(' Libera ') + LV.textoLibera(i) + '</span>') + '</div>' +
+          '<p class="small">' + LV.descAtq(at, hn, sp.el) + (lib ? LV.t(' Recarga ') + s1(LV.recargaAtq(at, hn)) + ' s.' : '') + '</p></div>';
+      });
+      h += '</div>';
       if (hn < LV.HAB_MAX) {
         const c = LV.custoHab(p.sp, hn);
-        h += LV.t('<p class="small acc">No nível ') + (hn + 1) + ': ' + hb.desc(hn + 1) + LV.t(' Recarga ') + s1(LV.habRecarga(p.sp, hn + 1)) + ' s.</p>' +
+        h += LV.t('<p class="small acc">Melhorar deixa todos os ataques mais fortes e com recarga menor (nível ') + (hn + 1) + ').</p>' +
           '<div class="row"><button class="btn" data-act="hab" data-uid="' + p.uid + '" data-custo="' + c.lumes + '" data-mat="' + c.mat + ':' + c.q + LV.t('">Melhorar · ') + ICON.lumes + ' ' + fmt(c.lumes) +
           ' + <i class="dot" style="--c:' + LV.MAT[c.mat].cor + '"></i>' + c.q + '</button><span class="muted small">' + LV.MAT[c.mat].nome + ': ' + fmt(s.mats[c.mat] || 0) + '</span></div>';
-      } else h += LV.t('<p class="small maxed">Habilidade no nível máximo</p>');
+      } else h += LV.t('<p class="small maxed">Ataques no nível máximo</p>');
       h += '</div>';
     }
     const forte = LV.EL[sp.el].forte.map((x) => LV.EL[x].nome).join(', ') || '—';
@@ -1079,8 +1089,14 @@
     else if (a === 'evoluir') { const r = game.acao.evoluir(uid); if (r !== true) ui.toast(LV.t('Ainda faltam requisitos para evoluir'), 'ruim', true); }
     else if (a === 'hab') {
       const r = game.acao.melhorarHab(uid);
-      if (r === true) { const p = s.pets.find((x) => x.uid === uid); ui.toast(LV.HAB[p.sp].nome + LV.t(' agora no nível ') + p.hab, 'bom', true); som('nivel'); }
-      else ui.toast(r === 'mat' ? LV.t('Faltam materiais para melhorar') : r === 'max' ? LV.t('Habilidade no nível máximo') : LV.t('Lumes insuficientes'), 'ruim', true);
+      if (r === true) { const p = s.pets.find((x) => x.uid === uid); ui.toast(LV.t('Ataques de ') + LV.nomePet(p) + LV.t(' agora no nível ') + p.hab, 'bom', true); som('nivel'); }
+      else ui.toast(r === 'mat' ? LV.t('Faltam materiais para melhorar') : r === 'max' ? LV.t('Ataques no nível máximo') : LV.t('Lumes insuficientes'), 'ruim', true);
+      ui.render(); LV.salvarLogo();
+    }
+    else if (a === 'atq') {
+      const r = game.acao.equiparAtq(uid, b.dataset.id);
+      if (r === 'ultimo') ui.toast(LV.t('Pelo menos um ataque precisa ficar equipado'), 'ruim', true);
+      else if (r === true) som('clique');
       ui.render(); LV.salvarLogo();
     }
     else if (a === 'ponto') { game.acao.ponto(b.dataset.attr, +b.dataset.n); ui.render(); }
@@ -1248,11 +1264,11 @@
     el.lant2.textContent = s.lanternas;
     W.pets.forEach((p) => {
       const c = el.pets.querySelector('[data-u="' + p.uid + '"]');
-      if (c && LV.HAB[p.ref.sp]) {
-        const tot = game.habRecarga(p), k = p.habCd == null ? 0.5 : 1 - LV.clamp(p.habCd / tot, 0, 1);
+      if (c && LV.ATQ_SP[p.ref.sp]) {
+        const pr = game.prontidaoAtq(p), k = Math.max(0, pr.k);
         const b = c.querySelector('.habil b');
         if (b) { b.style.width = (k * 100).toFixed(1) + '%'; b.parentNode.classList.toggle('pronta', k >= 1); }
-        c.dataset.hab = LV.HAB[p.ref.sp].nome;
+        c.dataset.hab = pr.nome;
       }
       if (!c) return;
       c.classList.toggle('ko', p.desm > 0);
@@ -1341,8 +1357,8 @@
     ui.modal(LV.t('<div class="eyebrow">Santuário dos Ecos</div><h2>Renascer?</h2>') +
       LV.t('<p>Você volta ao começo de Lumevale e ganha <b class="ecos-txt">') + ICON.eco + ' ' + fmt(prev) + LV.t(' Ecos</b>, ficando com ') + fmt(s.meta.ecos + prev) + LV.t(' para gastar no Santuário.</p>') +
       LV.t('<div class="perde-fica"><div><h3>Você perde</h3><ul>') +
-      LV.t('<li>Todos os ') + s.pets.length + LV.t(' pets</li><li>Nível ') + s.dom.nivel + LV.t(' do domador e os atributos</li><li>Lumes, materiais e lanternas</li><li>Moedas dos Guardiões e melhorias da Loja</li><li>Mapas liberados</li></ul></div>') +
-      LV.t('<div><h3>Fica com você</h3><ul><li>Ecos e melhorias do Santuário</li><li>Nome do domador</li><li>Este espaço de save</li></ul></div></div>') +
+      LV.t('<li>Todos os ') + s.pets.length + LV.t(' pets</li><li>Nível ') + s.dom.nivel + LV.t(' do domador e os atributos</li><li>Lumes, materiais e lanternas</li><li>Moedas dos Guardiões, melhorias e lanternas da Loja</li><li>Itens dos Guardiões (capas e lanternas com bônus)</li><li>Mapas liberados</li></ul></div>') +
+      LV.t('<div><h3>Fica com você</h3><ul><li>Ecos e melhorias do Santuário</li><li>Conquistas, capas visuais e lanternas das conquistas</li><li>Nome do domador</li><li>Este espaço de save</li></ul></div></div>') +
       LV.t('<div class="row end"><button class="btn" data-m="fechar">Continuar a jornada</button><button class="btn perigo" data-m="renascer">Renascer</button></div>'));
   };
 

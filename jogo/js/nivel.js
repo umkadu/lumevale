@@ -85,9 +85,11 @@
         const pc = LV.PECAS[s.tipo];
         const y0 = s.y + pc.alt * (1 - pc.topo) - 6;
         if (y0 > G - 20) return;
-        for (const px of [s.x0 + 30, s.x1 - 30]) {
+        // uma coluna no meio das plataformas curtas, duas nas largas (longe das pontas arredondadas)
+        const larg = s.x1 - s.x0, xs = larg < 230 ? [(s.x0 + s.x1) / 2] : [s.x0 + larg * 0.24, s.x1 - larg * 0.24];
+        for (const px of xs) {
           const abaixo = nivel.sobre({ sup }, px, s.y + 4);
-          if (abaixo) pilares.push({ x: px, y0, y1: abaixo.y + 4 });
+          if (abaixo) pilares.push({ x: Math.round(px), y0, y1: abaixo.y + 4, sy: s.y, alta: !!s.alto });
         }
       });
     }
@@ -323,8 +325,18 @@
   nivel.desenhar = function (c, L, cam, vw, t) {
     const spr = LV.spr, art = LV.art, P = LV.MAPS[L.idx].pal, tinta = L.cen.tinta;
     const vis = (x0, x1) => x1 > cam - 60 && x0 < cam + vw + 60;
-    const pilar = spr.tingida('pecas/pilar', tinta, 0.25);
-    if (pilar) for (const p of L.pilares) if (vis(p.x - 30, p.x + 30)) c.drawImage(pilar, p.x - 19, p.y0, 38, p.y1 - p.y0);
+    const kit = LV.MAPS[L.idx].tema, K = LV.KITS && LV.KITS[kit], KD = LV.KIT_DESENHO;
+    const peca = (n) => spr.tingida('kits/' + kit + '/' + n, tinta, 0.08);
+    const kitOk = K && ['pe', 'pm', 'pd', 'ct', 'cm', 'cb'].every((n) => spr.get('kits/' + kit + '/' + n));
+    if (kitOk) {
+      for (const p of L.pilares) if (vis(p.x - 60, p.x + 60)) {
+        const alt = p.alta ? KD.plat.altaAlt : KD.plat.alt;
+        spr.colunaModular(c, [peca('ct'), peca('cm'), peca('cb')], p.x, p.sy + alt * (1 - K.plat.topo) * 0.45, p.y1, K.col, KD.col.larg);
+      }
+    } else {
+      const pilar = spr.tingida('pecas/pilar', tinta, 0.25);
+      if (pilar) for (const p of L.pilares) if (vis(p.x - 30, p.x + 30)) c.drawImage(pilar, p.x - 19, p.y0, 38, p.y1 - p.y0);
+    }
     const corr = spr.get('pecas/corrente');
     for (const p of L.props) {
       if (!p.pend || !corr || !vis(p.x - 30, p.x + 30)) continue;
@@ -350,6 +362,7 @@
     }
     for (const s of L.sup) {
       if (!s.id || !vis(s.x0, s.x1)) continue;
+      if (kitOk) { spr.platModular(c, [peca('pe'), peca('pm'), peca('pd')], s.x0 - 8, s.x1 + 8, s.y, K.plat, s.alto ? KD.plat.altaAlt : KD.plat.alt); continue; }
       const pc = LV.PECAS[s.tipo];
       spr.plataforma(c, spr.tingida('pecas/' + s.tipo, tinta, 0.2), s.x0 - 6, s.x1 + 6, s.y, pc);
     }

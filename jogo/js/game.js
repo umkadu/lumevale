@@ -98,9 +98,9 @@
       if (!uid || vistos.has(uid)) uid = 0; else vistos.add(uid);
       mx = Math.max(mx, uid);
       const b = p.bonus && LV.TALENTOS[p.bonus.t] ? { t: p.bonus.t, v: numOr(p.bonus.v, 0.1, 0.01, 0.5) } : null;
-      return { uid, sp: p.sp, nivel: intOr(p.nivel, 1, 1, 999), xp: numOr(p.xp, 0, 0, 1e300), est: intOr(p.est, 0, 0, 2), hab: intOr(p.hab, 1, 1, LV.HAB_MAX || 10), bonus: b, especial: !!p.especial, apelido: typeof p.apelido === 'string' && p.apelido.trim() ? p.apelido.trim().slice(0, 20) : null };
+      return { uid, sp: p.sp, nivel: intOr(p.nivel, 1, 1, 999), xp: numOr(p.xp, 0, 0, 1e300), est: intOr(p.est, 0, 0, 2), hab: intOr(p.hab, 1, 1, LV.HAB_MAX || 10), atqs: Array.isArray(p.atqs) ? [...new Set(p.atqs.filter((id) => (LV.ATQ_SP[p.sp] || []).includes(id)))].slice(0, 2) : null, atqN: p.atqN == null ? null : intOr(p.atqN, 1, 0, 5), bonus: b, especial: !!p.especial, apelido: typeof p.apelido === 'string' && p.apelido.trim() ? p.apelido.trim().slice(0, 20) : null };
     });
-    o.pets.forEach((p) => { if (!p.uid) p.uid = ++mx; });
+    o.pets.forEach((p) => { if (!p.uid) p.uid = ++mx; conferirAtaques(p, false); });
     o.prox = Math.max(intOr(s.prox, 1, 1, 1e9), mx + 1);
     o.ativos = [...new Set(Array.isArray(s.ativos) ? s.ativos : [])].filter((u) => o.pets.some((p) => p.uid === u)).slice(0, 3 + o.up.laco + o.meta.up.vinculo);
     if (!o.ativos.length && o.pets.length) o.ativos = [o.pets[0].uid];
@@ -386,6 +386,7 @@
     if (primeira) {
       const pr = W.def.chefe.premio;
       premio = { uid: S.prox++, sp: pr.sp, nivel: Math.max(1, Math.min(W.def.lv[1], F.capPet(S.dom.nivel))), xp: 0, est: pr.est || 0, apelido: null };
+      conferirAtaques(premio, false);
       S.pets.push(premio);
       if (S.ativos.length < slots()) { S.ativos.push(premio.uid); montarPets(); }
       if (W.idx + 1 < LV.MAPS.length) S.mapas[W.idx + 1].liberado = true;
@@ -468,7 +469,7 @@
     let up = 0;
     while (p.xp >= F.xpPet(p.nivel) && p.nivel < cap) { p.xp -= F.xpPet(p.nivel); p.nivel++; up++; }
     if (p.nivel >= cap) p.xp = Math.min(p.xp, F.xpPet(p.nivel) - 1);
-    if (up) { montarPets(); emit('petNivel', p); }
+    if (up) { conferirAtaques(p); montarPets(); emit('petNivel', p); }
   }
   /* avisa uma única vez quando TODOS os requisitos de evolução (nível, materiais e Lumes) estão cumpridos */
   function conferirEvolucoes() {
@@ -617,6 +618,7 @@
   function darPetRadiante(sp) {
     const nivel = Math.max(5, Math.min(F.capPet(S.dom.nivel), S.dom.nivel));
     const pet = { uid: S.prox++, sp, nivel, xp: 0, est: 0, apelido: null, hab: 1, bonus: null, especial: true };
+    conferirAtaques(pet, false);
     S.pets.push(pet);
     if (S.ativos.length < slots()) { S.ativos.push(pet.uid); montarPets(); }
     return pet;
@@ -696,107 +698,314 @@
   }
   // lasquinhas de cristal que saltam quando a carapaça se forma
   function lascasPet(x, y, cor, n) { for (let i = 0; i < n; i++) particula({ x, y, vx: LV.rand(-160, 160), vy: LV.rand(-240, -60), g: 700, vida: LV.rand(0.4, 0.7), t: 0, r: LV.rand(2, 3.2), cor, tipo: 'lasca' }); }
-  function tentarHabilidade(p, ini) {
-    const h = LV.HAB[p.ref.sp], n = habNivel(p), T = W.tam;
-    if (!h) return false;
+  /* visual de cada elemento nos ataques que existem em mais de um elemento */
+  const ELV = {
+    brasa: { cor: '#ff9a52', luz: '#ffb35c', expl: 'hab/explosao', tiro: 'hab/brasacai', tiroTipo: 'brasa' },
+    mare: { cor: '#8ff6ff', luz: '#bff7ff', expl: 'hab/anelagua', tiro: 'hab/tiro_mare' },
+    musgo: { cor: '#c8ff7a', luz: '#d8ffb0', expl: 'ataques/esporo', tiro: 'hab/folha' },
+    sombra: { cor: '#a99bff', luz: '#c8bcff', expl: null, tiro: 'hab/tiro_sombra', tiroTipo: 'corvo' },
+    cristal: { cor: '#ee9cff', luz: '#f6c6ff', expl: 'ataques/estilhacos', tiro: 'ataques/lasca' },
+  };
+  game.ELV = ELV;
+  const valor = (f, n) => (typeof f === 'function' ? f(n) : f);
+  /* efeitos extras de um ataque (queimadura/veneno, atordoar, lento, fraco, vulnerável) */
+  function efeitosAtq(e, p, a, n) {
+    if (!e || e.hp <= 0) return;
+    if (a.dot) aplicarDot(e, p.atk * a.dot.k, a.dot.dur, p.el, ELV[p.el].cor);
+    if (a.atord) { const d = valor(a.atord, n) * (e.tipo === 'chefe' ? 0.35 : 1); e.atord = Math.max(e.atord || 0, d); }
+    if (a.lento) e.lento = Math.max(e.lento || 0, a.lento);
+    if (a.fraco) e.fraco = Math.max(e.fraco || 0, a.fraco);
+    if (a.vuln) { e.vuln = Math.max(e.vuln || 0, 4); e.vulnK = Math.max(e.vulnK || 0, valor(a.vuln, n)); }
+  }
+  /* empurra uma criatura sem tirá-la da plataforma (Guardiões não saem do lugar) */
+  function empurrar(e, dx) {
+    if (e.tipo === 'chefe') return;
+    e.x += dx;
+    if (e.sup >= 0 && W.L.sup[e.sup]) { const s = W.L.sup[e.sup]; e.x = LV.clamp(e.x, s.x0 + 8, s.x1 - 8); }
+    else e.x = LV.clamp(e.x, 20, W.w - 20);
+  }
+  /* explosão ilustrada no elemento do pet */
+  function estouro(x, y, r, el, img) {
+    const V = ELV[el], im = img || V.expl;
+    fx({ tipo: 'brilho', x, y, r: r * 1.1, cor: V.cor, vida: 0.5 });
+    if (im) fx({ tipo: 'spr', img: im, x, y, h: r * 1.35, ay: 0.5, cresce: [0.3, 1.05], vida: 0.6, flip: Math.random() < 0.5, luz: el === 'mare' || el === 'musgo' });
+    else fx({ tipo: 'anel', x, y, r0: 8, r1: r, cor: V.cor, vida: 0.5 });
+    explosao(x, y, V.luz, 12);
+  }
+  /* tenta usar um ataque especial; devolve false se não havia alvo (a recarga não é gasta) */
+  function tentarAtaque(p, a, ini) {
+    const n = habNivel(p), T = W.tam, V = ELV[p.el] || ELV.brasa;
     const perto = ini.filter((e) => dist2(e, T) < RAIO_PET + 70);
     const time = W.pets.filter((x) => x.desm <= 0).concat(T.caido > 0 ? [] : [T]);
     const alvoDe = () => (p.alvo && alvoValido(p.alvo) && perto.includes(p.alvo) ? p.alvo : maisProximo(p, perto, Infinity, (e) => dist2(e, p)));
-    const cor = LV.EL[p.el].cor;
-    switch (h.tipo) {
+    const m = valor(a.mult, n) || 0;
+    switch (a.tipo) {
       case 'explosao': {
-        const a = alvoDe(); if (!a) return false;
-        const r = h.raio(n), x = a.x, y = alvoY(a);
-        fx({ tipo: 'brilho', x, y, r: r * 1.1, cor: '#ff9a52', vida: 0.5 });
-        fx({ tipo: 'spr', img: 'hab/explosao', x, y, h: r * 1.35, ay: 0.5, cresce: [0.3, 1.05], vida: 0.6, flip: Math.random() < 0.5 });
-        explosao(x, y, '#ffb35c', 14); W.shake = Math.max(W.shake, 5); som('impacto');
-        perto.filter((e) => Math.hypot(e.x - x, alvoY(e) - y) < r).forEach((e) => { dano(e, p.atk * h.mult(n), p.el, p); aplicarDot(e, p.atk * 0.15, 3, 'brasa', '#ff8a3d'); });
+        const e = alvoDe(); if (!e) return false;
+        const r = valor(a.raio, n), x = e.x, y = alvoY(e);
+        estouro(x, y, r, p.el, a.img);
+        W.shake = Math.max(W.shake, 5); som('impacto');
+        perto.filter((o) => Math.hypot(o.x - x, alvoY(o) - y) < r).forEach((o) => { dano(o, p.atk * m, p.el, p); efeitosAtq(o, p, a, n); });
         break;
       }
       case 'chuva': {
         if (!perto.length) return false;
-        const alvos = perto.slice().sort(() => Math.random() - 0.5).slice(0, h.qtd(n));
-        alvos.forEach((e, k) => W.proj.push({ x: e.x + LV.rand(-60, 60), y: alvoY(e) - 260 - k * 30, alvo: e, vel: 520, dmg: p.atk * h.mult(n), el: p.el, cor: '#ff8a4a', dono: 'pet', fonte: p, tipo: 'brasa', vida: 2.5, efeito: (x) => aplicarDot(x, p.atk * 0.12, 2, 'brasa', '#ff8a3d') }));
+        const alvos = perto.slice().sort(() => Math.random() - 0.5).slice(0, valor(a.qtd, n));
+        const tipo = a.img === 'hab/brasacai' || (!a.img && p.el === 'brasa') ? 'brasa' : null;
+        alvos.forEach((e, k) => W.proj.push({ x: e.x + LV.rand(-60, 60), y: alvoY(e) - 260 - k * 30, alvo: e, vel: 520, dmg: p.atk * m, el: p.el, cor: V.cor, dono: 'pet', fonte: p, tipo: tipo || 'img', img: tipo ? null : a.img || V.tiro, tam: 24, vida: 2.5, efeito: (x) => efeitosAtq(x, p, a, n) }));
         som('lanterna');
         break;
       }
       case 'escudo': {
         if (!perto.length) return false;
-        time.forEach((a) => { a.escudo = Math.round(a.hpMax * h.pct(n)); a.escudoT = 6; fx({ tipo: 'spr', img: 'hab/bolha', x: a.x, y: alvoY(a), h: (a.h || 40) * 1.5, ay: 0.5, cresce: [0.3, 1.1], vida: 0.45, alfa: 0.9 }); });
+        const pct = valor(a.pct, n);
+        time.forEach((x) => { x.escudo = Math.round(x.hpMax * pct); x.escudoT = 6; fx({ tipo: 'spr', img: 'hab/bolha', x: x.x, y: alvoY(x), h: (x.h || 40) * 1.5, ay: 0.5, cresce: [0.3, 1.1], vida: 0.45, alfa: 0.9 }); });
+        if (p.el === 'cristal') time.forEach((x) => lascasPet(x.x, alvoY(x), V.luz, 4));
         som('brilho');
         break;
       }
       case 'pulso': {
-        const r = 125;
+        const r = valor(a.raio, n) || 125;
         const alvos = ini.filter((e) => Math.hypot(e.x - p.x, alvoY(e) - alvoY(p)) < r);
         if (!alvos.length) return false;
-        fx({ tipo: 'spr', img: 'hab/anelagua', x: p.x, y: alvoY(p), h: r * 2, ay: 0.5, cresce: [0.12, 1], vida: 0.5, gira: 0.8 });
-        fx({ tipo: 'brilho', x: p.x, y: alvoY(p), r: r * 0.6, cor: '#8ff6ff', vida: 0.35 });
-        alvos.forEach((e) => { dano(e, p.atk * h.mult(n), p.el, p); if (e.tipo !== 'chefe') e.atord = Math.max(e.atord || 0, h.atord(n)); else e.atord = Math.max(e.atord || 0, h.atord(n) * 0.35); });
+        const im = a.img || (p.el === 'mare' ? 'hab/anelagua' : null);
+        if (im) fx({ tipo: 'spr', img: im, x: p.x, y: alvoY(p), h: r * 2, ay: 0.5, cresce: [0.12, 1], vida: 0.5, gira: 0.8, luz: im === 'hab/polen', alfa: im === 'hab/polen' ? 0.5 : 1 });
+        fx({ tipo: 'brilho', x: p.x, y: alvoY(p), r: r * 0.6, cor: V.cor, vida: 0.35 });
+        fx({ tipo: 'anel', x: p.x, y: alvoY(p), r0: 10, r1: r, cor: V.cor, vida: 0.4 });
+        if (p.el === 'cristal') { lascasPet(p.x, p.y, V.luz, 10); W.shake = Math.max(W.shake, 6); }
+        alvos.forEach((e) => { dano(e, p.atk * m, p.el, p); efeitosAtq(e, p, a, n); });
         som('impacto');
         break;
       }
       case 'cura': {
-        const feridos = time.filter((a) => a.hp < a.hpMax * 0.9);
+        const feridos = time.filter((x) => x.hp < x.hpMax * 0.9);
         if (!feridos.length) return false;
-        fx({ tipo: 'spr', img: 'hab/polen', x: p.x, y: alvoY(p), h: 170, ay: 0.5, cresce: [0.25, 1.1], vida: 0.8, luz: true, alfa: 0.45, gira: 0.5 });
-        time.forEach((a) => curar(a, a.hpMax * h.pct(n)));
+        if (p.el === 'mare') fx({ tipo: 'spr', img: 'hab/anelagua', x: p.x, y: alvoY(p), h: 200, ay: 0.5, cresce: [0.2, 1.1], vida: 0.7, luz: true, alfa: 0.6, gira: 0.5 });
+        else fx({ tipo: 'spr', img: 'hab/polen', x: p.x, y: alvoY(p), h: 170, ay: 0.5, cresce: [0.25, 1.1], vida: 0.8, luz: true, alfa: 0.45, gira: 0.5 });
+        const pct = valor(a.pct, n);
+        time.forEach((x) => curar(x, x.hpMax * pct));
+        som('brilho');
+        break;
+      }
+      case 'regen': {
+        if (!time.some((x) => x.hp < x.hpMax * 0.95)) return false;
+        W.areas.push({ tipo: 'regen', x: p.x, y: p.y, r: 0, t: a.dur, dur: a.dur, tick: 0, pct: valor(a.pct, n), cor: V.cor });
+        fx({ tipo: 'spr', img: 'hab/folha', x: p.x, y: alvoY(p) - 10, h: 60, ay: 0.5, cresce: [0.3, 1.2], vida: 0.8, gira: 2 });
         som('brilho');
         break;
       }
       case 'nuvem': {
-        const a = alvoDe(); if (!a) return false;
-        const y = a.voa ? N().chaoSob(W.L, a.x, a.y) : a.y;
-        W.areas.push({ tipo: 'nuvem', x: a.x, y, r: 88, t: 4, dur: 4, tick: 0, dps: p.atk * h.dps(n), el: p.el, cor: '#d4ff7a' });
+        const e = alvoDe(); if (!e) return false;
+        const y = e.voa ? N().chaoSob(W.L, e.x, e.y) : e.y;
+        W.areas.push({ tipo: 'nuvem', x: e.x, y, r: 88, t: 4, dur: 4, tick: 0, dps: p.atk * valor(a.dps, n), el: p.el, cor: '#d4ff7a' });
         som('escapou');
+        break;
+      }
+      case 'parede': {
+        const e = alvoDe(); if (!e) return false;
+        const y = e.voa ? N().chaoSob(W.L, e.x, e.y) : e.y;
+        W.areas.push({ tipo: 'chamas', x: e.x, y, r: 80, t: a.dur, dur: a.dur, tick: 0, dps: p.atk * valor(a.dps, n), el: p.el, cor: V.cor, img: a.img });
+        som('impacto');
         break;
       }
       case 'provocar': {
         const alvos = ini.filter((e) => Math.hypot(e.x - p.x, alvoY(e) - alvoY(p)) < 190);
         if (!alvos.length) return false;
-        const dur = h.dur(n);
+        const dur = valor(a.dur, n);
         alvos.forEach((e) => { e.prov = p; e.provT = dur; });
-        p.reducao = dur; p.reducaoK = h.red(n);
-        fx({ tipo: 'brilho', x: p.x, y: alvoY(p), r: 120, cor: '#f3a6ff', vida: 0.45 });
-        lascasPet(p.x, alvoY(p), '#f3b8ff', 8);
+        p.reducao = dur; p.reducaoK = valor(a.red, n);
+        fx({ tipo: 'brilho', x: p.x, y: alvoY(p), r: 120, cor: V.cor, vida: 0.45 });
+        if (p.el === 'cristal') lascasPet(p.x, alvoY(p), '#f3b8ff', 8);
+        else for (let k = 0; k < 6; k++) particula({ x: p.x + LV.rand(-20, 20), y: alvoY(p) + LV.rand(-10, 10), vx: LV.rand(-40, 40), vy: LV.rand(-80, -30), g: 0, vida: 0.8, t: 0, r: 2.4, cor: V.luz, tipo: 'luz' });
         som('impacto');
         break;
       }
       case 'lanca': {
-        const a = alvoDe(); if (!a) return false;
-        const dir = Math.sign(a.x - p.x) || p.face, L = h.alc(n), y0 = alvoY(p);
+        const e = alvoDe(); if (!e) return false;
+        const dir = Math.sign(e.x - p.x) || p.face, L = valor(a.alc, n), y0 = alvoY(p);
         p.face = dir;
-        fx({ tipo: 'lanca', x0: p.x + dir * 10, y0, x1: p.x + dir * L, y1: y0 + (alvoY(a) - y0) * 0.4, cor: '#9ff3ff', vida: 0.5 });
-        ini.filter((e) => (e.x - p.x) * dir > -10 && Math.abs(e.x - p.x) < L && Math.abs(alvoY(e) - y0) < 60).forEach((e) => dano(e, p.atk * h.mult(n), p.el, p));
+        fx({ tipo: 'lanca', x0: p.x + dir * 10, y0, x1: p.x + dir * L, y1: y0 + (alvoY(e) - y0) * 0.4, cor: p.el === 'cristal' ? '#9ff3ff' : V.cor, vida: 0.5 });
+        ini.filter((o) => (o.x - p.x) * dir > -10 && Math.abs(o.x - p.x) < L && Math.abs(alvoY(o) - y0) < 60).forEach((o) => { dano(o, p.atk * m, p.el, p); efeitosAtq(o, p, a, n); });
         som('brilho');
         break;
       }
       case 'revoada': {
         if (!perto.length) return false;
-        for (let k = 0; k < h.qtd(n); k++) {
+        const img = a.img || (p.el === 'sombra' ? null : V.tiro);
+        for (let k = 0; k < valor(a.qtd, n); k++) {
           const e = perto[k % perto.length];
-          W.proj.push({ x: p.x + LV.rand(-10, 10), y: alvoY(p) - 10 - k * 6, alvo: e, vel: 360 + k * 30, dmg: p.atk * h.mult(n), el: p.el, cor: '#b49bff', dono: 'pet', fonte: p, tipo: 'corvo', vida: 2.6, efeito: (x) => { x.fraco = 4; } });
+          W.proj.push({ x: p.x + LV.rand(-10, 10), y: alvoY(p) - 10 - k * 6, alvo: e, vel: 360 + k * 30, dmg: p.atk * m, el: p.el, cor: V.cor, dono: 'pet', fonte: p, tipo: img ? 'img' : 'corvo', img, tam: 20, gira: 8, vida: 2.6, efeito: (x) => efeitosAtq(x, p, a, n) });
         }
         som('lanterna');
         break;
       }
       case 'teia': {
-        const a = alvoDe(); if (!a) return false;
-        const y = a.voa ? alvoY(a) : a.y - 6;
-        W.areas.push({ tipo: 'teia', x: a.x, y, r: 90, t: 3, dur: 3, cor: '#ff9be0' });
-        ini.filter((e) => Math.hypot(e.x - a.x, alvoY(e) - alvoY(a)) < 90).forEach((e) => { dano(e, p.atk * 0.6, p.el, p); e.lento = 3; e.vuln = 4; e.vulnK = h.vuln(n); });
+        const e = alvoDe(); if (!e) return false;
+        const y = e.voa ? alvoY(e) : e.y - 6;
+        W.areas.push({ tipo: 'teia', x: e.x, y, r: 90, t: 3, dur: 3, cor: '#ff9be0' });
+        ini.filter((o) => Math.hypot(o.x - e.x, alvoY(o) - alvoY(e)) < 90).forEach((o) => { dano(o, p.atk * 0.6, p.el, p); o.lento = 3; o.vuln = 4; o.vulnK = valor(a.vuln, n); });
         som('golpe');
+        break;
+      }
+      case 'sopro': {
+        // cone à frente do pet
+        const e = alvoDe(); if (!e) return false;
+        const dir = Math.sign(e.x - p.x) || p.face, L = valor(a.alc, n), y0 = alvoY(p);
+        p.face = dir;
+        const alvos = ini.filter((o) => { const dx = (o.x - p.x) * dir, dy = Math.abs(alvoY(o) - y0); return dx > -6 && dx < L && dy < 26 + dx * 0.45; });
+        if (!alvos.length) return false;
+        if (imgAtq('hab/sopro')) fx({ tipo: 'spr', img: 'hab/sopro', x: p.x + dir * 8, y: y0, h: L * 0.62, ax: 0.04, ay: 0.5, flip: dir < 0, cresce: [0.4, 1], vida: 0.55, luz: true });
+        for (let k = 0; k < 18; k++) { const ang = LV.rand(-0.4, 0.4), v = LV.rand(220, 380); particula({ x: p.x + dir * 10, y: y0, vx: Math.cos(ang) * v * dir, vy: Math.sin(ang) * v, g: -40, vida: L / v, t: 0, r: LV.rand(2, 4), cor: k % 3 ? V.cor : V.luz, tipo: 'luz' }); }
+        fx({ tipo: 'brilho', x: p.x + dir * L * 0.5, y: y0, r: L * 0.55, cor: V.cor, vida: 0.4 });
+        alvos.forEach((o) => { dano(o, p.atk * m, p.el, p); efeitosAtq(o, p, a, n); });
+        som('impacto');
+        break;
+      }
+      case 'mordida': {
+        const e = alvoDe(); if (!e) return false;
+        const dir = Math.sign(e.x - p.x) || p.face; p.face = dir;
+        if (p.el === 'brasa' && imgAtq('hab/mordida')) fx({ tipo: 'spr', img: 'hab/mordida', x: e.x, y: alvoY(e), h: Math.max(44, e.h * 0.9), ay: 0.5, flip: dir < 0, cresce: [1.25, 0.9], vida: 0.4 });
+        else fx({ tipo: 'corte', x: e.x - dir * 4, y: alvoY(e), face: dir, cor: V.cor, vida: 0.3 });
+        fx({ tipo: 'brilho', x: e.x, y: alvoY(e), r: 40, cor: V.cor, vida: 0.3 });
+        faiscas(e.x, alvoY(e), V.luz, 10); W.shake = Math.max(W.shake, 3);
+        dano(e, p.atk * m, p.el, p); efeitosAtq(e, p, a, n);
+        som('golpe');
+        break;
+      }
+      case 'garras': {
+        const e = alvoDe(); if (!e) return false;
+        const dir = Math.sign(e.x - p.x) || p.face; p.face = dir;
+        for (let k = 0; k < a.golpes; k++) (W.agenda = W.agenda || []).push({ t: k * 0.11, fn: () => {
+          if (e.hp <= 0) return;
+          fx({ tipo: 'corte', x: e.x - dir * 4 + LV.rand(-6, 6), y: alvoY(e) + LV.rand(-8, 8), face: k % 2 ? -dir : dir, cor: V.cor, vida: 0.22 });
+          dano(e, p.atk * m, p.el, p); if (k === a.golpes - 1) efeitosAtq(e, p, a, n);
+        } });
+        som('golpe');
+        break;
+      }
+      case 'empurrao': {
+        const e = alvoDe(); if (!e) return false;
+        const dir = Math.sign(e.x - p.x) || p.face, L = a.alc, y0 = alvoY(p);
+        p.face = dir;
+        const alvos = ini.filter((o) => { const dx = (o.x - p.x) * dir; return dx > -6 && dx < L && Math.abs(alvoY(o) - y0) < 70; });
+        if (!alvos.length) return false;
+        const im = a.img || (imgAtq('hab/vento') ? 'hab/vento' : null);
+        if (im) fx({ tipo: 'spr', img: im, x: p.x + dir * L * 0.45, y: y0, h: 90, ay: 0.5, flip: dir < 0, cresce: [0.5, 1.15], vida: 0.55, luz: im === 'hab/vento' });
+        for (let k = 0; k < 14; k++) particula({ x: p.x + dir * LV.rand(0, 30), y: y0 + LV.rand(-30, 30), vx: dir * LV.rand(260, 420), vy: LV.rand(-20, 20), g: 0, vida: 0.4, t: 0, r: 2, cor: V.luz, tipo: 'luz' });
+        alvos.forEach((o) => { dano(o, p.atk * m, p.el, p); efeitosAtq(o, p, a, n); empurrar(o, dir * a.empurra * (1 - Math.abs(o.x - p.x) / (L * 1.6))); o.irritado = true; });
+        som('impacto');
+        break;
+      }
+      case 'dreno': {
+        const e = alvoDe(); if (!e) return false;
+        const antes = e.hp;
+        dano(e, p.atk * m, p.el, p); efeitosAtq(e, p, a, n);
+        const tirado = Math.max(0, antes - Math.max(0, e.hp));
+        // orbes de vida voltam ao pet (e ao aliado mais ferido)
+        for (let k = 0; k < 8; k++) particula({ x: e.x + LV.rand(-10, 10), y: alvoY(e) + LV.rand(-10, 10), vx: (p.x - e.x) * LV.rand(1.6, 2.4), vy: (alvoY(p) - alvoY(e)) * 2 + LV.rand(-30, 30), g: 0, vida: 0.5, t: 0, r: 2.6, cor: '#ff5a6a', tipo: 'luz' });
+        if (imgAtq('hab/dreno')) fx({ tipo: 'spr', img: 'hab/dreno', x: e.x, y: alvoY(e), h: 54, ay: 0.5, cresce: [0.5, 1.1], vida: 0.5, gira: -3, luz: true });
+        const ferido = time.reduce((mn, x) => (x.hp / x.hpMax < mn.hp / mn.hpMax ? x : mn), p);
+        curar(p, tirado * a.dreno * 0.5); curar(ferido, tirado * a.dreno * 0.5);
+        som('golpe');
+        break;
+      }
+      case 'investida': {
+        // atravessa os inimigos girando e para do outro lado do alvo
+        const e = alvoDe(); if (!e) return false;
+        const dir = Math.sign(e.x - p.x) || p.face, x0 = p.x;
+        let x1 = e.x + dir * 50;
+        if (!p.voa && p.sup >= 0 && W.L.sup[p.sup]) { const s = W.L.sup[p.sup]; x1 = LV.clamp(x1, s.x0 + 12, s.x1 - 12); }
+        const y0 = alvoY(p), lo = Math.min(x0, x1), hi = Math.max(x0, x1);
+        ini.filter((o) => o.x >= lo - 20 && o.x <= hi + 20 && Math.abs(alvoY(o) - (p.voa ? alvoY(e) : y0)) < 60).forEach((o) => { dano(o, p.atk * m, p.el, p); efeitosAtq(o, p, a, n); });
+        for (let k = 0; k <= 8; k++) { const q = k / 8; particula({ x: LV.lerp(x0, x1, q), y: (p.voa ? alvoY(e) : y0) + LV.rand(-12, 12), vx: LV.rand(-20, 20), vy: LV.rand(-50, -10), g: 0, vida: 0.6, t: 0, r: LV.rand(2.5, 4), cor: k % 2 ? V.cor : V.luz, tipo: 'luz' }); }
+        fx({ tipo: 'feixe', x0, y0, x1, y1: p.voa ? alvoY(e) : y0, cor: V.cor, vida: 0.3, larg: 3 });
+        if (p.el === 'brasa' && imgAtq('hab/rodopio')) fx({ tipo: 'spr', img: 'hab/rodopio', x: x1, y: p.voa ? alvoY(e) : y0, h: 70, ay: 0.5, cresce: [0.6, 1.1], vida: 0.45, gira: 10, luz: true });
+        p.x = x1; if (p.voa) p.y = e.y; p.face = dir;
+        W.shake = Math.max(W.shake, 4); som('impacto');
+        break;
+      }
+      case 'prisao': {
+        const e = alvoDe(); if (!e) return false;
+        fx({ tipo: 'spr', img: a.img || 'hab/bolha', x: e.x, y: alvoY(e), h: Math.max(50, e.h * 1.2), ay: 0.5, cresce: [0.3, 1.05], vida: Math.min(2.4, valor(a.atord, n)), alfa: 0.85 });
+        dano(e, p.atk * m, p.el, p); efeitosAtq(e, p, a, n);
+        som('brilho');
+        break;
+      }
+      case 'prisaoArea': {
+        const e = alvoDe(); if (!e) return false;
+        const r = a.raio, x = e.x, y = alvoY(e);
+        const alvos = perto.filter((o) => Math.hypot(o.x - x, alvoY(o) - y) < r);
+        if (a.img === 'ataques/raizbaixa') alvos.forEach((o) => fx({ tipo: 'spr', img: 'ataques/raizbaixa', x: o.x, y: o.voa ? alvoY(o) + 20 : o.y + 4, h: 46, ay: 1, cresce: [0.2, 1], vida: Math.min(2.2, valor(a.atord, n)) }));
+        else fx({ tipo: 'spr', img: a.img || V.expl || 'hab/estrela', x, y, h: r * 1.6, ay: 0.5, cresce: [0.3, 1.1], vida: 0.6, luz: true, gira: 1 });
+        fx({ tipo: 'brilho', x, y, r, cor: V.cor, vida: 0.5 });
+        alvos.forEach((o) => { dano(o, p.atk * m, p.el, p); efeitosAtq(o, p, a, n); });
+        som('golpe');
+        break;
+      }
+      case 'corrente': {
+        const e = alvoDe(); if (!e) return false;
+        const cadeia = [e];
+        let ult = e;
+        for (let k = 0; k < valor(a.saltos, n); k++) {
+          const prox = maisProximo(ult, ini.filter((o) => !cadeia.includes(o) && Math.hypot(o.x - ult.x, alvoY(o) - alvoY(ult)) < 140), Infinity, (o) => Math.hypot(o.x - ult.x, alvoY(o) - alvoY(ult)));
+          if (!prox) break;
+          cadeia.push(prox); ult = prox;
+        }
+        let de = p;
+        cadeia.forEach((o) => { fx({ tipo: 'feixe', x0: de.x, y0: alvoY(de), x1: o.x, y1: alvoY(o), cor: V.luz, vida: 0.3, larg: 1.4 }); faiscas(o.x, alvoY(o), V.luz, 6); dano(o, p.atk * m, p.el, p); efeitosAtq(o, p, a, n); de = o; });
+        som('brilho');
+        break;
+      }
+      case 'eclipse': {
+        const e = alvoDe(); if (!e) return false;
+        const r = a.raio, x = e.x, y = alvoY(e);
+        W.areas.push({ tipo: 'eclipse', x, y, r, t: 1.4, dur: 1.4, cor: V.cor });
+        perto.filter((o) => Math.hypot(o.x - x, alvoY(o) - y) < r).forEach((o) => { dano(o, p.atk * m, p.el, p); efeitosAtq(o, p, a, n); });
+        som('impacto');
         break;
       }
       default: return false;
     }
-    anunciar(p, h.nome);
+    anunciar(p, a.nome);
     p.atkA = 1;
     return true;
   }
+  /* quanto falta para o próximo ataque especial do pet (0 a 1) e o nome dele, para a barrinha da interface */
+  game.prontidaoAtq = function (p) {
+    if (!p.ref) return { k: 0, nome: '' };
+    const n = habNivel(p);
+    let melhor = { k: -1, nome: '' };
+    for (const id of LV.atqsEquipados(p.ref)) {
+      const a = LV.ATQ[id], tot = LV.recargaAtq(a, n), cd = p.cds && p.cds[id] != null ? p.cds[id] : tot * 0.5, k = 1 - LV.clamp(cd / tot, 0, 1);
+      if (k > melhor.k) melhor = { k, nome: a.nome };
+    }
+    return melhor;
+  };
+  /* ataques novos liberados (nível ou evolução): entram equipados se houver vaga, com aviso */
+  function conferirAtaques(p, avisar) {
+    const lib = LV.atqsLiberados(p);
+    if (p.atqN == null) { p.atqN = lib.length; if (!Array.isArray(p.atqs) || !p.atqs.length) p.atqs = lib.slice(0, 2); return; }
+    if (lib.length <= p.atqN) return;
+    for (const id of lib.slice(p.atqN)) {
+      p.atqs = (p.atqs || []).filter((x) => lib.includes(x));
+      if (p.atqs.length < 2 && !p.atqs.includes(id)) p.atqs.push(id);
+      if (avisar !== false) emit('novoAtaque', { pet: p, id, equipado: p.atqs.includes(id) });
+    }
+    p.atqN = lib.length;
+  }
+  game.conferirAtaques = conferirAtaques;
   function updAreas(dt) {
+    if (W.agenda && W.agenda.length) W.agenda = W.agenda.filter((x) => { x.t -= dt; if (x.t <= 0) { x.fn(); return false; } return true; });
     W.areas = W.areas.filter((a) => {
       a.t -= dt;
+      if (a.tipo === 'chamas') {
+        a.tick -= dt;
+        if (a.tick <= 0) { a.tick = 0.5; W.ini.filter(alvoValido).forEach((e) => { if (Math.abs(e.x - a.x) < a.r && Math.abs(alvoY(e) - (a.y - 24)) < a.r * 0.8) { dano(e, a.dps * 0.5, a.el, 'status'); } }); }
+      }
+      if (a.tipo === 'regen') {
+        a.tick -= dt;
+        if (a.tick <= 0) { a.tick = 1; W.pets.filter((x) => x.desm <= 0).concat(W.tam.caido > 0 ? [] : [W.tam]).forEach((x) => curar(x, x.hpMax * a.pct)); }
+      }
       if (a.tipo === 'nuvem') {
         a.tick -= dt;
         if (a.tick <= 0) {
@@ -940,6 +1149,7 @@
   game.chanceCaptura = (e) => chanceCaptura(e);
   function capturar(e, talento) {
     const pet = { uid: S.prox++, sp: e.sp, nivel: Math.max(1, Math.min(e.lv, F.capPet(S.dom.nivel))), xp: 0, est: e.est, apelido: null, hab: 1, bonus: talento || null };
+    conferirAtaques(pet, false);
     S.pets.push(pet); S.st.capturas++; contar(e.sp, 'c'); contar(formaDe(e), 'c'); S.meta.tot.capt++;
     e.capturado = true; e.hp = 0;
     let entrou = false;
@@ -1182,8 +1392,14 @@
       const combate = ini.some((e) => dist2(e, p) < 320);
       p.hp = Math.min(p.hpMax, p.hp + p.hpMax * (combate ? 0.006 : 0.05) * dt);
       if (p.reducao > 0) p.reducao -= dt;
-      p.habCd = (p.habCd == null ? habRecarga(p) * 0.5 : p.habCd) - dt;
-      if (p.habCd <= 0) { if (tentarHabilidade(p, alvosHab)) p.habCd = habRecarga(p); else p.habCd = 0; }
+      // ataques especiais equipados (até 2): cada um com a sua recarga e 1 s entre um e outro
+      p.cds = p.cds || {}; p.gcd = Math.max(0, (p.gcd || 0) - dt);
+      for (const id of LV.atqsEquipados(p.ref)) {
+        const at = LV.ATQ[id], tot = LV.recargaAtq(at, habNivel(p));
+        if (p.cds[id] == null) p.cds[id] = tot * 0.5;
+        p.cds[id] -= dt;
+        if (p.cds[id] <= 0 && p.gcd <= 0) { if (tentarAtaque(p, at, alvosHab)) { p.cds[id] = tot; p.gcd = 1; } else p.cds[id] = 0; }
+      }
       if (foco) p.alvo = foco;
       else if (p.alvo && (!alvoValido(p.alvo) || dist2(p.alvo, T) > RAIO_PET + 40 || !permitidos.includes(p.alvo))) p.alvo = null;
       if (!p.alvo) p.alvo = maisProximo(p, permitidos.filter((e) => dist2(e, T) < RAIO_PET), Infinity, (e) => dist2(e, T) + dist2(e, p) * 0.5);
@@ -2276,6 +2492,30 @@
     for (const a of W.areas) {
       const k = Math.min(1, a.t / 0.5), vida = Math.min(1, (a.dur - a.t) / 0.3);
       const al = Math.min(k, vida);
+      if (a.tipo === 'chamas') {
+        // parede de chamas: labaredas em fila no chão
+        for (let i = 0; i < 4; i++) {
+          const ox = (i - 1.5) * a.r * 0.5, h = 52 + 10 * Math.sin(t * 9 + i * 1.7);
+          if (!atq(c, a.img || 'ataques/chamas', a.x + ox, a.y + 4, h, { alpha: 0.95 * al, flip: i % 2 === 1, luz: true })) art.glow(c, a.x + ox, a.y - 18, 24, a.cor, 0.5 * al);
+        }
+        art.glow(c, a.x, a.y - 22, a.r, a.cor, 0.3 * al);
+        if (Math.random() < 0.5) particula({ x: a.x + LV.rand(-a.r, a.r), y: a.y - LV.rand(0, 30), vx: LV.rand(-10, 10), vy: LV.rand(-70, -40), g: 0, vida: 0.7, t: 0, r: 2, cor: '#ffcf7a', tipo: 'luz' });
+        continue;
+      }
+      if (a.tipo === 'regen') {
+        const alvo = W.tam;
+        if (Math.random() < 0.3) for (const x of W.pets.concat([alvo])) particula({ x: x.x + LV.rand(-12, 12), y: alvoY(x) + LV.rand(-6, 10), vx: 0, vy: LV.rand(-50, -25), g: 0, vida: 0.8, t: 0, r: 1.8, cor: a.cor, tipo: 'luz' });
+        continue;
+      }
+      if (a.tipo === 'eclipse') {
+        // eclipse: um sol negro com coroa roxa que escurece a área
+        const r = a.r * (0.6 + 0.4 * Math.min(1, (a.dur - a.t) / 0.3));
+        if (!atq(c, 'hab/eclipse', a.x, a.y, r * 1.4, { ay: 0.5, alpha: 0.9 * al, rot: t * 0.6 })) {
+          c.save(); c.globalAlpha = 0.55 * al; c.fillStyle = '#05030a'; c.beginPath(); c.arc(a.x, a.y, r * 0.45, 0, TAU); c.fill(); c.restore();
+        }
+        art.glow(c, a.x, a.y, r, a.cor, 0.35 * al);
+        continue;
+      }
       if (a.tipo === 'nuvem' && imgAtq('hab/nuvem')) {
         // nuvem de esporos do Esporito: tufos que respiram devagar
         for (let i = 0; i < 3; i++) {
@@ -2334,6 +2574,11 @@
       c.fillStyle = p.cor; c.fillRect(-p.r, -p.r * 0.6, p.r * 2, p.r * 1.2); c.restore();
     }
     for (const pr of W.proj) {
+      if (pr.tipo === 'img' && pr.img && imgAtq(pr.img)) {
+        art.glow(c, pr.x, pr.y, 14, pr.cor, 0.5);
+        atq(c, pr.img, pr.x, pr.y, pr.tam || 20, { ay: 0.5, rot: (pr.gira || 0) * t + pr.x * 0.01 });
+        continue;
+      }
       if (pr.tipo === 'corvo' && imgAtq('hab/corvo')) {
         // corvo de sombra: voa até o alvo batendo as asas
         const a = pr.ang != null ? pr.ang : 0, esq = Math.cos(a) < 0;
@@ -2751,6 +2996,7 @@
     escolherInicial(spId) {
       if (!LV.SPECIES[spId] || (S.inicial && !S.aguardaInicial)) return false;
       const p = { uid: S.prox++, sp: spId, nivel: 1 + 3 * MU('primeiro'), xp: 0, est: 0, apelido: null, hab: 1, bonus: null };
+      conferirAtaques(p, false);
       S.pets.push(p); S.ativos = [p.uid]; S.inicial = true; S.aguardaInicial = false;
       montarPets();
       emit('equipe');
@@ -2895,8 +3141,22 @@
       }
       const de = LV.nomePet(p), estAntes = p.est;
       p.est++; S.st.evolucoes++; S.meta.tot.evo++;
+      conferirAtaques(p);
       montarPets();
       emit('evolucao', { pet: p, de, estAntes });
+      return true;
+    },
+    /* equipa ou tira um ataque especial (até 2; com 2 equipados, o novo entra no lugar do mais antigo) */
+    equiparAtq(uid, id) {
+      const p = S.pets.find((q) => q.uid === uid);
+      if (!p) return 'nao';
+      const lib = LV.atqsLiberados(p);
+      if (!lib.includes(id)) return 'trancado';
+      let eq = LV.atqsEquipados(p).slice();
+      if (eq.includes(id)) { if (eq.length <= 1) return 'ultimo'; eq = eq.filter((x) => x !== id); }
+      else { if (eq.length >= 2) eq.shift(); eq.push(id); }
+      p.atqs = eq;
+      emit('equipe');
       return true;
     },
     melhorarHab(uid, gratis) {

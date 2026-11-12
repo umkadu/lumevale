@@ -42,7 +42,7 @@
         'Up to 3 pets fight with you (more with <b>Extra Bond</b> in the Shop and <b>Eternal Bond</b> in the Sanctuary). The rest wait in the Collection: drag them to a free slot.',
         'Modes: <b>Aggressive</b> attacks everything nearby, <b>Defender</b> only whoever attacks first, <b>Passive</b> never attacks.',
         'A pet that runs out of health faints and returns after 10 s.',
-        'Pets can only be up to 10 levels above the tamer.',
+        'Pets can only be up to ' + LV.F.capPet(0) + ' levels above the tamer.',
       ]],
       ['Elements', elementos(true).concat(['A pet’s element shows next to its name. Use strong elements against each map’s creatures.'])],
       ['Capture', [
@@ -54,7 +54,8 @@
       ]],
       ['Evolution and abilities', [
         'Each species has 3 forms. To evolve you need level <b>' + evo[0] + '</b> (then <b>' + evo[1] + '</b>), materials and Lumes. A golden ▲ badge marks pets ready to evolve.',
-        'Each species has a special ability with a cooldown. Upgrade it up to level 10 in the pet’s details.',
+        'Each species has <b>5 special attacks</b> (species of the same element share some). The 1st comes from the start; the others unlock at level 12, at the 1st evolution, at level 32 and at the 2nd evolution.',
+        'Up to <b>2 attacks</b> can be equipped, each with its own cooldown. Choose them in the pet’s details (Team tab). Upgrading (up to level 10) makes all of them stronger.',
       ]],
       ['Tamer and attributes', [
         'Each tamer level gives 3 points: <b>Strength</b> (damage), <b>Vigor</b> (health), <b>Luck</b> (capture, gathering, critical) and <b>Bond</b> (pet XP and attack speed).',
@@ -68,7 +69,8 @@
       ]],
       ['Shop and Guardian coins', [
         'Upgrades cost Lumes plus coins that only Guardians drop (each Guardian has its own coin).',
-        'Shop upgrades are lost when you are reborn.',
+        'The Shop also sells cloaks (purely visual, one-time purchase you keep forever) and special lanterns (they last until you rebirth).',
+        'Shop upgrades and lanterns are lost when you are reborn.',
       ]],
       ['Guardians and maps', [
         'Defeat creatures on the map until the goal (' + metas + ') and tap <b>Challenge Guardian</b>.',
@@ -83,11 +85,11 @@
       ]],
       ['Rebirth and Sanctuary', [
         'After the first Guardian you can be reborn: you start over and earn <b>Echoes</b> (more for each Guardian beaten and for a high tamer level).',
-        'You lose pets, levels, Lumes, materials, coins, Shop upgrades and maps. You keep Echoes, the Sanctuary, achievements and the Bestiary.',
+        'You lose pets, levels, Lumes, materials, coins, Shop upgrades and lanterns, Guardian items and maps. You keep Echoes, the Sanctuary, achievements, visual cloaks and the Bestiary.',
         'Echoes buy permanent upgrades and automatic attributes.',
       ]],
       ['Achievements and Bestiary', [
-        'Achievements give lanterns, Lumes, Echoes, bonuses against creatures and even Radiant pets. Claim them at the trophy. They last forever.',
+        'Achievements give capture lanterns, Lumes, Echoes, bonuses against creatures, cloaks, special lanterns and even Radiant pets. Claim them at the trophy. They last forever.',
         'The Bestiary records every form you have met and where it lives.',
       ]],
       ['Away from the game', [
@@ -123,7 +125,7 @@
         'Até 3 pets lutam com você (mais com <b>Laço Extra</b> na Loja e <b>Vínculo Eterno</b> no Santuário). Os outros ficam na Coleção: arraste até uma vaga livre.',
         'Modos: <b>Agressivo</b> ataca tudo por perto, <b>Defensor</b> só quem atacar primeiro, <b>Passivo</b> não ataca.',
         'Pet sem vida desmaia e volta em 10 s.',
-        'Os pets só passam 10 níveis acima do domador.',
+        'Os pets só passam ' + LV.F.capPet(0) + ' níveis acima do domador.',
       ]],
       ['Elementos', elementos(false).concat(['O elemento aparece ao lado do nome do pet. Use elementos fortes contra as criaturas de cada mapa.'])],
       ['Captura', [
@@ -135,7 +137,8 @@
       ]],
       ['Evolução e habilidades', [
         'Cada espécie tem 3 formas. Para evoluir: nível <b>' + evo[0] + '</b> (depois <b>' + evo[1] + '</b>), materiais e Lumes. O selo dourado ▲ mostra quem já pode evoluir.',
-        'Cada espécie tem uma habilidade especial com recarga. Melhore até o nível 10 no detalhe do pet.',
+        'Cada espécie tem <b>5 ataques especiais</b> (espécies do mesmo elemento dividem alguns). O 1º vem de início; os outros se liberam no nível 12, na 1ª evolução, no nível 32 e na 2ª evolução.',
+        'Até <b>2 ataques</b> ficam equipados, cada um com a sua recarga. Escolha no detalhe do pet (aba Equipe). Melhorar (até o nível 10) deixa todos mais fortes.',
       ]],
       ['Domador e atributos', [
         'Cada nível do domador dá 3 pontos: <b>Força</b> (dano), <b>Vigor</b> (vida), <b>Sorte</b> (captura, coleta e crítico) e <b>Vínculo</b> (XP dos pets e velocidade de ataque).',
@@ -149,7 +152,8 @@
       ]],
       ['Loja e moedas dos Guardiões', [
         'As melhorias custam Lumes e moedas que só os Guardiões soltam (cada Guardião tem a sua).',
-        'As melhorias da Loja se perdem ao renascer.',
+        'A Loja também vende capas (só visuais, compra única que fica para sempre) e lanternas especiais (valem até renascer).',
+        'As melhorias e as lanternas da Loja se perdem ao renascer.',
       ]],
       ['Guardiões e mapas', [
         'Derrote criaturas do mapa até a meta (' + metas + ') e toque em <b>Desafiar Guardião</b>.',
@@ -164,11 +168,11 @@
       ]],
       ['Renascer e Santuário', [
         'Depois do primeiro Guardião você pode renascer: volta ao começo e ganha <b>Ecos</b> (mais Ecos a cada Guardião vencido e com o domador em nível alto).',
-        'Você perde pets, níveis, Lumes, materiais, moedas, melhorias da Loja e mapas. Ficam os Ecos, o Santuário, as conquistas e o Bestiário.',
+        'Você perde pets, níveis, Lumes, materiais, moedas, melhorias e lanternas da Loja, itens dos Guardiões e mapas. Ficam os Ecos, o Santuário, as conquistas, as capas visuais e o Bestiário.',
         'Os Ecos compram melhorias permanentes e atributos automáticos.',
       ]],
       ['Conquistas e Bestiário', [
-        'Conquistas dão lanternas, Lumes, Ecos, bônus contra criaturas e até pets Radiantes. Resgate no troféu. Valem para sempre.',
+        'Conquistas dão lanternas de captura, Lumes, Ecos, bônus contra criaturas, capas, lanternas especiais e até pets Radiantes. Resgate no troféu. Valem para sempre.',
         'O Bestiário registra cada forma que você encontrou e onde ela vive.',
       ]],
       ['Fora do jogo', [

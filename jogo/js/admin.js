@@ -226,13 +226,13 @@
     setTimeout(() => LV.apagarSlotAtual(), 300);
     return [ok('Progresso apagado. Voltando ao menu principal…')];
   });
-  def(['habilidade', 'hab'], 'habilidade <nº|nome> <nível>', 'Define o nível da habilidade especial de um pet (1 a 10)', (a) => {
+  def(['habilidade', 'hab'], 'habilidade <nº|nome> <nível>', 'Define o nível dos ataques especiais de um pet (1 a 10)', (a) => {
     const p = acharPet(a[0]);
     if (!p) return [erro('Pet não encontrado. Digite "pets" para ver a lista numerada.')];
     const v = Math.floor(valor(p.hab || 1, a[1]));
     if (!isFinite(v)) return [erro('Use: habilidade 1 5')];
     p.hab = LV.clamp(v, 1, LV.HAB_MAX); atualizar();
-    return [ok(LV.HAB[p.sp].nome + ' de ' + LV.nomePet(p) + ' agora no nível ' + p.hab)];
+    return [ok('Ataques de ' + LV.nomePet(p) + ' agora no nível ' + p.hab)];
   });
   def(['moeda', 'moedas'], 'moeda <nome|todas> <valor>', 'Moedas dos Guardiões (semente, trufa, perola, geodo, ticao)', (a) => {
     const s = S(), q = LV.semAcento(a[0] || '');

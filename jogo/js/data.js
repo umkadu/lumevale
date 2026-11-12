@@ -382,10 +382,10 @@
   // [imagem, altura, olha para a esquerda, boca (canto da Matriarca, em fração da imagem olhando para a direita)]
   const CHEFE_IMG = [['chefes/maeraiz', 210, true], ['chefes/reibolor', 215, false], ['chefes/sentinela', 225, true], ['chefes/matriarca', 186, false, { x: 0.68, y: 0.24 }], ['chefes/coracao', 215, true]];
   const CEN = [
-    { plat: 'plat_raiz', alta: 'plat_raiz', pilar: false, props: ['cogumelos', 'lapide'], tinta: '#14463f', correntes: false },
+    { plat: 'plat_raiz', alta: 'plat_raiz', pilar: true, props: ['cogumelos', 'lapide'], tinta: '#14463f', correntes: false },
     { plat: 'laje', alta: 'borda', pilar: true, props: ['cogumelos', 'lapide', 'poste'], tinta: '#5a3216', correntes: true },
     { plat: 'laje', alta: 'plat_madeira', pilar: true, props: ['poste', 'lapide', 'poste'], tinta: '#1c3658', correntes: true },
-    { plat: 'plat_madeira', alta: 'plat_madeira', pilar: false, props: ['cristais', 'poste', 'cristais'], tinta: '#3e2460', correntes: false },
+    { plat: 'plat_madeira', alta: 'plat_madeira', pilar: true, props: ['cristais', 'poste', 'cristais'], tinta: '#3e2460', correntes: false },
     { plat: 'borda', alta: 'laje', pilar: true, props: ['lapide', 'cristais'], tinta: '#5a1a10', correntes: true },
   ];
   const KILLS_CHEFE = [100, 140, 180, 220, 260];
@@ -408,6 +408,12 @@
   /* com muito mais inimigos por mapa, cada um rende um pouco menos */
   const iniBase = LV.F.ini;
   LV.F.ini = (L) => { const b = iniBase(L); b.xp *= 0.75; b.lumes *= 0.8; return b; };
+  /* cenário modular (v1.12): por mapa, plataforma em 3 peças (ponta, meio que se repete, ponta) e coluna em 3 peças
+     (topo, meio que se repete, base), em img/kits/<tema>. plat.alt = altura desenhada; col.larg = largura do tronco */
+  /* KITS:INICIO (gerado por ferramentas/kit_cortar.js) — medidas das peças de cenário modular de cada mapa */
+  LV.KITS = {"raizes":{"plat":{"h":198,"topo":0.1869,"w":[224,295,236]},"col":{"w":[264,141,309],"h":[258,168,285],"cx":[0.506,0.4728,0.465],"tronco":68}},"fungos":{"plat":{"h":168,"topo":0.2262,"w":[275,189,278]},"col":{"w":[177,147,291],"h":[297,174,309],"cx":[0.5092,0.4799,0.5151],"tronco":114}},"ruinas":{"plat":{"h":156,"topo":0.0192,"w":[209,255,206]},"col":{"w":[174,123,261],"h":[240,205,258],"cx":[0.4993,0.4967,0.4742],"tronco":98}},"cristais":{"plat":{"h":216,"topo":0.2037,"w":[293,256,296]},"col":{"w":[234,69,216],"h":[276,203,288],"cx":[0.5044,0.4916,0.5152],"tronco":63}},"cinzas":{"plat":{"h":144,"topo":0.0278,"w":[275,167,281]},"col":{"w":[201,93,288],"h":[222,127,234],"cx":[0.5082,0.4918,0.4592],"tronco":89}}};
+  /* KITS:FIM */
+  LV.KIT_DESENHO = { plat: { alt: 64, altaAlt: 56 }, col: { larg: 30 } };
   LV.HEROI = { alt: 68, parado: 'heroi/parado', andando: 'heroi/andando', pulando: 'heroi/pulando', lanterna: 'heroi/lanterna' };
   /* HEROI_MED:INICIO (gerado por ferramentas/medir_heroi.js) — máscara (fx, fy, largura) e lanterna (lx, ly, altura) de cada sprite do domador, em frações */
   LV.HEROI_MED = {"base":{"parado":[0.4969,0.2703,0.2762,0.8993,0.2735,0.1214,1.0952],"andando":[0.5554,0.2762,0.2833,0.9122,0.2889,0.1214,1.2214],"pulando":[0.5437,0.2999,0.2881,0.9123,0.3092,0.1262,1.2238],"lanterna":[0.4305,0.2859,0.2571,0.8438,0.2903,0.1214,1.2262]},
@@ -424,45 +430,132 @@
   /* HEROI_MED:FIM */
 
   /* =========================================================
-     HABILIDADES ESPECIAIS — uma por espécie, baseada no elemento.
-     n = nível da habilidade (1 a 10). cd = recarga em segundos no nível 1.
+     ATAQUES ESPECIAIS DAS CENTELHAS (v1.12) — cada espécie tem 5; até 2 ficam equipados.
+     O 1º vem de início; os outros se liberam no nível 12, na 1ª evolução, no nível 32 e na 2ª evolução.
+     Espécies do mesmo elemento dividem alguns ataques. n = nível dos ataques do pet (1 a 10, melhorado com Lumes).
+     tipo = como o ataque funciona (motor em game.js, tentarAtaque). Efeitos extras opcionais:
+       dot {k, dur} (dano por segundo, fração do ataque) · atord(n) · lento · fraco · vuln(n) · dreno
      ========================================================= */
   const pc = (v) => Math.round(v * 100) + '%';
   const s1 = (v) => (Math.round(v * 10) / 10).toLocaleString(LV.locale);
   LV.HAB_MAX = 10;
-  LV.HAB = {
-    fagulho: { nome: LV.t('Explosão de Brasa'), tipo: 'explosao', cd: 9,
-      mult: (n) => 1.6 + 0.15 * (n - 1), raio: (n) => 95 + 5 * (n - 1),
-      desc: (n) => LV.t('Explode o alvo em chamas: ') + pc(LV.HAB.fagulho.mult(n)) + LV.t(' do ataque em todos os inimigos num raio de ') + LV.HAB.fagulho.raio(n) + LV.t(' e queimadura por 3 s.') },
-    cinzelo: { nome: LV.t('Chuva de Cinzas'), tipo: 'chuva', cd: 12,
-      mult: (n) => 1.3 + 0.12 * (n - 1), qtd: (n) => 4 + Math.floor((n - 1) / 3),
-      desc: (n) => LV.t('Faz cair brasas sobre até ') + LV.HAB.cinzelo.qtd(n) + LV.t(' inimigos perto do herói: ') + pc(LV.HAB.cinzelo.mult(n)) + LV.t(' do ataque cada e queimadura por 2 s.') },
-    gotim: { nome: LV.t('Casco de Maré'), tipo: 'escudo', cd: 14,
-      pct: (n) => 0.18 + 0.02 * (n - 1),
-      desc: (n) => LV.t('Cria um escudo de água em todos os aliados que absorve ') + pc(LV.HAB.gotim.pct(n)) + LV.t(' da vida máxima de cada um por 6 s.') },
-    lumagua: { nome: LV.t('Pulso Paralisante'), tipo: 'pulso', cd: 12,
-      mult: (n) => 0.9 + 0.1 * (n - 1), atord: (n) => 1.5 + 0.12 * (n - 1),
-      desc: (n) => LV.t('Descarga em volta da água-viva: ') + pc(LV.HAB.lumagua.mult(n)) + LV.t(' do ataque e atordoa os inimigos por ') + s1(LV.HAB.lumagua.atord(n)) + ' s.' },
-    muscolino: { nome: LV.t('Pólen Restaurador'), tipo: 'cura', cd: 10,
-      pct: (n) => 0.12 + 0.02 * (n - 1),
-      desc: (n) => LV.t('Espalha pólen que cura ') + pc(LV.HAB.muscolino.pct(n)) + LV.t(' da vida máxima dela, dos outros pets e do herói.') },
-    esporito: { nome: LV.t('Nuvem de Esporos'), tipo: 'nuvem', cd: 11,
-      dps: (n) => 0.35 + 0.05 * (n - 1),
-      desc: (n) => LV.t('Solta uma nuvem venenosa por 4 s: ') + pc(LV.HAB.esporito.dps(n)) + LV.t(' do ataque por segundo e deixa os inimigos lentos.') },
-    lascado: { nome: LV.t('Carapaça de Geodo'), tipo: 'provocar', cd: 13,
-      dur: (n) => 4 + 0.3 * (n - 1), red: (n) => 0.45 + 0.03 * (n - 1),
-      desc: (n) => LV.t('Atrai os inimigos próximos para si por ') + s1(LV.HAB.lascado.dur(n)) + LV.t(' s e reduz o dano que recebe em ') + pc(LV.HAB.lascado.red(n)) + '.' },
-    brilhoca: { nome: LV.t('Lança de Quartzo'), tipo: 'lanca', cd: 8,
-      mult: (n) => 2.0 + 0.18 * (n - 1), alc: (n) => 260 + 10 * (n - 1),
-      desc: (n) => LV.t('Dispara um raio de cristal em linha reta: ') + pc(LV.HAB.brilhoca.mult(n)) + LV.t(' do ataque em todos os inimigos no caminho (alcance ') + LV.HAB.brilhoca.alc(n) + ').' },
-    umbrim: { nome: LV.t('Revoada Sombria'), tipo: 'revoada', cd: 10,
-      mult: (n) => 1.1 + 0.1 * (n - 1), qtd: (n) => 3 + Math.floor((n - 1) / 3),
-      desc: (n) => LV.t('Solta ') + LV.HAB.umbrim.qtd(n) + LV.t(' corvos de sombra: ') + pc(LV.HAB.umbrim.mult(n)) + LV.t(' do ataque cada e enfraquece os atingidos (−30% de ataque por 4 s).') },
-    tecelo: { nome: LV.t('Teia Noturna'), tipo: 'teia', cd: 12,
-      vuln: (n) => 0.25 + 0.03 * (n - 1),
-      desc: (n) => LV.t('Prende os inimigos numa teia: ficam lentos por 3 s e recebem +') + pc(LV.HAB.tecelo.vuln(n)) + LV.t(' de dano por 4 s.') },
+  const L1 = (a, b) => (n) => a + b * (n - 1);
+  LV.ATQ = {
+    // ---- brasa ----
+    explosao_brasa: { nome: LV.t('Explosão de Brasa'), tipo: 'explosao', cd: 9, mult: L1(1.6, 0.15), raio: L1(95, 5), dot: { k: 0.15, dur: 3 } },
+    sopro_dragao: { nome: LV.t('Sopro do Dragão'), tipo: 'sopro', cd: 10, mult: L1(1.25, 0.12), alc: L1(150, 6), dot: { k: 0.18, dur: 3 } },
+    parede_chamas: { nome: LV.t('Parede de Chamas'), tipo: 'parede', cd: 13, dps: L1(0.5, 0.05), dur: 4, img: 'ataques/chamas' },
+    mordida_ignea: { nome: LV.t('Mordida Ígnea'), tipo: 'mordida', cd: 7, mult: L1(2.6, 0.2), dot: { k: 0.25, dur: 3 } },
+    garras_flamejantes: { nome: LV.t('Garras Flamejantes'), tipo: 'garras', cd: 8, golpes: 3, mult: L1(0.9, 0.08), dot: { k: 0.12, dur: 2 } },
+    chuva_cinzas: { nome: LV.t('Chuva de Cinzas'), tipo: 'chuva', cd: 12, mult: L1(1.0, 0.1), qtd: (n) => 4 + Math.floor((n - 1) / 3), atord: L1(1, 0.05), img: 'hab/brasacai' },
+    vento_escaldante: { nome: LV.t('Vento Escaldante'), tipo: 'empurrao', cd: 10, mult: L1(0.8, 0.08), alc: 170, empurra: 95, dot: { k: 0.1, dur: 2 } },
+    absorcao_vampirica: { nome: LV.t('Absorção Vampírica'), tipo: 'dreno', cd: 9, mult: L1(2.0, 0.15), dreno: 0.6 },
+    investida_magma: { nome: LV.t('Investida de Magma'), tipo: 'investida', cd: 11, mult: L1(3.0, 0.2), dot: { k: 0.2, dur: 3 } },
+    // ---- maré ----
+    casco_mare: { nome: LV.t('Casco de Maré'), tipo: 'escudo', cd: 14, pct: L1(0.18, 0.02) },
+    jato_agua: { nome: LV.t('Jato d’Água'), tipo: 'lanca', cd: 9, mult: L1(1.6, 0.15), alc: L1(240, 8), lento: 2 },
+    onda_curativa: { nome: LV.t('Onda Curativa'), tipo: 'cura', cd: 12, pct: L1(0.1, 0.02) },
+    bolha_prisioneira: { nome: LV.t('Bolha Prisioneira'), tipo: 'prisao', cd: 12, mult: L1(0.8, 0.06), atord: L1(2.5, 0.15), img: 'hab/bolha' },
+    tsunami: { nome: LV.t('Tsunami'), tipo: 'empurrao', cd: 13, mult: L1(1.3, 0.12), alc: 220, empurra: 120, lento: 2, img: 'ataques/onda' },
+    pulso_paralisante: { nome: LV.t('Pulso Paralisante'), tipo: 'pulso', cd: 12, mult: L1(0.9, 0.1), raio: 125, atord: L1(1.5, 0.12) },
+    tentaculos: { nome: LV.t('Tentáculos Elétricos'), tipo: 'corrente', cd: 9, mult: L1(1.0, 0.1), saltos: (n) => 2 + Math.floor((n - 1) / 4), lento: 1.5 },
+    maremoto: { nome: LV.t('Maremoto'), tipo: 'explosao', cd: 11, mult: L1(1.4, 0.12), raio: L1(100, 5), atord: L1(0.8, 0.05) },
+    // ---- musgo ----
+    polen_restaurador: { nome: LV.t('Pólen Restaurador'), tipo: 'cura', cd: 10, pct: L1(0.12, 0.02) },
+    raizes_prendedoras: { nome: LV.t('Raízes Prendedoras'), tipo: 'prisaoArea', cd: 12, mult: L1(0.7, 0.06), raio: 90, atord: L1(2, 0.12), img: 'ataques/raizbaixa' },
+    folhas_navalha: { nome: LV.t('Folhas Navalha'), tipo: 'revoada', cd: 9, mult: L1(0.9, 0.09), qtd: (n) => 4 + Math.floor((n - 1) / 3), dot: { k: 0.1, dur: 3 }, img: 'hab/folha' },
+    brisa_sonolenta: { nome: LV.t('Brisa Sonolenta'), tipo: 'pulso', cd: 13, mult: L1(0.4, 0.04), raio: 140, atord: L1(2, 0.1), img: 'hab/polen' },
+    bencao_floresta: { nome: LV.t('Bênção da Floresta'), tipo: 'regen', cd: 16, pct: L1(0.03, 0.004), dur: 5 },
+    nuvem_esporos: { nome: LV.t('Nuvem de Esporos'), tipo: 'nuvem', cd: 11, dps: L1(0.35, 0.05) },
+    cabecada: { nome: LV.t('Cabeçada de Chapéu'), tipo: 'mordida', cd: 9, mult: L1(1.8, 0.14), atord: L1(1.2, 0.06) },
+    esporos_explosivos: { nome: LV.t('Esporos Explosivos'), tipo: 'explosao', cd: 11, mult: L1(1.2, 0.1), raio: L1(90, 5), dot: { k: 0.2, dur: 4 } },
+    muralha_fungos: { nome: LV.t('Muralha de Fungos'), tipo: 'provocar', cd: 14, dur: L1(4, 0.3), red: L1(0.4, 0.03) },
+    // ---- sombra ----
+    revoada_sombria: { nome: LV.t('Revoada Sombria'), tipo: 'revoada', cd: 10, mult: L1(1.1, 0.1), qtd: (n) => 3 + Math.floor((n - 1) / 3), fraco: 4 },
+    eclipse: { nome: LV.t('Eclipse'), tipo: 'eclipse', cd: 14, mult: L1(1.0, 0.1), raio: 110, fraco: 4, vuln: L1(0.2, 0.02) },
+    bico_sombrio: { nome: LV.t('Bico Sombrio'), tipo: 'mordida', cd: 7, mult: L1(2.3, 0.18), fraco: 4 },
+    mergulho_trevas: { nome: LV.t('Mergulho das Trevas'), tipo: 'investida', cd: 11, mult: L1(2.6, 0.18), fraco: 3 },
+    grito_sombrio: { nome: LV.t('Grito Sombrio'), tipo: 'pulso', cd: 12, mult: L1(0.7, 0.07), raio: 130, atord: L1(1.2, 0.08), fraco: 3 },
+    teia_noturna: { nome: LV.t('Teia Noturna'), tipo: 'teia', cd: 12, vuln: L1(0.25, 0.03) },
+    picada_venenosa: { nome: LV.t('Picada Venenosa'), tipo: 'mordida', cd: 8, mult: L1(1.6, 0.12), dot: { k: 0.35, dur: 4 } },
+    fios_cortantes: { nome: LV.t('Fios Cortantes'), tipo: 'lanca', cd: 9, mult: L1(1.7, 0.15), alc: L1(230, 8), vuln: L1(0.15, 0.02) },
+    casulo: { nome: LV.t('Casulo'), tipo: 'prisao', cd: 13, mult: L1(0.6, 0.05), atord: L1(2.8, 0.15), img: 'hab/teia' },
+    // ---- cristal ----
+    carapaca_geodo: { nome: LV.t('Carapaça de Geodo'), tipo: 'provocar', cd: 13, dur: L1(4, 0.3), red: L1(0.45, 0.03) },
+    estilhacos: { nome: LV.t('Estilhaços'), tipo: 'chuva', cd: 11, mult: L1(1.1, 0.1), qtd: (n) => 4 + Math.floor((n - 1) / 3), vuln: L1(0.15, 0.015), img: 'ataques/lasca' },
+    pinca_cristal: { nome: LV.t('Pinça de Cristal'), tipo: 'mordida', cd: 8, mult: L1(2.2, 0.17), vuln: L1(0.2, 0.02) },
+    terremoto: { nome: LV.t('Terremoto de Cristal'), tipo: 'pulso', cd: 12, mult: L1(1.0, 0.1), raio: 140, atord: L1(1, 0.06), img: 'ataques/cristais' },
+    espelho_prismatico: { nome: LV.t('Espelho Prismático'), tipo: 'escudo', cd: 15, pct: L1(0.16, 0.02) },
+    lanca_quartzo: { nome: LV.t('Lança de Quartzo'), tipo: 'lanca', cd: 8, mult: L1(2.0, 0.18), alc: L1(260, 10) },
+    prisma_ofuscante: { nome: LV.t('Prisma Ofuscante'), tipo: 'prisaoArea', cd: 13, mult: L1(0.6, 0.05), raio: 100, atord: L1(1.8, 0.1), img: 'hab/estrela' },
+    chuva_cristais: { nome: LV.t('Chuva de Cristais'), tipo: 'explosao', cd: 11, mult: L1(1.4, 0.12), raio: L1(95, 5), vuln: L1(0.15, 0.015), img: 'ataques/estilhacos' },
+    mordida_quartzo: { nome: LV.t('Mordida de Quartzo'), tipo: 'mordida', cd: 7, mult: L1(2.7, 0.2) },
   };
-  LV.habRecarga = (sp, n) => LV.HAB[sp].cd * Math.max(0.6, 1 - 0.03 * (n - 1));
+  for (const id in LV.ATQ) LV.ATQ[id].id = id;
+  /* os 5 ataques de cada espécie, na ordem em que se liberam */
+  LV.ATQ_SP = {
+    fagulho: ['explosao_brasa', 'sopro_dragao', 'parede_chamas', 'mordida_ignea', 'garras_flamejantes'],
+    cinzelo: ['chuva_cinzas', 'vento_escaldante', 'absorcao_vampirica', 'explosao_brasa', 'investida_magma'],
+    gotim: ['casco_mare', 'jato_agua', 'onda_curativa', 'bolha_prisioneira', 'tsunami'],
+    lumagua: ['pulso_paralisante', 'onda_curativa', 'tentaculos', 'maremoto', 'tsunami'],
+    muscolino: ['polen_restaurador', 'raizes_prendedoras', 'folhas_navalha', 'brisa_sonolenta', 'bencao_floresta'],
+    esporito: ['nuvem_esporos', 'raizes_prendedoras', 'cabecada', 'esporos_explosivos', 'muralha_fungos'],
+    umbrim: ['revoada_sombria', 'eclipse', 'bico_sombrio', 'mergulho_trevas', 'grito_sombrio'],
+    tecelo: ['teia_noturna', 'eclipse', 'picada_venenosa', 'fios_cortantes', 'casulo'],
+    lascado: ['carapaca_geodo', 'estilhacos', 'pinca_cristal', 'terremoto', 'espelho_prismatico'],
+    brilhoca: ['lanca_quartzo', 'estilhacos', 'prisma_ofuscante', 'chuva_cristais', 'mordida_quartzo'],
+  };
+  /* quando cada um dos 5 se libera */
+  LV.ATQ_LIBERA = [{ nivel: 1 }, { nivel: 12 }, { est: 1 }, { nivel: 32 }, { est: 2 }];
+  LV.atqLiberado = (p, i) => { const r = LV.ATQ_LIBERA[i]; return r.est != null ? p.est >= r.est : p.nivel >= r.nivel; };
+  LV.atqsLiberados = (p) => (LV.ATQ_SP[p.sp] || []).filter((id, i) => LV.atqLiberado(p, i));
+  LV.textoLibera = (i) => { const r = LV.ATQ_LIBERA[i]; return r.est != null ? (r.est === 1 ? LV.t('na 1ª evolução') : LV.t('na 2ª evolução')) : LV.t('no nível ') + r.nivel; };
+  /* ataques equipados (até 2) que o pet já liberou */
+  LV.atqsEquipados = (p) => { const lib = LV.atqsLiberados(p); const eq = (p.atqs || []).filter((id) => lib.includes(id)).slice(0, 2); return eq.length ? eq : lib.slice(0, 1); };
+  /* compatibilidade: LV.HAB[sp] = primeiro ataque da espécie */
+  LV.HAB = {};
+  for (const sp in LV.ATQ_SP) LV.HAB[sp] = LV.ATQ[LV.ATQ_SP[sp][0]];
+  /* descrição montada a partir do tipo e dos efeitos */
+  const DOT_NOME = { brasa: LV.t('queimadura'), musgo: LV.t('veneno'), sombra: LV.t('veneno de sombra'), mare: LV.t('afogamento'), cristal: LV.t('cortes') };
+  LV.descAtq = function (a, n, el) {
+    const v = (f) => (typeof f === 'function' ? f(n) : f);
+    let t;
+    switch (a.tipo) {
+      case 'explosao': t = LV.t('Explode no alvo: ') + pc(v(a.mult)) + LV.t(' do ataque em todos num raio de ') + Math.round(v(a.raio)); break;
+      case 'chuva': t = LV.t('Faz cair ') + v(a.qtd) + LV.t(' projéteis sobre os inimigos perto do domador: ') + pc(v(a.mult)) + LV.t(' do ataque cada'); break;
+      case 'escudo': t = LV.t('Escudo em todos os aliados que absorve ') + pc(v(a.pct)) + LV.t(' da vida máxima de cada um por 6 s'); break;
+      case 'pulso': t = LV.t('Descarga em volta do pet: ') + pc(v(a.mult)) + LV.t(' do ataque num raio de ') + v(a.raio); break;
+      case 'cura': t = LV.t('Cura ') + pc(v(a.pct)) + LV.t(' da vida máxima do domador e de todos os pets'); break;
+      case 'nuvem': t = LV.t('Nuvem venenosa por 4 s: ') + pc(v(a.dps)) + LV.t(' do ataque por segundo e deixa os inimigos lentos'); break;
+      case 'provocar': t = LV.t('Atrai os inimigos próximos por ') + s1(v(a.dur)) + LV.t(' s e reduz o dano que recebe em ') + pc(v(a.red)); break;
+      case 'lanca': t = LV.t('Raio em linha reta: ') + pc(v(a.mult)) + LV.t(' do ataque em todos no caminho (alcance ') + Math.round(v(a.alc)) + ')'; break;
+      case 'revoada': t = LV.t('Solta ') + v(a.qtd) + LV.t(' projéteis que perseguem os inimigos: ') + pc(v(a.mult)) + LV.t(' do ataque cada'); break;
+      case 'teia': t = LV.t('Prende os inimigos numa teia: ficam lentos por 3 s'); break;
+      case 'sopro': t = LV.t('Sopro em cone à frente: ') + pc(v(a.mult)) + LV.t(' do ataque em todos até ') + Math.round(v(a.alc)) + LV.t(' de distância'); break;
+      case 'parede': t = LV.t('Ergue chamas no alvo por ') + a.dur + LV.t(' s: ') + pc(v(a.dps)) + LV.t(' do ataque por segundo em quem estiver dentro'); break;
+      case 'mordida': t = LV.t('Golpe único e forte: ') + pc(v(a.mult)) + LV.t(' do ataque'); break;
+      case 'garras': t = a.golpes + LV.t(' golpes rápidos: ') + pc(v(a.mult)) + LV.t(' do ataque cada'); break;
+      case 'empurrao': t = LV.t('Rajada à frente: ') + pc(v(a.mult)) + LV.t(' do ataque e empurra os inimigos para longe'); break;
+      case 'dreno': t = pc(v(a.mult)) + LV.t(' do ataque num alvo e recupera ') + pc(a.dreno) + LV.t(' do dano como vida'); break;
+      case 'investida': t = LV.t('Avança girando através dos inimigos: ') + pc(v(a.mult)) + LV.t(' do ataque em todos no caminho'); break;
+      case 'prisao': t = LV.t('Prende um alvo: ') + pc(v(a.mult)) + LV.t(' do ataque e o deixa parado por ') + s1(v(a.atord)) + ' s'; break;
+      case 'prisaoArea': t = LV.t('Prende todos numa área: ') + pc(v(a.mult)) + LV.t(' do ataque e ficam parados por ') + s1(v(a.atord)) + ' s'; break;
+      case 'corrente': t = LV.t('Atinge o alvo e salta para mais ') + v(a.saltos) + LV.t(' inimigos: ') + pc(v(a.mult)) + LV.t(' do ataque cada'); break;
+      case 'regen': t = LV.t('Regenera ') + pc(v(a.pct)) + LV.t(' da vida máxima do grupo todo a cada segundo, por ') + a.dur + ' s'; break;
+      case 'eclipse': t = LV.t('Escurece uma área: ') + pc(v(a.mult)) + LV.t(' do ataque em todos dentro'); break;
+      default: t = '';
+    }
+    const ex = [];
+    if (a.atord && !['prisao', 'prisaoArea'].includes(a.tipo)) ex.push(LV.t('atordoa por ') + s1(v(a.atord)) + ' s');
+    if (a.dot) ex.push(DOT_NOME[el] + LV.t(' por ') + a.dot.dur + ' s');
+    if (a.lento) ex.push(LV.t('deixa lento por ') + a.lento + ' s');
+    if (a.fraco) ex.push(LV.t('enfraquece (−30% de ataque) por ') + a.fraco + ' s');
+    if (a.vuln) ex.push(LV.t('deixa vulnerável (+') + pc(v(a.vuln)) + LV.t(' de dano recebido) por 4 s'));
+    return t + (ex.length ? LV.t(', ') + ex.join(LV.t(', ')) : '') + '.';
+  };
+  LV.recargaAtq = (a, n) => a.cd * Math.max(0.6, 1 - 0.03 * (n - 1));
+  LV.habRecarga = (sp, n) => LV.recargaAtq(LV.HAB[sp], n);
+  for (const sp in LV.HAB) { const a = LV.HAB[sp]; if (!a.desc) a.desc = (n) => LV.descAtq(a, n, LV.SPECIES[sp] ? LV.SPECIES[sp].el : 'brasa'); }
   LV.custoHab = (sp, n) => ({ lumes: Math.round(300 * Math.pow(1.85, n - 1)), mat: LV.SPECIES[sp].evoMat[0], q: 5 * n });
 
   /* criaturas mansas: só atacam depois de serem atacadas (as hostis e as demais selvagens sempre atacam) */
@@ -485,7 +578,7 @@
     'bolafogo', 'chamas', 'corrente', 'correntechao', 'explosao', 'brasas'];
   /* peças ilustradas das habilidades e dos tiros das Centelhas (img/hab) */
   LV.HAB_IMG = ['explosao', 'brasacai', 'tiro_brasa', 'bolha', 'anelagua', 'tiro_mare', 'polen', 'folha', 'nuvem', 'tiro_musgo', 'corvo', 'tiro_sombra',
-    'carapaca', 'lanca', 'tiro_cristal', 'teia', 'garra', 'estrela'];
+    'carapaca', 'lanca', 'tiro_cristal', 'teia', 'garra', 'estrela', 'sopro', 'mordida', 'vento', 'dreno', 'rodopio', 'eclipse'];
   /* lista de todas as imagens para pré-carregar */
   LV.IMAGENS = (function () {
     const l = [];
@@ -495,6 +588,7 @@
     ['parado', 'andando', 'pulando', 'lanterna'].forEach((k) => l.push(LV.HEROI[k]));
     for (const k in LV.PECAS) l.push('pecas/' + k);
     l.push('pecas/escada_mao');
+    for (const k in LV.KITS || {}) ['pe', 'pm', 'pd', 'ct', 'cm', 'cb'].forEach((p) => l.push('kits/' + k + '/' + p));
     LV.ATAQUES_IMG.forEach((n) => l.push('ataques/' + n));
     LV.HAB_IMG.forEach((n) => l.push('hab/' + n));
     ['simples', 'candeia', 'cantante', 'cura', 'mares', 'explosiva', 'breu'].forEach((n) => l.push('lanternas/' + n));

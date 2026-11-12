@@ -110,6 +110,52 @@
     LV.art.retratoDomador = () => spr.url(LV.imgCapa(LV.game && LV.game.S && LV.game.capaAtual ? LV.game.capaAtual() : 'padrao'));
   }
 
+  /* plataforma modular: ponta esquerda, meio repetido (sem esticar) e ponta direita, todas na mesma altura.
+     K = { h, topo, w: [esq, meio, dir] } em pixels da imagem; alt = altura desenhada */
+  spr.platModular = function (c, im, x0, x1, ytopo, K, alt) {
+    if (!im[0] || !im[1] || !im[2]) return false;
+    const s = alt / K.h, y = ytopo - K.topo * alt;
+    const we = K.w[0] * s, wm = K.w[1] * s, wd = K.w[2] * s, w = x1 - x0;
+    if (w <= (we + wd) * 0.98) {
+      // plataforma curta: só as pontas, cortadas pela metade de cada uma
+      const k = w / (we + wd);
+      c.drawImage(im[0], 0, 0, im[0].width * k, im[0].height, x0, y, we * k, alt);
+      c.drawImage(im[2], im[2].width * (1 - k), 0, im[2].width * k, im[2].height, x0 + we * k - 0.5, y, wd * k, alt);
+      return true;
+    }
+    let x = x0 + we - 1;
+    const xf = x1 - wd + 1;
+    while (x < xf - 0.5) {
+      const resta = xf - x;
+      if (resta >= wm) { c.drawImage(im[1], x, y, wm, alt); x += wm - 1; }
+      else { c.drawImage(im[1], 0, 0, (resta / wm) * im[1].width, im[1].height, x, y, resta, alt); x = xf; }
+    }
+    c.drawImage(im[0], x0, y, we, alt);
+    c.drawImage(im[2], x1 - wd, y, wd, alt);
+    return true;
+  };
+  /* coluna modular: topo (encosta na plataforma), meio repetido e base no chão, centralizados no tronco.
+     K = { w: [], h: [], cx: [], tronco } em pixels da imagem; larg = largura desenhada do tronco */
+  spr.colunaModular = function (c, im, x, y0, y1, K, larg) {
+    if (!im[0] || !im[1] || !im[2] || y1 - y0 < 20) return false;
+    let s = larg / K.tronco;
+    const tot = y1 - y0;
+    if ((K.h[0] + K.h[2]) * s > tot) s = tot / (K.h[0] + K.h[2]);
+    const ht = K.h[0] * s, hb = K.h[2] * s, hm = K.h[1] * s;
+    // meio, de baixo para cima (a base cobre a emenda de baixo; o topo, a de cima)
+    let y = y1 - hb + 1;
+    const ytop = y0 + ht - 1;
+    const xm = x - K.cx[1] * K.w[1] * s, wm = K.w[1] * s;
+    while (y > ytop + 0.5) {
+      const resta = y - ytop;
+      if (resta >= hm) { c.drawImage(im[1], xm, y - hm, wm, hm); y -= hm - 1; }
+      else { const sh = (resta / hm) * im[1].height; c.drawImage(im[1], 0, im[1].height - sh, im[1].width, sh, xm, ytop, wm, resta); y = ytop; }
+    }
+    c.drawImage(im[2], x - K.cx[2] * K.w[2] * s, y1 - hb, K.w[2] * s, hb);
+    c.drawImage(im[0], x - K.cx[0] * K.w[0] * s, y0, K.w[0] * s, ht);
+    return true;
+  };
+
   /* fatiamento em 3 partes na horizontal: pontas sem distorção, meio esticado */
   spr.plataforma = function (c, img, x0, x1, ytopo, peca) {
     if (!img) return false;

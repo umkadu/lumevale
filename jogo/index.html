@@ -366,6 +366,15 @@
   .up.up-img img { grid-row: 1 / span 2; width: 52px; height: 52px; object-fit: contain; }
   .up.up-img .up-t, .up.up-img .up-d { grid-column: 2; }
   .up.up-img > .btn, .up.up-img > .maxed { grid-column: 3; }
+  /* ataques especiais do pet */
+  .atqs { display: grid; gap: 6px; margin: 6px 0 8px; }
+  .atq { padding: 7px 9px; border: 1px solid var(--linha); background: rgba(255, 255, 255, 0.02); }
+  .atq.eq { border-color: color-mix(in srgb, var(--acc) 60%, transparent); background: color-mix(in srgb, var(--acc) 7%, transparent); }
+  .atq.trav { opacity: 0.6; }
+  .atq-t { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .atq p { margin: 3px 0 0; }
+  .btn.mini { padding: 2px 9px; font-size: 12px; }
+  .btn.mini.sel { border-color: var(--acc); color: var(--acc); }
   /* equipamento do domador (capas e lanternas) */
   .premio-item img { width: auto; max-width: 110px; object-fit: contain; }
   .equips { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
