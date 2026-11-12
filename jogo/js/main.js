@@ -322,7 +322,7 @@
         return;
       }
       if (e.key === 'Escape' && document.documentElement.classList.contains('diario') && !ui.modalAberto) { ui.diario(false); return; }
-      // atalhos: O Bestiário (o olho), C Conquistas e as abas do Diário (E T L M R B H)
+      // atalhos: O Bestiário (o olho), C Conquistas e as abas do Diário (E T L M R B H; L = Vila)
       const livre = !fora(e) && !ui.modalAberto && !ui.inicioVisivel() && game.slot && !e.ctrlKey && !e.metaKey && !e.altKey;
       if ((e.key === 'o' || e.key === 'O') && livre) { ui.abrirBestiario(); return; }
       const aba = livre && !e.repeat ? Object.keys(ui.ATALHOS).find((a) => ui.ATALHOS[a] === e.key.toUpperCase()) : null;
@@ -388,6 +388,8 @@
       }
       if (game.pausado || game.pausaAviso) return;
       cv.focus({ preventScroll: true });
+      const npc = e.button === 0 && game.npcEm(x, y);
+      if (npc) { game.falarNpc(npc); LV.audio && LV.audio.tocar('clique'); return; }
       const alvo = game.inimigoEm(x, y, dedo ? 58 : 34);
       if (e.button === 2) {
         e.preventDefault();
@@ -425,7 +427,7 @@
         return;
       }
       if (game.miraHover) game.miraHover = null;
-      const sob = !game.pausado && game.inimigoEm(x, y, 34);
+      const sob = !game.pausado && (game.inimigoEm(x, y, 34) || game.npcEm(x, y));
       cv.style.cursor = sob ? 'pointer' : '';
     });
   }

@@ -152,6 +152,59 @@
     return L;
   };
 
+  /* ---------- lugares (v1.16) ---------- */
+  function pilaresDe(sup, lista) {
+    const pilares = [];
+    for (const s of lista) {
+      const larg = s.x1 - s.x0, xs = larg < 230 ? [(s.x0 + s.x1) / 2] : [s.x0 + larg * 0.2, s.x1 - larg * 0.2];
+      for (const px of xs) {
+        const abaixo = nivel.sobre({ sup }, px, s.y + 4);
+        if (abaixo) pilares.push({ x: Math.round(px), y0: s.y + 40, y1: abaixo.y + 4, sy: s.y, alta: !!s.alto });
+      }
+    }
+    return pilares;
+  }
+  /* Vila de Alvorada: três andares. No chão o portão do treino, o Lanterneiro, o grande lampião, o Trocador e o Santuário;
+     no segundo andar a Costureira e o Ferreiro; no alto a Zeladora das Radiantes (sobe-se pulando do segundo andar). */
+  nivel.gerarVila = function (def) {
+    const W = 2000, r = LV.rng(def.seed || 91);
+    const A = { id: 1, x0: 800, x1: 1500, y: G - 118, tipo: 'laje', torre: true };
+    const C = { id: 2, x0: 1040, x1: 1260, y: A.y - 104, tipo: 'laje', torre: true, alto: true };
+    const sup = [{ id: 0, x0: 0, x1: W, y: G, tipo: 'chao' }, A, C];
+    const run = (G - A.y) * LV.PECAS.escada.inclinacao;
+    const esc = [{ id: 0, xb: Math.round(A.x0 - run), yb: G, xt: A.x0, yt: A.y, de: 0, para: 1, dir: 1 }];
+    const npcs = [
+      { id: 'portao', x: 110, sup: 0, estr: 'vila/portao', eh: 170 },
+      { id: 'pavio', x: 370, sup: 0, img: 'vila/npc_pavio', h: 74, estr: 'vila/barraca_pavio', eh: 150, ex: -34 },
+      { id: 'agulha', x: 905, sup: 1, img: 'vila/npc_agulha', h: 72, estr: 'vila/barraca_agulha', eh: 140, ex: -30 },
+      { id: 'iris', x: 1150, sup: 2, img: 'vila/npc_iris', h: 74, estr: 'vila/altar_iris', eh: 96, ex: 40 },
+      { id: 'bigorna', x: 1410, sup: 1, img: 'vila/npc_bigorna', h: 76, estr: 'vila/forja_bigorna', eh: 130, ex: 34 },
+      { id: 'escambo', x: 1660, sup: 0, img: 'vila/npc_escambo', h: 72, estr: 'vila/barraca_escambo', eh: 140, ex: 36 },
+      { id: 'santuario', x: 1880, sup: 0, estr: 'vila/santuario', eh: 230 },
+    ].map((n) => Object.assign(n, { y: sup[n.sup].y }));
+    const deco = [{ img: 'vila/lampiao', x: 580, y: G + 2, h: 250, luz: true }];
+    const props = [];
+    for (let px = 250; px < W - 100; px += 260 + r() * 200) {
+      const livre = Math.abs(px - 580) > 90 && npcs.every((n) => n.sup || Math.abs(n.x - px) > 120) && (px < esc[0].xb - 30 || px > A.x0 + 30);
+      if (livre) props.push({ tipo: 'cogumelos', x: px, y: G + 2, s: 0.7 + r() * 0.3, flip: r() < 0.5, ph: r() * 10 });
+    }
+    const L = { idx: 1, w: W, sup, esc, props, pilares: pilaresDe(sup, [A, C]), cen: def.cen, zonas: [], arestas: null, rotas: new Map(), def, npcs, deco, entrada: 470,
+      kit: LV.KITS && LV.KITS.vila ? 'vila' : 'fungos' };
+    construirArestas(L);
+    return L;
+  };
+  /* Campo de Treino: chão reto e três bonecos em fila */
+  nivel.gerarTreino = function (def) {
+    const W = 1500, r = LV.rng(def.seed || 97);
+    const sup = [{ id: 0, x0: 0, x1: W, y: G, tipo: 'chao' }];
+    const props = [];
+    for (let px = 140; px < W - 100; px += 240 + r() * 200) if (px < 820 || px > 1300) props.push({ tipo: def.cen.props[Math.floor(r() * def.cen.props.length)], x: px, y: G + 2, s: 0.8 + r() * 0.4, flip: r() < 0.5, ph: r() * 10 });
+    const L = { idx: 0, w: W, sup, esc: [], props, pilares: [], cen: def.cen, zonas: [], arestas: null, rotas: new Map(), def, bonecos: [950, 1060, 1170], entrada: 780,
+      deco: [{ img: 'treino/placa', x: 640, y: G + 2, h: 96 }] };
+    construirArestas(L);
+    return L;
+  };
+
   /* ---------- consultas ---------- */
   nivel.sobre = function (L, x, y) {
     let best = null;
@@ -323,9 +376,9 @@
 
   /* ---------- desenho das peças ---------- */
   nivel.desenhar = function (c, L, cam, vw, t) {
-    const spr = LV.spr, art = LV.art, P = LV.MAPS[L.idx].pal, tinta = L.cen.tinta;
+    const spr = LV.spr, art = LV.art, D = L.def || LV.MAPS[L.idx], P = D.pal, tinta = L.cen.tinta;
     const vis = (x0, x1) => x1 > cam - 60 && x0 < cam + vw + 60;
-    const kit = LV.MAPS[L.idx].tema, K = LV.KITS && LV.KITS[kit], KD = LV.KIT_DESENHO;
+    const kit = L.kit || D.tema, K = LV.KITS && LV.KITS[kit], KD = LV.KIT_DESENHO;
     const peca = (n) => spr.tingida('kits/' + kit + '/' + n, tinta, 0.08);
     const kitOk = K && ['pe', 'pm', 'pd', 'ct', 'cm', 'cb'].every((n) => spr.get('kits/' + kit + '/' + n));
     if (kitOk) {

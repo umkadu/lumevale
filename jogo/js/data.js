@@ -411,7 +411,7 @@
   /* cenário modular (v1.12): por mapa, plataforma em 3 peças (ponta, meio que se repete, ponta) e coluna em 3 peças
      (topo, meio que se repete, base), em img/kits/<tema>. plat.alt = altura desenhada; col.larg = largura do tronco */
   /* KITS:INICIO (gerado por ferramentas/kit_cortar.js) — medidas das peças de cenário modular de cada mapa */
-  LV.KITS = {"raizes":{"plat":{"h":198,"topo":0.1869,"w":[224,295,236]},"col":{"w":[264,141,309],"h":[258,168,285],"cx":[0.506,0.4728,0.465],"tronco":68}},"fungos":{"plat":{"h":168,"topo":0.2262,"w":[275,189,278]},"col":{"w":[177,147,291],"h":[297,174,309],"cx":[0.5092,0.4799,0.5151],"tronco":114}},"ruinas":{"plat":{"h":156,"topo":0.0192,"w":[209,255,206]},"col":{"w":[174,123,261],"h":[240,205,258],"cx":[0.4993,0.4967,0.4742],"tronco":98}},"cristais":{"plat":{"h":216,"topo":0.2037,"w":[293,256,296]},"col":{"w":[234,69,216],"h":[276,203,288],"cx":[0.5044,0.4916,0.5152],"tronco":63}},"cinzas":{"plat":{"h":144,"topo":0.0278,"w":[275,167,281]},"col":{"w":[201,93,288],"h":[222,127,234],"cx":[0.5082,0.4918,0.4592],"tronco":89}}};
+  LV.KITS = {"raizes":{"plat":{"h":198,"topo":0.1869,"w":[224,295,236]},"col":{"w":[264,141,309],"h":[258,168,285],"cx":[0.506,0.4728,0.465],"tronco":68}},"fungos":{"plat":{"h":168,"topo":0.2262,"w":[275,189,278]},"col":{"w":[177,147,291],"h":[297,174,309],"cx":[0.5092,0.4799,0.5151],"tronco":114}},"ruinas":{"plat":{"h":156,"topo":0.0192,"w":[209,255,206]},"col":{"w":[174,123,261],"h":[240,205,258],"cx":[0.4993,0.4967,0.4742],"tronco":98}},"cristais":{"plat":{"h":141,"topo":0.0355,"w":[141,256,141]},"col":{"w":[234,69,216],"h":[276,203,288],"cx":[0.5044,0.4916,0.5152],"tronco":63}},"cinzas":{"plat":{"h":144,"topo":0.0278,"w":[275,167,281]},"col":{"w":[201,93,288],"h":[222,127,234],"cx":[0.5082,0.4918,0.4592],"tronco":89}}};
   /* KITS:FIM */
   LV.KIT_DESENHO = { plat: { alt: 64, altaAlt: 56 }, col: { larg: 30 } };
   LV.HEROI = { alt: 68, parado: 'heroi/parado', andando: 'heroi/andando', pulando: 'heroi/pulando', lanterna: 'heroi/lanterna' };
@@ -490,26 +490,49 @@
     prisma_ofuscante: { nome: LV.t('Prisma Ofuscante'), tipo: 'prisaoArea', cd: 13, mult: L1(0.6, 0.05), raio: 100, atord: L1(1.8, 0.1), img: 'hab/estrela' },
     chuva_cristais: { nome: LV.t('Chuva de Cristais'), tipo: 'explosao', cd: 11, mult: L1(1.4, 0.12), raio: L1(95, 5), vuln: L1(0.15, 0.015), img: 'ataques/estilhacos' },
     mordida_quartzo: { nome: LV.t('Mordida de Quartzo'), tipo: 'mordida', cd: 7, mult: L1(2.7, 0.2) },
+    // ---- v1.16: fortalecimentos (próprio pet e grupo), execução e controle ----
+    furia_flamejante: { nome: LV.t('Fúria Flamejante'), tipo: 'furia', cd: 16, dur: 6, dano: L1(0.35, 0.03), vel: L1(0.3, 0.02) },
+    golpe_derradeiro: { nome: LV.t('Golpe Derradeiro'), tipo: 'mordida', cd: 10, mult: L1(3.0, 0.22), exec: 1 },
+    instinto_predador: { nome: LV.t('Instinto Predador'), tipo: 'furia', cd: 15, dur: 6, dano: L1(0.3, 0.03), vel: L1(0.35, 0.025) },
+    marca_presa: { nome: LV.t('Marca da Presa'), tipo: 'mordida', cd: 9, mult: L1(1.6, 0.12), vuln: L1(0.35, 0.025) },
+    brasas_guerra: { nome: LV.t('Brasas de Guerra'), tipo: 'grito', cd: 18, dur: 8, dano: L1(0.2, 0.02) },
+    seiva_coragem: { nome: LV.t('Seiva da Coragem'), tipo: 'grito', cd: 18, dur: 8, dano: L1(0.22, 0.02) },
+    casca_viva: { nome: LV.t('Casca Viva'), tipo: 'guarda', cd: 18, dur: 6, red: L1(0.25, 0.02) },
+    mare_alta: { nome: LV.t('Maré Alta'), tipo: 'grito', cd: 18, dur: 8, vel: L1(0.25, 0.02) },
+    redemoinho: { nome: LV.t('Redemoinho'), tipo: 'prisaoArea', cd: 13, mult: L1(0.7, 0.06), raio: 105, atord: L1(1.8, 0.1), lento: 3, img: 'hab/anelagua' },
+    bastiao_cristal: { nome: LV.t('Bastião de Cristal'), tipo: 'guarda', cd: 18, dur: 6, red: L1(0.3, 0.02) },
+    couraca_micelio: { nome: LV.t('Couraça de Micélio'), tipo: 'furia', cd: 15, dur: 6, red: L1(0.4, 0.03), dano: L1(0.15, 0.02) },
   };
+  /* especialidade de cada Centelha (v1.16): muda um pouco a vida e o ataque e define o estilo dos 5 ataques */
+  LV.ESPEC = {
+    dps: { nome: LV.t('Dano em alvo único'), curto: LV.t('Dano'), desc: LV.t('Golpes fortes num alvo só e fúria que acelera os próprios ataques.'), cor: '#ff7a5a', hp: 0.9, atk: 1.15 },
+    area: { nome: LV.t('Dano em área'), curto: LV.t('Área'), desc: LV.t('Explosões e chuvas que atingem vários inimigos de uma vez.'), cor: '#ffb84d', hp: 1, atk: 1 },
+    suporte: { nome: LV.t('Suporte e cura'), curto: LV.t('Suporte'), desc: LV.t('Cura, escudos e fortalecimentos para o domador e todo o grupo.'), cor: '#8fe07f', hp: 1.05, atk: 0.85 },
+    controle: { nome: LV.t('Controle'), curto: LV.t('Controle'), desc: LV.t('Prende, atordoa, deixa lento e fraco: os inimigos mal conseguem reagir.'), cor: '#c79bff', hp: 1, atk: 0.95 },
+    tanque: { nome: LV.t('Tanque'), curto: LV.t('Tanque'), desc: LV.t('Muita vida, atrai os inimigos e protege o grupo.'), cor: '#7fc8ff', hp: 1.3, atk: 0.85 },
+  };
+  const ESPEC_SP = { fagulho: 'dps', umbrim: 'dps', cinzelo: 'area', brilhoca: 'area', muscolino: 'suporte', gotim: 'suporte', tecelo: 'controle', lumagua: 'controle', lascado: 'tanque', esporito: 'tanque' };
+  for (const sp in ESPEC_SP) if (LV.SPECIES[sp]) LV.SPECIES[sp].espec = ESPEC_SP[sp];
+  LV.especDe = (sp) => LV.ESPEC[(LV.SPECIES[sp] || {}).espec] || null;
   for (const id in LV.ATQ) LV.ATQ[id].id = id;
   /* os 5 ataques de cada espécie, na ordem em que se liberam */
   LV.ATQ_SP = {
-    fagulho: ['explosao_brasa', 'sopro_dragao', 'parede_chamas', 'mordida_ignea', 'garras_flamejantes'],
-    cinzelo: ['chuva_cinzas', 'vento_escaldante', 'absorcao_vampirica', 'explosao_brasa', 'investida_magma'],
-    gotim: ['casco_mare', 'jato_agua', 'onda_curativa', 'bolha_prisioneira', 'tsunami'],
-    lumagua: ['pulso_paralisante', 'onda_curativa', 'tentaculos', 'maremoto', 'tsunami'],
-    muscolino: ['polen_restaurador', 'raizes_prendedoras', 'folhas_navalha', 'brisa_sonolenta', 'bencao_floresta'],
-    esporito: ['nuvem_esporos', 'raizes_prendedoras', 'cabecada', 'esporos_explosivos', 'muralha_fungos'],
-    umbrim: ['revoada_sombria', 'eclipse', 'bico_sombrio', 'mergulho_trevas', 'grito_sombrio'],
-    tecelo: ['teia_noturna', 'eclipse', 'picada_venenosa', 'fios_cortantes', 'casulo'],
-    lascado: ['carapaca_geodo', 'estilhacos', 'pinca_cristal', 'terremoto', 'espelho_prismatico'],
-    brilhoca: ['lanca_quartzo', 'estilhacos', 'prisma_ofuscante', 'chuva_cristais', 'mordida_quartzo'],
+    fagulho: ['mordida_ignea', 'furia_flamejante', 'garras_flamejantes', 'golpe_derradeiro', 'investida_magma'],
+    umbrim: ['bico_sombrio', 'marca_presa', 'instinto_predador', 'mergulho_trevas', 'revoada_sombria'],
+    cinzelo: ['explosao_brasa', 'chuva_cinzas', 'brasas_guerra', 'parede_chamas', 'sopro_dragao'],
+    brilhoca: ['estilhacos', 'chuva_cristais', 'prisma_ofuscante', 'lanca_quartzo', 'terremoto'],
+    muscolino: ['polen_restaurador', 'bencao_floresta', 'seiva_coragem', 'raizes_prendedoras', 'casca_viva'],
+    gotim: ['onda_curativa', 'casco_mare', 'mare_alta', 'bolha_prisioneira', 'tsunami'],
+    tecelo: ['teia_noturna', 'picada_venenosa', 'casulo', 'eclipse', 'fios_cortantes'],
+    lumagua: ['pulso_paralisante', 'tentaculos', 'jato_agua', 'redemoinho', 'maremoto'],
+    lascado: ['carapaca_geodo', 'pinca_cristal', 'espelho_prismatico', 'bastiao_cristal', 'terremoto'],
+    esporito: ['muralha_fungos', 'cabecada', 'nuvem_esporos', 'couraca_micelio', 'esporos_explosivos'],
   };
   /* quando cada um dos 5 se libera */
-  LV.ATQ_LIBERA = [{ nivel: 1 }, { nivel: 12 }, { est: 1 }, { nivel: 32 }, { est: 2 }];
-  LV.atqLiberado = (p, i) => { const r = LV.ATQ_LIBERA[i]; return r.est != null ? p.est >= r.est : p.nivel >= r.nivel; };
+  LV.ATQ_LIBERA = [{ nivel: 1 }, { nivel: 25 }, { nivel: 40, est: 1 }, { nivel: 55 }, { nivel: 65, est: 2 }];
+  LV.atqLiberado = (p, i) => { const r = LV.ATQ_LIBERA[i]; return p.nivel >= r.nivel && (r.est == null || p.est >= r.est); };
   LV.atqsLiberados = (p) => (LV.ATQ_SP[p.sp] || []).filter((id, i) => LV.atqLiberado(p, i));
-  LV.textoLibera = (i) => { const r = LV.ATQ_LIBERA[i]; return r.est != null ? (r.est === 1 ? LV.t('na 1ª evolução') : LV.t('na 2ª evolução')) : LV.t('no nível ') + r.nivel; };
+  LV.textoLibera = (i) => { const r = LV.ATQ_LIBERA[i]; return LV.t('no nível ') + r.nivel + (r.est === 1 ? LV.t(' e após a 1ª evolução') : r.est === 2 ? LV.t(' e após a 2ª evolução') : ''); };
   /* ataques equipados (até 2) que o pet já liberou */
   LV.atqsEquipados = (p) => { const lib = LV.atqsLiberados(p); const eq = (p.atqs || []).filter((id) => lib.includes(id)).slice(0, 2); return eq.length ? eq : lib.slice(0, 1); };
   /* compatibilidade: LV.HAB[sp] = primeiro ataque da espécie */
@@ -533,7 +556,16 @@
       case 'teia': t = LV.t('Prende os inimigos numa teia: ficam lentos por 3 s'); break;
       case 'sopro': t = LV.t('Sopro em cone à frente: ') + pc(v(a.mult)) + LV.t(' do ataque em todos até ') + Math.round(v(a.alc)) + LV.t(' de distância'); break;
       case 'parede': t = LV.t('Ergue chamas no alvo por ') + a.dur + LV.t(' s: ') + pc(v(a.dps)) + LV.t(' do ataque por segundo em quem estiver dentro'); break;
-      case 'mordida': t = LV.t('Golpe único e forte: ') + pc(v(a.mult)) + LV.t(' do ataque'); break;
+      case 'mordida': t = LV.t('Golpe único e forte: ') + pc(v(a.mult)) + LV.t(' do ataque') + (a.exec ? LV.t(' (o dobro contra alvos com menos de 35% de vida)') : ''); break;
+      case 'furia': case 'grito': {
+        const p = [];
+        if (a.dano) p.push('+' + pc(v(a.dano)) + LV.t(' de dano'));
+        if (a.vel) p.push('+' + pc(v(a.vel)) + LV.t(' de velocidade de ataque'));
+        if (a.red) p.push(pc(v(a.red)) + LV.t(' menos dano recebido'));
+        t = (a.tipo === 'furia' ? LV.t('Fortalece o próprio pet por ') : LV.t('Fortalece o domador e todos os pets por ')) + a.dur + ' s: ' + p.join(LV.t(', '));
+        break;
+      }
+      case 'guarda': t = LV.t('O domador e todos os pets recebem ') + pc(v(a.red)) + LV.t(' menos dano por ') + a.dur + ' s'; break;
       case 'garras': t = a.golpes + LV.t(' golpes rápidos: ') + pc(v(a.mult)) + LV.t(' do ataque cada'); break;
       case 'empurrao': t = LV.t('Rajada à frente: ') + pc(v(a.mult)) + LV.t(' do ataque e empurra os inimigos para longe'); break;
       case 'dreno': t = pc(v(a.mult)) + LV.t(' do ataque num alvo e recupera ') + pc(a.dreno) + LV.t(' do dano como vida'); break;
@@ -591,9 +623,36 @@
     for (const k in LV.KITS || {}) ['pe', 'pm', 'pd', 'ct', 'cm', 'cb'].forEach((p) => l.push('kits/' + k + '/' + p));
     LV.ATAQUES_IMG.forEach((n) => l.push('ataques/' + n));
     LV.HAB_IMG.forEach((n) => l.push('hab/' + n));
-    ['simples', 'candeia', 'cantante', 'cura', 'mares', 'explosiva', 'breu'].forEach((n) => l.push('lanternas/' + n));
+    ['simples', 'candeia', 'cantante', 'cura', 'mares', 'explosiva', 'breu'].forEach((n) => { l.push('lanternas/' + n); l.push('lanternas/tiros/' + n); });
     return l;
   })();
+  /* =========================================================
+     LUGARES (v1.16): a Vila de Alvorada (lojas, trocas, Radiantes e Santuário) e o Campo de Treino
+     (bonecos de vida infinita e medidor de dano por segundo). Não são profundezas: sem ninhos nem Guardião.
+     base = mapa que empresta paleta, música e peças desenhadas à mão quando falta arte própria.
+     ========================================================= */
+  LV.LUGARES = {
+    vila: { id: 'vila', nome: LV.t('Vila de Alvorada'), sub: LV.t('A última vila ainda acesa: lojas, trocas e o Santuário dos Ecos.'), tema: 'vila', base: 1, seed: 91,
+      pal: { luz: '#ffe2a8', acento: '#ffc46b', nevoa: '#a8805a' } },
+    treino: { id: 'treino', nome: LV.t('Campo de Treino'), sub: LV.t('Bonecos que nunca caem: teste as suas Centelhas e veja o dano por segundo.'), tema: 'treino', base: 0, seed: 97,
+      pal: { luz: '#ffe9b8', acento: '#ffcf7a' } },
+  };
+  /* moradores da vila (e os prédios com que se fala). As posições ficam em nivel.gerarVila */
+  LV.NPCS = {
+    pavio: { nome: LV.t('Mestre Pavio'), papel: LV.t('Lanterneiro'), fala: LV.t('Lanterna boa é lanterna acesa. Leve quantas precisar para a descida.'), cor: '#ffc46b' },
+    agulha: { nome: LV.t('Dona Agulha'), papel: LV.t('Costureira'), fala: LV.t('Uma capa nova não deixa ninguém mais forte, mas deixa mais bonito. Escolha com calma.'), cor: '#ff9ab8' },
+    bigorna: { nome: LV.t('Mestre Bigorna'), papel: LV.t('Ferreiro'), fala: LV.t('Traga as moedas dos Guardiões e eu reforço o que você e os seus pets têm.'), cor: '#ff8a52' },
+    escambo: { nome: LV.t('Velho Escambo'), papel: LV.t('Trocador'), fala: LV.t('Musgo por esporo, esporo por escama... Tudo tem o seu preço, e o meu é justo.'), cor: '#9ef08a' },
+    iris: { nome: LV.t('Zeladora Íris'), papel: LV.t('Guardiã das Radiantes'), fala: LV.t('Toda Radiante que você conquistou deixa um rastro de luz. Mesmo depois de um renascimento, eu sei trazê-la de volta.'), cor: '#ffe27a' },
+    santuario: { nome: LV.t('Santuário dos Ecos'), papel: LV.t('Melhorias permanentes'), estrutura: true, cor: '#c8b8ff' },
+    portao: { nome: LV.t('Campo de Treino'), papel: LV.t('Teste o dano das Centelhas'), estrutura: true, cor: '#ffd27a' },
+  };
+  /* trocas do Velho Escambo: só entre materiais vizinhos (mapa a mapa).
+     Descer (para o material do mapa seguinte) custa 5 por 1; subir (para o do mapa anterior) rende 2 por 1. */
+  LV.TROCA = { ordem: ['musgo', 'esporo', 'escama', 'cristal', 'brasa'], sobe: 5, desce: 2 };
+  /* taxa da Zeladora Íris para trazer de volta um Radiante de conquista que você não tem mais */
+  LV.TAXA_RADIANTE = 2000;
+
   /* cenários pintados (Gemini), um por mapa: desenhados atrás de tudo com parallax lento */
   LV.FUNDOS = LV.MAPS.map((m) => 'fundos/' + m.tema);
 

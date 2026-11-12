@@ -1097,7 +1097,8 @@
   }
 
   art.criarFundo = function (idx, scale) {
-    const def = LV.MAPS[idx], P = def.pal, T = TEMA[def.tema];
+    // idx: número do mapa ou a definição de um lugar (vila, treino), que usa as peças do tema de um mapa (temaArte)
+    const def = typeof idx === 'object' ? idx : LV.MAPS[idx], temaArte = def.temaArte || def.tema, P = def.pal, T = TEMA[temaArte];
     const s = LV.clamp(scale || 1, 0.5, 1.5);
     const r = LV.rng(def.seed * 1000 + 7);
     const mk = (fn, sc) => { const t = novoTile(sc); fn(t.g); return t.cv; };
@@ -1106,8 +1107,8 @@
       longe: mk((g) => T.longe(g, r, P), s * 0.8),
       meio: mk((g) => T.meio(g, r, P), s * 0.9),
       perto: mk((g) => T.perto(g, r, P), s),
-      chao: mk((g) => chao(g, r, P, def.tema), s),
-      frente: mk((g) => frente(g, r, P, def.tema), s * 0.7),
+      chao: mk((g) => chao(g, r, P, temaArte), s),
+      frente: mk((g) => frente(g, r, P, temaArte), s * 0.7),
       nevoa: mk((g) => nevoa(g, r, P), 0.5),
       raios: [], props: [],
     };

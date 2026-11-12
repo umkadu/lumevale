@@ -36,10 +36,10 @@
         'Click the scenery to walk there. <b>Left-click</b> a creature: only the tamer attacks. <b>Right-click</b>: the tamer and the pets attack together.',
         'Stairs: jump and land on a staircase to climb it. Walking sideways or dropping down, you pass through it.',
         '<b>Q</b>: lantern (capture) · <b>1, 2, 3</b>: pet mode · <b>O</b>: Bestiary · <b>C</b>: Achievements · <b>Esc</b>: Settings.',
-        'Journal tabs: <b>E</b> Team · <b>T</b> Tamer · <b>L</b> Shop · <b>M</b> Maps · <b>R</b> Sanctuary · <b>B</b> Satchel · <b>H</b> Help. Press the same key again to close.',
+        'Journal tabs: <b>E</b> Team · <b>T</b> Tamer · <b>L</b> Village · <b>M</b> Maps · <b>R</b> Sanctuary · <b>B</b> Satchel · <b>H</b> Help. Press the same key again to close.',
       ]],
       ['Pets in the field', [
-        'Up to 3 pets fight with you (more with <b>Extra Bond</b> in the Shop and <b>Eternal Bond</b> in the Sanctuary). The rest wait in the Collection: drag them to a free slot.',
+        'Up to 3 pets fight with you (more with <b>Extra Bond</b> from Master Anvil and <b>Eternal Bond</b> in the Sanctuary). The rest wait in the Collection: drag them to a free slot.',
         'Modes: <b>Aggressive</b> attacks everything nearby, <b>Defender</b> only whoever attacks first, <b>Passive</b> never attacks.',
         'A pet that runs out of health faints and returns after 10 s.',
         'Pets can only be up to ' + LV.F.capPet(0) + ' levels above the tamer.',
@@ -50,27 +50,33 @@
         'The chance is rolled when the lantern hits. At full health it is about <b>30%</b> in the first areas and lower for high-level creatures. <b>The less health, the higher the chance</b> (up to about 85%).',
         'If it holds, the minigame starts: close the lantern' + (movel ? '' : ' (click or <b>Space</b>)') + ' while the pointer is in the light zone, within 5 s. In the <b>golden center</b> the pet may gain a talent (Fierce, Sturdy or Nimble).',
         'Docile creatures only fight back; aggressive ones attack whoever comes near their nest. The <b>Murks</b> (total darkness, no light inside) can’t be caught and always attack. Each map has its own Murks, and nests mix several kinds.',
-        'Lanterns are bought in the Shop.',
+        'Lanterns are bought from <b>Master Wick</b>, in Daybreak Village.',
       ]],
       ['Evolution and abilities', [
         'Each species has 3 forms. To evolve you need level <b>' + evo[0] + '</b> (then <b>' + evo[1] + '</b>), materials and Lumes. A golden ▲ badge marks pets ready to evolve.',
-        'Each species has <b>5 special attacks</b> (species of the same element share some). The 1st comes from the start; the others unlock at level 12, at the 1st evolution, at level 32 and at the 2nd evolution.',
+        'Each species has a <b>specialty</b> shown next to its element: <b>Damage</b> (single target), <b>Area</b>, <b>Support</b> (healing and buffs), <b>Control</b> (roots, stuns, slows) or <b>Tank</b> (health, taunts and team protection). It slightly changes health and attack.',
+        'Each species has <b>5 special attacks</b> that mix its specialty with self buffs, team buffs, crowd control and raw damage. The 1st comes from the start; the others unlock at level <b>25</b>, at level <b>40</b> after the 1st evolution, at level <b>55</b> and at level <b>65</b> after the 2nd evolution.',
         'Up to <b>2 attacks</b> can be equipped, each with its own cooldown. Choose them in the pet’s details (Team tab). Upgrading (up to level 10) makes all of them stronger.',
       ]],
       ['Tamer and attributes', [
         'Each tamer level gives 3 points: <b>Strength</b> (damage), <b>Vigor</b> (health), <b>Luck</b> (capture, gathering, critical) and <b>Bond</b> (pet XP and attack speed).',
         'Each tamer level also gives +1% damage and health to all pets.',
+        'Next to each attribute: <b>+1</b>, <b>+5</b>, <b>+½</b> (half of your free points) and <b>+All</b>.',
       ]],
       ['Cloaks and lanterns', [
         'In the <b>Tamer</b> tab you choose the tamer’s cloak and lantern. Locked items show how to unlock them.',
-        '<b>Common cloaks</b> are purely visual and yours forever: they come from achievements or from the Shop (one-time purchase).',
-        '<b>Lanterns</b> change the lantern strike: piercing crystal beam, ember blast, tide that slows, shadow that weakens, or healing for the whole team (the Healing Lantern doesn’t attack). Achievement lanterns are permanent; Shop lanterns last until you rebirth.',
+        '<b>Common cloaks</b> are purely visual and yours forever: they come from achievements or from Madam Needle, the village tailor (one-time purchase).',
+        '<b>Lanterns</b> change the lantern strike: piercing crystal beam, ember blast, tide that slows, shadow that weakens, or healing for the whole team (the Healing Lantern doesn’t attack). Achievement lanterns are permanent; the ones bought in the village last until you rebirth. Each lantern fires its own projectile.',
         'Each <b>Guardian</b> drops a themed item on its first defeat of each journey (a cloak or a lantern with real bonuses). It comes equipped and is gone when you rebirth.',
       ]],
-      ['Shop and Guardian coins', [
-        'Upgrades cost Lumes plus coins that only Guardians drop (each Guardian has its own coin).',
-        'The Shop also sells cloaks (purely visual, one-time purchase you keep forever) and special lanterns (they last until you rebirth).',
-        'Shop upgrades and lanterns are lost when you are reborn.',
+      ['Daybreak Village', [
+        'The Shop became <b>Daybreak Village</b> (Village tab or the <b>L</b> key). Click a villager to walk over and talk. Only the tamer and the pet in the first slot go to the village.',
+        '<b>Master Wick</b> sells capture and special lanterns · <b>Madam Needle</b> sells cloaks · <b>Master Anvil</b> sells upgrades for Lumes plus Guardian coins (each Guardian drops its own) · <b>Old Barter</b> trades materials between neighboring depths (5 for 1 going deeper, 1 for 2 going up) · <b>Keeper Iris</b> brings back achievement Radiants you lost when reborn (2,000 Lumes each) · the <b>Sanctuary</b> opens the Sanctuary tab.',
+        'Upgrades and lanterns bought in the village are lost when you are reborn.',
+      ]],
+      ['Training Ground', [
+        'Through the village gate (or the Village tab) you reach the <b>Training Ground</b>: three dummies that never fall and a <b>damage per second</b> meter at the top of the screen, split by tamer and pet.',
+        'Pets attack the dummies in any mode. Use it to compare attacks, specialties and lanterns. Nothing is earned or lost there.',
       ]],
       ['Guardians and maps', [
         'Defeat creatures on the map until the goal (' + metas + ') and tap <b>Challenge Guardian</b>.',
@@ -93,7 +99,7 @@
         'The Bestiary records every form you have met and where it lives.',
       ]],
       ['Away from the game', [
-        'Your pets keep hunting while you are away (up to the Campsite limit, upgradable in the Shop). When you return you see what they earned.',
+        'Your pets keep hunting while you are away (up to the Campsite limit, upgradable with Master Anvil). When you return you see what they earned.',
         'After a few idle minutes the rest screen appears (adjust it in Settings).',
       ]],
       ['Saves, language and updates', [
@@ -119,10 +125,10 @@
         'Clique no cenário para ir até lá. <b>Clique esquerdo</b> numa criatura: só o domador ataca. <b>Clique direito</b>: o domador e os pets atacam juntos.',
         'Escadas: pule e caia em cima de uma escada para subir por ela. Andando de lado ou descendo, você passa direto.',
         '<b>Q</b>: lanterna (captura) · <b>1, 2, 3</b>: modo dos pets · <b>O</b>: Bestiário · <b>C</b>: Conquistas · <b>Esc</b>: Configurações.',
-        'Abas do Diário: <b>E</b> Equipe · <b>T</b> Domador · <b>L</b> Loja · <b>M</b> Mapas · <b>R</b> Santuário · <b>B</b> Bolsa · <b>H</b> Ajuda. Apertar a mesma tecla de novo fecha.',
+        'Abas do Diário: <b>E</b> Equipe · <b>T</b> Domador · <b>L</b> Vila · <b>M</b> Mapas · <b>R</b> Santuário · <b>B</b> Bolsa · <b>H</b> Ajuda. Apertar a mesma tecla de novo fecha.',
       ]],
       ['Pets em campo', [
-        'Até 3 pets lutam com você (mais com <b>Laço Extra</b> na Loja e <b>Vínculo Eterno</b> no Santuário). Os outros ficam na Coleção: arraste até uma vaga livre.',
+        'Até 3 pets lutam com você (mais com <b>Laço Extra</b>, do Mestre Bigorna, e <b>Vínculo Eterno</b> no Santuário). Os outros ficam na Coleção: arraste até uma vaga livre.',
         'Modos: <b>Agressivo</b> ataca tudo por perto, <b>Defensor</b> só quem atacar primeiro, <b>Passivo</b> não ataca.',
         'Pet sem vida desmaia e volta em 10 s.',
         'Os pets só passam ' + LV.F.capPet(0) + ' níveis acima do domador.',
@@ -133,27 +139,33 @@
         'A chance é sorteada quando a lanterna acerta. Com vida cheia é cerca de <b>30%</b> nas primeiras áreas e menor em criaturas de nível alto. <b>Quanto menos vida, maior a chance</b> (até uns 85%).',
         'Se prender, vem o minijogo: feche a lanterna' + (movel ? '' : ' (clique ou <b>Espaço</b>)') + ' com o ponteiro na faixa clara, em até 5 s. No <b>centro dourado</b> o pet pode ganhar um talento (Feroz, Robusto ou Ágil).',
         'Criaturas mansas só revidam; as agressivas atacam quem chega perto do ninho. Os <b>Breus</b> (escuridão completa, sem nenhuma luz dentro) não podem ser capturados e atacam sempre. Cada mapa tem os seus Breus, e os ninhos misturam vários tipos.',
-        'Lanternas são compradas na Loja.',
+        'Lanternas são compradas com o <b>Mestre Pavio</b>, na Vila de Alvorada.',
       ]],
       ['Evolução e habilidades', [
         'Cada espécie tem 3 formas. Para evoluir: nível <b>' + evo[0] + '</b> (depois <b>' + evo[1] + '</b>), materiais e Lumes. O selo dourado ▲ mostra quem já pode evoluir.',
-        'Cada espécie tem <b>5 ataques especiais</b> (espécies do mesmo elemento dividem alguns). O 1º vem de início; os outros se liberam no nível 12, na 1ª evolução, no nível 32 e na 2ª evolução.',
+        'Cada espécie tem uma <b>especialidade</b>, que aparece ao lado do elemento: <b>Dano</b> (alvo único), <b>Área</b>, <b>Suporte</b> (cura e fortalecimentos), <b>Controle</b> (prende, atordoa, deixa lento) ou <b>Tanque</b> (vida, atrai inimigos e protege o grupo). Ela muda um pouco a vida e o ataque.',
+        'Cada espécie tem <b>5 ataques especiais</b>, que misturam a especialidade com fortalecimentos do próprio pet, do grupo, controle e dano bruto. O 1º vem de início; os outros se liberam no nível <b>25</b>, no nível <b>40</b> depois da 1ª evolução, no nível <b>55</b> e no nível <b>65</b> depois da 2ª evolução.',
         'Até <b>2 ataques</b> ficam equipados, cada um com a sua recarga. Escolha no detalhe do pet (aba Equipe). Melhorar (até o nível 10) deixa todos mais fortes.',
       ]],
       ['Domador e atributos', [
         'Cada nível do domador dá 3 pontos: <b>Força</b> (dano), <b>Vigor</b> (vida), <b>Sorte</b> (captura, coleta e crítico) e <b>Vínculo</b> (XP dos pets e velocidade de ataque).',
         'Cada nível do domador também dá +1% de dano e vida a todos os pets.',
+        'Ao lado de cada atributo: <b>+1</b>, <b>+5</b>, <b>+½</b> (metade dos pontos livres) e <b>+Tudo</b>.',
       ]],
       ['Capas e lanternas', [
         'Na aba <b>Domador</b> você escolhe a capa e a lanterna do domador. Os itens trancados mostram como liberar.',
-        '<b>Capas comuns</b> são só visuais e ficam para sempre: saem das conquistas ou da Loja (compra única).',
-        'As <b>lanternas</b> mudam o golpe da lanterna: feixe de cristal que atravessa, explosão de brasa, maré que deixa lento, sombra que enfraquece ou cura para o grupo todo (a Lanterna de Cura não ataca). As das conquistas ficam para sempre; as da Loja valem até renascer.',
+        '<b>Capas comuns</b> são só visuais e ficam para sempre: saem das conquistas ou da Dona Agulha, a costureira da vila (compra única).',
+        'As <b>lanternas</b> mudam o golpe da lanterna: feixe de cristal que atravessa, explosão de brasa, maré que deixa lento, sombra que enfraquece ou cura para o grupo todo (a Lanterna de Cura não ataca). As das conquistas ficam para sempre; as compradas na vila valem até renascer. Cada lanterna dispara um tiro próprio.',
         'Cada <b>Guardião</b> deixa um item temático na primeira vitória de cada jornada (uma capa ou lanterna com bônus de verdade). Ele já vem equipado e some ao renascer.',
       ]],
-      ['Loja e moedas dos Guardiões', [
-        'As melhorias custam Lumes e moedas que só os Guardiões soltam (cada Guardião tem a sua).',
-        'A Loja também vende capas (só visuais, compra única que fica para sempre) e lanternas especiais (valem até renascer).',
-        'As melhorias e as lanternas da Loja se perdem ao renascer.',
+      ['Vila de Alvorada', [
+        'A Loja virou a <b>Vila de Alvorada</b> (aba Vila ou tecla <b>L</b>). Clique num morador para ir até ele e conversar. Na vila só vão o domador e o pet da primeira vaga.',
+        '<b>Mestre Pavio</b> vende lanternas de captura e especiais · <b>Dona Agulha</b> vende capas · <b>Mestre Bigorna</b> vende melhorias por Lumes e moedas dos Guardiões (cada Guardião solta a sua) · <b>Velho Escambo</b> troca materiais de profundezas vizinhas (5 por 1 para baixo, 1 por 2 para cima) · <b>Zeladora Íris</b> traz de volta os Radiantes das conquistas que você perdeu ao renascer (2.000 Lumes cada) · o <b>Santuário</b> abre a aba Santuário.',
+        'As melhorias e as lanternas compradas na vila se perdem ao renascer.',
+      ]],
+      ['Campo de Treino', [
+        'Pelo portão da vila (ou pela aba Vila) você chega ao <b>Campo de Treino</b>: três bonecos que nunca caem e um medidor de <b>dano por segundo</b> no alto da tela, separado por domador e pet.',
+        'Os pets atacam os bonecos em qualquer modo. Use para comparar ataques, especialidades e lanternas. Lá não se ganha nem se perde nada.',
       ]],
       ['Guardiões e mapas', [
         'Derrote criaturas do mapa até a meta (' + metas + ') e toque em <b>Desafiar Guardião</b>.',
@@ -176,7 +188,7 @@
         'O Bestiário registra cada forma que você encontrou e onde ela vive.',
       ]],
       ['Fora do jogo', [
-        'Seus pets continuam caçando enquanto você está fora (até o limite do Acampamento, que melhora na Loja). Na volta, você vê o que eles ganharam.',
+        'Seus pets continuam caçando enquanto você está fora (até o limite do Acampamento, que melhora com o Mestre Bigorna). Na volta, você vê o que eles ganharam.',
         'Parado por alguns minutos, aparece a tela de descanso (ajuste em Configurações).',
       ]],
       ['Saves, idioma e atualizações', [

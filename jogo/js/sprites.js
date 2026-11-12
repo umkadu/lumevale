@@ -110,49 +110,77 @@
     LV.art.retratoDomador = () => spr.url(LV.imgCapa(LV.game && LV.game.S && LV.game.capaAtual ? LV.game.capaAtual() : 'padrao'));
   }
 
+  /* cópia com uma borda esfumada (some aos poucos): lado 'e' esquerda, 'd' direita, 'c' cima, 'b' baixo.
+     As peças modulares se sobrepõem com essas bordas, então não sobra linha de emenda entre elas. */
+  const esfumadas = new WeakMap();
+  function esf(im, lado, frac) {
+    let m = esfumadas.get(im);
+    if (!m) { m = {}; esfumadas.set(im, m); }
+    const k = lado + frac;
+    if (m[k]) return m[k];
+    const w = im.width || im.naturalWidth, h = im.height || im.naturalHeight;
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const g = cv.getContext('2d');
+    g.drawImage(im, 0, 0);
+    g.globalCompositeOperation = 'destination-in';
+    const gr = lado === 'e' ? g.createLinearGradient(0, 0, w * frac, 0)
+      : lado === 'd' ? g.createLinearGradient(w, 0, w * (1 - frac), 0)
+      : lado === 'c' ? g.createLinearGradient(0, 0, 0, h * frac)
+      : g.createLinearGradient(0, h, 0, h * (1 - frac));
+    gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,1)');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    m[k] = cv;
+    return cv;
+  }
+  spr.esfumar = esf;
+  const FE = 0.32, OV = 0.16;   // fração esfumada das pontas e sobreposição entre as peças do meio
+
   /* plataforma modular: ponta esquerda, meio repetido (sem esticar) e ponta direita, todas na mesma altura.
+     O meio fica por baixo e as pontas se fundem nele pela borda de dentro, esfumada.
      K = { h, topo, w: [esq, meio, dir] } em pixels da imagem; alt = altura desenhada */
   spr.platModular = function (c, im, x0, x1, ytopo, K, alt) {
     if (!im[0] || !im[1] || !im[2]) return false;
-    const s = alt / K.h, y = ytopo - K.topo * alt;
-    const we = K.w[0] * s, wm = K.w[1] * s, wd = K.w[2] * s, w = x1 - x0;
-    if (w <= (we + wd) * 0.98) {
-      // plataforma curta: só as pontas, cortadas pela metade de cada uma
-      const k = w / (we + wd);
-      c.drawImage(im[0], 0, 0, im[0].width * k, im[0].height, x0, y, we * k, alt);
-      c.drawImage(im[2], im[2].width * (1 - k), 0, im[2].width * k, im[2].height, x0 + we * k - 0.5, y, wd * k, alt);
-      return true;
+    const s = alt / K.h, y = ytopo - K.topo * alt, w = x1 - x0;
+    let we = K.w[0] * s, wd = K.w[2] * s;
+    const wm = K.w[1] * s, lim = (we + wd) * 0.8;
+    if (w < lim) { const k = w / lim; we *= k; wd *= k; }      // plataforma curta: pontas mais estreitas
+    const ext = Math.min(we, wd) * 0.15;
+    const m0 = x0 + we * (1 - FE) - ext, m1 = x1 - wd * (1 - FE) + ext;
+    if (m1 - m0 > 2) {
+      const meio = im[1], meioE = esf(im[1], 'e', OV), iw = meio.width || meio.naturalWidth, ih = meio.height || meio.naturalHeight;
+      if (m1 - m0 <= wm) c.drawImage(meioE, 0, 0, iw * (m1 - m0) / wm, ih, m0, y, m1 - m0, alt);
+      else {
+        let x = m0;
+        while (x + wm < m1) { c.drawImage(meioE, x, y, wm, alt); x += wm * (1 - OV); }
+        c.drawImage(meioE, m1 - wm, y, wm, alt);             // a última encosta no fim (sobrepõe a anterior)
+      }
     }
-    let x = x0 + we - 1;
-    const xf = x1 - wd + 1;
-    while (x < xf - 0.5) {
-      const resta = xf - x;
-      if (resta >= wm) { c.drawImage(im[1], x, y, wm, alt); x += wm - 1; }
-      else { c.drawImage(im[1], 0, 0, (resta / wm) * im[1].width, im[1].height, x, y, resta, alt); x = xf; }
-    }
-    c.drawImage(im[0], x0, y, we, alt);
-    c.drawImage(im[2], x1 - wd, y, wd, alt);
+    c.drawImage(esf(im[0], 'd', FE), x0, y, we, alt);
+    c.drawImage(esf(im[2], 'e', FE), x1 - wd, y, wd, alt);
     return true;
   };
   /* coluna modular: topo (encosta na plataforma), meio repetido e base no chão, centralizados no tronco.
+     O meio fica por baixo; topo e base se fundem nele pela borda esfumada (sem linha de corte).
      K = { w: [], h: [], cx: [], tronco } em pixels da imagem; larg = largura desenhada do tronco */
   spr.colunaModular = function (c, im, x, y0, y1, K, larg) {
     if (!im[0] || !im[1] || !im[2] || y1 - y0 < 20) return false;
     let s = larg / K.tronco;
     const tot = y1 - y0;
-    if ((K.h[0] + K.h[2]) * s > tot) s = tot / (K.h[0] + K.h[2]);
-    const ht = K.h[0] * s, hb = K.h[2] * s, hm = K.h[1] * s;
-    // meio, de baixo para cima (a base cobre a emenda de baixo; o topo, a de cima)
-    let y = y1 - hb + 1;
-    const ytop = y0 + ht - 1;
-    const xm = x - K.cx[1] * K.w[1] * s, wm = K.w[1] * s;
-    while (y > ytop + 0.5) {
-      const resta = y - ytop;
-      if (resta >= hm) { c.drawImage(im[1], xm, y - hm, wm, hm); y -= hm - 1; }
-      else { const sh = (resta / hm) * im[1].height; c.drawImage(im[1], 0, im[1].height - sh, im[1].width, sh, xm, ytop, wm, resta); y = ytop; }
+    if ((K.h[0] + K.h[2]) * s * 0.8 > tot) s = tot / ((K.h[0] + K.h[2]) * 0.8);
+    const ht = K.h[0] * s, hb = K.h[2] * s, hm = K.h[1] * s, wm = K.w[1] * s, xm = x - K.cx[1] * wm;
+    const ext = Math.min(ht, hb) * 0.12;
+    const m0 = y0 + ht * (1 - FE) - ext, m1 = y1 - hb * (1 - FE) + ext;
+    if (m1 - m0 > 2) {
+      const meioC = esf(im[1], 'c', OV), iw = im[1].width || im[1].naturalWidth, ih = im[1].height || im[1].naturalHeight;
+      if (m1 - m0 <= hm) c.drawImage(meioC, 0, 0, iw, ih * (m1 - m0) / hm, xm, m0, wm, m1 - m0);
+      else {
+        let y = m0;
+        while (y + hm < m1) { c.drawImage(meioC, xm, y, wm, hm); y += hm * (1 - OV); }
+        c.drawImage(meioC, xm, m1 - hm, wm, hm);
+      }
     }
-    c.drawImage(im[2], x - K.cx[2] * K.w[2] * s, y1 - hb, K.w[2] * s, hb);
-    c.drawImage(im[0], x - K.cx[0] * K.w[0] * s, y0, K.w[0] * s, ht);
+    c.drawImage(esf(im[2], 'c', FE), x - K.cx[2] * K.w[2] * s, y1 - hb, K.w[2] * s, hb);
+    c.drawImage(esf(im[0], 'b', FE), x - K.cx[0] * K.w[0] * s, y0, K.w[0] * s, ht);
     return true;
   };
 
