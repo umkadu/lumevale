@@ -36,7 +36,7 @@
   function novoEstado() {
     return {
       v: 3, criado: Date.now(), salvoEm: Date.now(),
-      dom: { nome: LV.t('Viajante'), nivel: 1, xp: 0, pontos: 0, attr: { forca: 0, vigor: 0, sorte: 0, vinculo: 0 }, skillPts: 0, skills: {} },
+      dom: { nome: LV.t('Viajante'), nivel: 1, xp: 0, pontos: 0, attr: { forca: 0, vigor: 0, sorte: 0, vinculo: 0 }, skillPts: 0, skills: {}, skRegra: 3 },
       lumes: 0, mats: { musgo: 0, esporo: 0, escama: 0, cristal: 0, brasa: 0 }, lanternas: 5,
       moedas: Object.fromEntries(LV.MOEDAS.map((m) => [m.id, 0])),
       up: Object.fromEntries(LV.UPGRADES.map((u) => [u.id, 0])),
@@ -65,10 +65,14 @@
     o.dom.xp = numOr(sd.xp, 0, 0, 1e300);
     o.dom.pontos = intOr(sd.pontos, 0, 0, 1e7);
     LV.ATTR.forEach((a) => { o.dom.attr[a.id] = intOr((sd.attr || {})[a.id], 0, 0, 1e7); });
-    // skills do domador (v1.17): saves antigos ganham 1 ponto por nível já alcançado
+    // skills do domador: 1 ponto a cada 3 níveis (v1.17.3). Saves da regra antiga (1 por nível) têm as skills
+    // devolvidas e recebem os pontos da regra nova para o nível que já têm
     o.dom.skills = {};
-    LV.SKILLS.forEach((k) => { const v = intOr((sd.skills || {})[k.id], 0, 0, LV.SKILL_MAX); if (v) o.dom.skills[k.id] = v; });
-    o.dom.skillPts = sd.skillPts == null ? o.dom.nivel - 1 : intOr(sd.skillPts, 0, 0, 1e6);
+    if (sd.skRegra === 3) {
+      LV.SKILLS.forEach((k) => { const v = intOr((sd.skills || {})[k.id], 0, 0, LV.SKILL_MAX); if (v) o.dom.skills[k.id] = v; });
+      o.dom.skillPts = intOr(sd.skillPts, 0, 0, 1e6);
+    } else o.dom.skillPts = LV.pontosSkill(o.dom.nivel);
+    o.dom.skRegra = 3;
     o.lumes = numOr(s.lumes, 0, 0, 1e300);
     o.lanternas = intOr(s.lanternas, 5, 0, 1e7);
     Object.keys(o.mats).forEach((k) => { o.mats[k] = intOr((s.mats || {})[k], 0, 0, 1e12); });
@@ -479,8 +483,8 @@
   function ganharXPDom(n) {
     const d = S.dom;
     d.xp += n;
-    let up = 0;
-    while (d.xp >= F.xpDom(d.nivel) && d.nivel < 999) { d.xp -= F.xpDom(d.nivel); d.nivel++; d.pontos += 3; d.skillPts = (d.skillPts || 0) + 1; up++; }
+    let up = 0, skUp = 0;
+    while (d.xp >= F.xpDom(d.nivel) && d.nivel < 999) { d.xp -= F.xpDom(d.nivel); d.nivel++; d.pontos += 3; if (d.nivel % LV.SKILL_A_CADA === 0) { d.skillPts = (d.skillPts || 0) + 1; skUp++; } up++; }
     // atributos automáticos (Santuário): os pontos novos vão sozinhos, revezando entre os atributos escolhidos
     const auto = (S.meta && S.meta.autoAttr) || [];
     if (up && auto.length) {
@@ -494,6 +498,7 @@
         montarPets();
         fx({ tipo: 'anel', x: W.tam.x, y: W.tam.y - 30, r0: 10, r1: 90, cor: '#ffe3a3', vida: 0.9 });
       }
+      game.skGanhoUlt = skUp;              // a mensagem de nível diz se veio ponto de skill
       emit('nivel', d.nivel);
       som('nivel');
     }
@@ -1384,7 +1389,8 @@
     } else if (inp.dir) vx = inp.dir * VEL_HEROI;
     else if (T.alvoX != null) {
       const d = T.alvoX - T.x;
-      if (Math.abs(d) < 6 || T.esc) T.alvoX = null; else vx = Math.sign(d) * VEL_HEROI;
+      if (T.esc) vx = T.escVx;                      // na escada: sobe ou desce até a ponta escolhida no clique
+      else if (Math.abs(d) < 6) T.alvoX = null; else vx = Math.sign(d) * VEL_HEROI;
     } else if (T.destino) {
       const dd = T.destino;
       vx = rotaAte(T, dd.sup, dd.x, 6);
@@ -2214,6 +2220,7 @@
     if (!W || !e || !alvoValido(e) || W.tam.caido > 0) return false;
     const T = W.tam;
     T.foco = e; T.alvoX = null; T.destino = null; T.manual = Math.max(T.manual, 2);
+    if (T.esc) sentidoNaEscada(T, e.x, alvoY(e), supDe(e));
     if (todos) { W.foco = e; W.focoAuto = false; W.pets.forEach((p) => { if (p.desm <= 0) p.alvo = e; }); }
     else if (W.foco && W.foco !== e) W.foco = null;
     W.marca = { e, todos: !!todos, t: 0 };
@@ -2228,10 +2235,32 @@
     return true;
   };
 
+  /* domador na escada (v1.17.2): sobe ou desce até a ponta mais perto do destino (em altura; empate: na horizontal) */
+  function sentidoNaEscada(T, x, y, supAlvo) {
+    const s = T.esc;
+    if (!s) return;
+    let subir;
+    if (supAlvo === s.para) subir = true;
+    else if (supAlvo === s.de) subir = false;
+    else {
+      const ty = supAlvo != null && supAlvo >= 0 && W.L.sup[supAlvo] ? W.L.sup[supAlvo].y : y;
+      const dt = ty == null ? 0 : Math.abs(ty - s.yt), db = ty == null ? 0 : Math.abs(ty - s.yb);
+      subir = Math.abs(dt - db) > 8 ? dt < db : Math.abs(x - s.xt) < Math.abs(x - s.xb);
+    }
+    T.escVx = (subir ? s.dir : -s.dir) * 110;
+  }
   game.irPara = function (x, y) {
     if (!W) return;
     const T = W.tam;
     T.foco = null; W.foco = null;
+    if (T.esc) {
+      const sob = y != null ? N().sobre(W.L, x, y - 30) : null;
+      const alvo = sob && Math.abs(sob.y - y) < 60 ? sob.id : null;
+      sentidoNaEscada(T, x, y, alvo);
+      if (alvo != null) { T.destino = { sup: alvo, x }; T.manual = 0; T.alvoX = null; return; }
+      T.alvoX = LV.clamp(x, 30, W.w - 30); T.manual = 4; T.destino = null;
+      return;
+    }
     if (y != null && T.sup >= 0 && !T.esc) {
       // clique numa plataforma: anda até lá usando a rota
       const s = N().sobre(W.L, x, y - 30);
@@ -3225,6 +3254,8 @@
         if (SPR().garantir(n.estr)) { const im = SPR().get(n.estr), w = (im.naturalWidth / im.naturalHeight) * n.eh; c.drawImage(im, ex - w / 2, n.y - n.eh + 6, w, n.eh); }
         else { c.fillStyle = 'rgba(30,20,12,0.85)'; c.fillRect(n.x - 60, n.y - n.eh * 0.8, 120, n.eh * 0.8); c.fillStyle = D.cor || '#ffc46b'; c.fillRect(n.x - 68, n.y - n.eh * 0.8 - 14, 136, 16); }
         art.glow(c, n.x, n.y - n.eh * 0.55, n.eh * 0.55, D.cor || '#ffc46b', 0.16 + 0.05 * Math.sin(t * 2 + n.t0));
+        if (n.id === 'iris') brilhoAltar(c, n, t);
+        if (n.id === 'saida') setasSaida(c, n, t, D.cor);
       }
       if (n.img) {
         const T = W.tam;
@@ -3238,6 +3269,48 @@
       }
     }
   }
+  /* altar da Zeladora Íris (v1.17.3): a estrela pulsa, solta raios girando e faíscas que sobem */
+  function brilhoAltar(c, n, t) {
+    const ax = n.x + (n.ex || 0) - 2, sy = n.y - n.eh + 6 + n.eh * 0.26, p = 0.5 + 0.5 * Math.sin(t * 2.2);
+    art.glow(c, ax, sy, n.eh * (0.95 + 0.15 * p), '#ffe27a', 0.38 + 0.2 * p);
+    art.glow(c, ax, sy, n.eh * 0.3, '#fff6d0', 0.5 + 0.3 * p);
+    c.save();
+    c.globalCompositeOperation = 'lighter';
+    c.translate(ax, sy); c.rotate(t * 0.3);
+    const len = n.eh * (0.5 + 0.08 * p);
+    for (let i = 0; i < 6; i++) {
+      c.rotate(TAU / 6);
+      const g = c.createLinearGradient(0, 0, 0, -len);
+      g.addColorStop(0, 'rgba(255,236,170,' + (0.3 + 0.15 * p).toFixed(2) + ')'); g.addColorStop(1, 'rgba(255,236,170,0)');
+      c.fillStyle = g;
+      c.beginPath(); c.moveTo(-3.2, 0); c.lineTo(0, -len); c.lineTo(3.2, 0); c.closePath(); c.fill();
+    }
+    c.restore();
+    c.save();
+    c.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 10; i++) {
+      const f = (t * 0.26 + i / 10) % 1, x = ax + Math.sin(i * 7.3 + t * 0.9) * (10 + 12 * f), y = n.y - n.eh * 0.3 - f * n.eh * 0.95;
+      c.globalAlpha = Math.sin(f * Math.PI) * 0.9;
+      c.fillStyle = i % 3 ? '#ffe9a6' : '#ffffff';
+      c.beginPath(); c.arc(x, y, 1.3 + (i % 3) * 0.6, 0, TAU); c.fill();
+    }
+    c.restore();
+  }
+  /* setas no chão antes da placa de saída, acendendo em sequência */
+  function setasSaida(c, n, t, cor) {
+    c.save();
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    for (let i = 0; i < 3; i++) {
+      const x = n.x - 108 + i * 24, y = n.y - 16, a = 0.25 + 0.75 * Math.max(0, Math.sin(t * 3 - i * 0.9));
+      c.globalAlpha = a;
+      c.strokeStyle = 'rgba(20,12,6,0.7)'; c.lineWidth = 7;
+      c.beginPath(); c.moveTo(x - 6, y - 9); c.lineTo(x + 4, y); c.lineTo(x - 6, y + 9); c.stroke();
+      c.strokeStyle = cor || '#b9e68f'; c.lineWidth = 3.5;
+      c.beginPath(); c.moveTo(x - 6, y - 9); c.lineTo(x + 4, y); c.lineTo(x - 6, y + 9); c.stroke();
+    }
+    c.restore();
+    art.glow(c, n.x - 84, n.y - 16, 46, cor || '#b9e68f', 0.12 + 0.06 * Math.sin(t * 3));
+  }
   /* nome e ofício sobre cada morador; o mais perto do domador ganha destaque */
   function rotulosNpc(c, cam, vw, t) {
     const T = W.tam;
@@ -3247,7 +3320,7 @@
       const topo = n.y - Math.max(n.h || 0, n.estr ? n.eh * 0.92 : 0) - 10 + Math.sin(t * 2 + n.t0) * 2;
       texto(c, D.nome || n.id, n.x, topo - 12, perto ? '#fff3cf' : '#e9dcc0', perto ? 13 : 12, 700);
       texto(c, D.papel || '', n.x, topo + 2, D.cor || '#ffc46b', 10);
-      if (perto) texto(c, LV.movel ? LV.t('toque para falar') : LV.t('clique para falar'), n.x, topo + 16, '#d8dde4', 9);
+      if (perto) texto(c, D.ir ? (LV.movel ? LV.t('toque para ir') : LV.t('clique para ir')) : LV.movel ? LV.t('toque para falar') : LV.t('clique para falar'), n.x, topo + 16, '#d8dde4', 9);
     }
   }
   /* clique na vila: acha o morador ou prédio sob o ponteiro */
@@ -3336,7 +3409,7 @@
     if (!S.inicial) { S.lanternas = tu.lant0; game.acao.escolherInicial(tu.sp); }
     game.tutorial = null;
     game.captura = null; game.pausado = false;
-    iniciarMapa(0);
+    if (!iniciarLugar('vila')) iniciarMapa(0);   // depois do tutorial, a aventura começa na Vila de Alvorada (v1.17.3)
     emit('equipe'); emit('lanternas', S.lanternas);
     return true;
   };

@@ -1138,5 +1138,11 @@
     " de Lumes e materiais e +": " Lumes and materials and +",
     " de XP do domador e das Centelhas.": " tamer and Glimmer XP.",
     "Título: ": "Title: ",
+    "Saída": "Exit",
+    "toque para ir": "tap to go",
+    "clique para ir": "click to go",
+    "1 a cada 3 níveis do domador": "1 every 3 tamer levels",
+    "Esta é <b>Alvorada</b>, a última vila ainda acesa. Aqui você compra lanternas, troca materiais e fortalece o grupo no <b>Santuário dos Ecos</b>. Quando estiver pronto, siga para a <b>direita</b> e ": "This is <b>Daybreak</b>, the last village still lit. Here you buy lanterns, trade materials and strengthen your group at the <b>Sanctuary of Echoes</b>. When you are ready, head <b>right</b> and ",
+    " na <b>placa de saída</b> para descer às <b>Raízes Murmurantes</b>.": " the <b>exit sign</b> to go down to the <b>Whispering Roots</b>.",
   });
 })();

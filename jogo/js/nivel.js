@@ -164,12 +164,13 @@
     }
     return pilares;
   }
-  /* Vila de Alvorada: três andares. No chão o portão do treino, o Lanterneiro, o grande lampião, o Trocador e o Santuário;
-     no segundo andar a Costureira e o Ferreiro; no alto a Zeladora das Radiantes (sobe-se pulando do segundo andar). */
+  /* Vila de Alvorada: três andares. No chão o portão do treino, o Lanterneiro, o grande lampião, o Trocador e, na ponta direita,
+     a placa de saída para as Raízes Murmurantes; no segundo andar a Costureira e o Ferreiro; no alto a Zeladora das Radiantes
+     e o Santuário dos Ecos (sobe-se pulando do segundo andar). */
   nivel.gerarVila = function (def) {
     const W = 2000, r = LV.rng(def.seed || 91);
     const A = { id: 1, x0: 800, x1: 1500, y: G - 118, tipo: 'laje', torre: true };
-    const C = { id: 2, x0: 1040, x1: 1260, y: A.y - 104, tipo: 'laje', torre: true, alto: true };
+    const C = { id: 2, x0: 980, x1: 1340, y: A.y - 104, tipo: 'laje', torre: true, alto: true };   // larga: cabem a Íris e o Santuário
     const sup = [{ id: 0, x0: 0, x1: W, y: G, tipo: 'chao' }, A, C];
     const run = (G - A.y) * LV.PECAS.escada.inclinacao;
     const esc = [{ id: 0, xb: Math.round(A.x0 - run), yb: G, xt: A.x0, yt: A.y, de: 0, para: 1, dir: 1 }];
@@ -177,10 +178,11 @@
       { id: 'portao', x: 110, sup: 0, estr: 'vila/portao', eh: 170 },
       { id: 'pavio', x: 370, sup: 0, img: 'vila/npc_pavio', h: 74, estr: 'vila/barraca_pavio', eh: 150, ex: -34 },
       { id: 'agulha', x: 905, sup: 1, img: 'vila/npc_agulha', h: 72, estr: 'vila/barraca_agulha', eh: 140, ex: -30 },
-      { id: 'iris', x: 1150, sup: 2, img: 'vila/npc_iris', h: 74, estr: 'vila/altar_iris', eh: 96, ex: 40 },
+      { id: 'iris', x: 1060, sup: 2, img: 'vila/npc_iris', h: 74, estr: 'vila/altar_iris', eh: 96, ex: 40 },
+      { id: 'santuario', x: 1255, sup: 2, estr: 'vila/santuario', eh: 160 },
       { id: 'bigorna', x: 1410, sup: 1, img: 'vila/npc_bigorna', h: 76, estr: 'vila/forja_bigorna', eh: 130, ex: 34 },
       { id: 'escambo', x: 1660, sup: 0, img: 'vila/npc_escambo', h: 72, estr: 'vila/barraca_escambo', eh: 140, ex: 36 },
-      { id: 'santuario', x: 1880, sup: 0, estr: 'vila/santuario', eh: 230 },
+      { id: 'saida', x: 1935, sup: 0, estr: 'vila/placa_saida', eh: 112 },
     ].map((n) => Object.assign(n, { y: sup[n.sup].y }));
     const deco = [{ img: 'vila/lampiao', x: 580, y: G + 2, h: 250, luz: true }];
     const props = [];

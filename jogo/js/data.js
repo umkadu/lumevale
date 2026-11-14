@@ -645,8 +645,9 @@
     escambo: { nome: LV.t('Velho Escambo'), papel: LV.t('Trocador'), fala: LV.t('Musgo por esporo, esporo por escama... Tudo tem o seu preço, e o meu é justo.'), cor: '#9ef08a' },
     iris: { nome: LV.t('Zeladora Íris'), papel: LV.t('Guardiã das Radiantes'), fala: LV.t('Toda Radiante que você conquistou deixa um rastro de luz. Mesmo depois de um renascimento, eu sei trazê-la de volta.'), cor: '#ffe27a' },
     santuario: { nome: LV.t('Santuário dos Ecos'), papel: LV.t('Melhorias permanentes'), estrutura: true, cor: '#c8b8ff' },
-    portao: { nome: LV.t('Campo de Treino'), papel: LV.t('Teste o dano das Centelhas'), estrutura: true, cor: '#ffd27a' },
-    portal: { nome: LV.t('Vila de Alvorada'), papel: LV.t('Voltar à vila'), estrutura: true, cor: '#ffc46b' },
+    portao: { nome: LV.t('Campo de Treino'), papel: LV.t('Teste o dano das Centelhas'), estrutura: true, ir: true, cor: '#ffd27a' },
+    portal: { nome: LV.t('Vila de Alvorada'), papel: LV.t('Voltar à vila'), estrutura: true, ir: true, cor: '#ffc46b' },
+    saida: { nome: LV.t('Saída'), papel: LV.t('Raízes Murmurantes'), estrutura: true, ir: true, cor: '#b9e68f' },
   };
   /* trocas do Velho Escambo: só entre materiais vizinhos (mapa a mapa).
      Descer (para o material do mapa seguinte) custa 5 por 1; subir (para o do mapa anterior) rende 2 por 1. */
@@ -847,22 +848,25 @@
      nv: nível do domador para liberar. v / v2: força do efeito no nível n.
      ========================================================= */
   LV.SKILL_MAX = 10;
+  /* pontos de skill (v1.17.3): 1 a cada 3 níveis do domador (nos níveis 3, 6, 9...) */
+  LV.SKILL_A_CADA = 3;
+  LV.pontosSkill = (nivel) => Math.floor(nivel / LV.SKILL_A_CADA);
   LV.custoSkill = (n) => (n < 4 ? 1 : n < 7 ? 2 : 3);
   const pcS = (v) => Math.round(v * 100) + '%', sgS = (v) => (Math.round(v * 10) / 10).toLocaleString(LV.locale) + ' s';
   LV.SKILLS = [
-    { id: 'brado', nome: LV.t('Brado de Comando'), nv: 3, tecla: '4', cor: '#ff8a6b',
+    { id: 'brado', nome: LV.t('Brado de Comando'), nv: 5, tecla: '4', cor: '#ff8a6b',
       dur: (n) => 8 + 0.4 * (n - 1), cd: (n) => 60 - 2 * (n - 1), v: (n) => 0.2 + 0.04 * (n - 1),
       desc: (n, k) => LV.t('Todas as Centelhas causam +') + pcS(k.v(n)) + LV.t(' de dano por ') + sgS(k.dur(n)) + '.' },
-    { id: 'olhar', nome: LV.t('Olhar Certeiro'), nv: 5, tecla: '5', cor: '#ffe27a',
+    { id: 'olhar', nome: LV.t('Olhar Certeiro'), nv: 15, tecla: '5', cor: '#ffe27a',
       dur: (n) => 10 + 0.5 * (n - 1), cd: (n) => 120 - 4 * (n - 1), v: (n) => 0.08 + 0.02 * (n - 1),
       desc: (n, k) => LV.t('+') + pcS(k.v(n)) + LV.t(' de chance de captura da lanterna por ') + sgS(k.dur(n)) + LV.t(' (o tempo para enquanto você mira).') },
-    { id: 'ritmo', nome: LV.t('Ritmo do Lume'), nv: 10, tecla: '6', cor: '#7fd8ff',
+    { id: 'ritmo', nome: LV.t('Ritmo do Lume'), nv: 25, tecla: '6', cor: '#7fd8ff',
       dur: (n) => 8 + 0.4 * (n - 1), cd: (n) => 75 - 2.5 * (n - 1), v: (n) => 0.2 + 0.03 * (n - 1), v2: (n) => 0.5 + 0.05 * (n - 1),
       desc: (n, k) => LV.t('As Centelhas atacam ') + pcS(k.v(n)) + LV.t(' mais rápido e os ataques especiais recarregam ') + pcS(k.v2(n)) + LV.t(' mais rápido por ') + sgS(k.dur(n)) + '.' },
-    { id: 'manto', nome: LV.t('Manto de Luz'), nv: 15, tecla: '7', cor: '#a8f0c0',
+    { id: 'manto', nome: LV.t('Manto de Luz'), nv: 30, tecla: '7', cor: '#a8f0c0',
       dur: (n) => 6 + 0.3 * (n - 1), cd: (n) => 90 - 3 * (n - 1), v: (n) => 0.15 + 0.02 * (n - 1), v2: (n) => 0.25 + 0.02 * (n - 1),
       desc: (n, k) => LV.t('Cura ') + pcS(k.v(n)) + LV.t(' da vida do domador e de todas as Centelhas e reduz o dano recebido em ') + pcS(k.v2(n)) + LV.t(' por ') + sgS(k.dur(n)) + '.' },
-    { id: 'colheita', nome: LV.t('Colheita Dourada'), nv: 20, tecla: '8', cor: '#f0cf86',
+    { id: 'colheita', nome: LV.t('Colheita Dourada'), nv: 40, tecla: '8', cor: '#f0cf86',
       dur: (n) => 20 + (n - 1), cd: (n) => 150 - 5 * (n - 1), v: (n) => 0.3 + 0.07 * (n - 1), v2: (n) => 0.15 + 0.03 * (n - 1),
       desc: (n, k) => LV.t('Puxa todos os itens do chão. Por ') + sgS(k.dur(n)) + LV.t(': +') + pcS(k.v(n)) + LV.t(' de Lumes e materiais e +') + pcS(k.v2(n)) + LV.t(' de XP do domador e das Centelhas.') },
   ];

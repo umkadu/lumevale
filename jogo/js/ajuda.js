@@ -65,8 +65,8 @@
         'In Stats, the button at the top picks how many points each <b>+</b> adds: 1, 5, 10 or 100 (with fewer free points, it adds all of them).',
       ]],
       ['Tamer skills', [
-        'Each tamer level gives <b>1 skill point</b>. Unlocking a skill costs 1 point; its next levels cost 1 (up to 4), 2 (up to 7) and 3 (up to 10). Skills reset when you are reborn.',
-        '<b>Command Shout</b> (level 3): more damage for every Glimmer · <b>Sure Gaze</b> (level 5): higher lantern capture chance · <b>Lume Rhythm</b> (level 10): Glimmers attack faster and recharge special attacks faster · <b>Mantle of Light</b> (level 15): heals the group and reduces damage taken · <b>Golden Harvest</b> (level 20): pulls every drop and gives more Lumes, materials and XP.',
+        'Every <b>3 tamer levels</b> give <b>1 skill point</b>. Unlocking a skill costs 1 point; its next levels cost 1 (up to 4), 2 (up to 7) and 3 (up to 10). Skills reset when you are reborn.',
+        '<b>Command Shout</b> (level 5): more damage for every Glimmer · <b>Sure Gaze</b> (level 15): higher lantern capture chance · <b>Lume Rhythm</b> (level 25): Glimmers attack faster and recharge special attacks faster · <b>Mantle of Light</b> (level 30): heals the group and reduces damage taken · <b>Golden Harvest</b> (level 40): pulls every drop and gives more Lumes, materials and XP.',
         'Use them with the round buttons ' + (movel ? 'above the controls' : 'at the bottom of the screen (or keys <b>4 to 8</b>)') + '. Each one lasts a few seconds and then recharges.',
       ]],
       ['Profile and titles', [
@@ -80,7 +80,7 @@
         'Each <b>Guardian</b> drops a themed item on its first defeat of each journey (a cloak or a lantern with real bonuses). It comes equipped and is gone when you rebirth.',
       ]],
       ['Daybreak Village', [
-        'Go to <b>Daybreak Village</b> from the <b>Maps</b> tab (the Daybreak section, at the top). Click a villager to walk over and talk. Only the tamer and the Glimmer in the first slot go to the village.',
+        'Your adventure starts in <b>Daybreak Village</b>; come back any time from the <b>Maps</b> tab (the Daybreak section, at the top). The <b>exit sign</b> at the far right of the village leads down to the Whispering Roots. Click a villager to walk over and talk. Only the tamer and the Glimmer in the first slot go to the village.',
         '<b>Master Wick</b> sells capture and special lanterns · <b>Madam Needle</b> sells cloaks · <b>Master Anvil</b> sells upgrades for Lumes plus Guardian coins (each Guardian drops its own) · <b>Old Barter</b> trades materials between neighboring depths (5 for 1 going deeper, 1 for 2 going up) · <b>Keeper Iris</b> brings back achievement Radiants you lost when reborn (50,000 Lumes each) · the <b>Sanctuary of Echoes</b> sells permanent upgrades and is where you are reborn.',
         'Upgrades and lanterns bought in the village are lost when you are reborn.',
       ]],
@@ -165,8 +165,8 @@
         'Em Status, o botão no alto escolhe quantos pontos cada <b>+</b> adiciona: 1, 5, 10 ou 100 (com menos pontos livres, adiciona todos).',
       ]],
       ['Skills do domador', [
-        'Cada nível do domador dá <b>1 ponto de skill</b>. Liberar uma skill custa 1 ponto; os níveis seguintes custam 1 (até o 4), 2 (até o 7) e 3 (até o 10). Ao renascer, as skills voltam a zero.',
-        '<b>Brado de Comando</b> (nível 3): mais dano para todas as Centelhas · <b>Olhar Certeiro</b> (nível 5): mais chance de captura da lanterna · <b>Ritmo do Lume</b> (nível 10): as Centelhas atacam mais rápido e recarregam os ataques especiais mais rápido · <b>Manto de Luz</b> (nível 15): cura o grupo e reduz o dano recebido · <b>Colheita Dourada</b> (nível 20): puxa tudo o que caiu e dá mais Lumes, materiais e XP.',
+        'A cada <b>3 níveis</b> do domador você ganha <b>1 ponto de skill</b>. Liberar uma skill custa 1 ponto; os níveis seguintes custam 1 (até o 4), 2 (até o 7) e 3 (até o 10). Ao renascer, as skills voltam a zero.',
+        '<b>Brado de Comando</b> (nível 5): mais dano para todas as Centelhas · <b>Olhar Certeiro</b> (nível 15): mais chance de captura da lanterna · <b>Ritmo do Lume</b> (nível 25): as Centelhas atacam mais rápido e recarregam os ataques especiais mais rápido · <b>Manto de Luz</b> (nível 30): cura o grupo e reduz o dano recebido · <b>Colheita Dourada</b> (nível 40): puxa tudo o que caiu e dá mais Lumes, materiais e XP.',
         'Use pelos botões redondos ' + (movel ? 'acima dos controles' : 'no canto de baixo da tela (ou pelas teclas <b>4 a 8</b>)') + '. Cada uma dura alguns segundos e depois recarrega.',
       ]],
       ['Perfil e títulos', [
@@ -180,7 +180,7 @@
         'Cada <b>Guardião</b> deixa um item temático na primeira vitória de cada jornada (uma capa ou lanterna com bônus de verdade). Ele já vem equipado e some ao renascer.',
       ]],
       ['Vila de Alvorada', [
-        'Vá até a <b>Vila de Alvorada</b> pela aba <b>Mapas</b> (seção Alvorada, no topo). Clique num morador para ir até ele e conversar. Na vila só vão o domador e a Centelha da primeira vaga.',
+        'A aventura começa na <b>Vila de Alvorada</b>; volte quando quiser pela aba <b>Mapas</b> (seção Alvorada, no topo). A <b>placa de saída</b>, na ponta direita da vila, leva às Raízes Murmurantes. Clique num morador para ir até ele e conversar. Na vila só vão o domador e a Centelha da primeira vaga.',
         '<b>Mestre Pavio</b> vende lanternas de captura e especiais · <b>Dona Agulha</b> vende capas · <b>Mestre Bigorna</b> vende melhorias por Lumes e moedas dos Guardiões (cada Guardião solta a sua) · <b>Velho Escambo</b> troca materiais de profundezas vizinhas (5 por 1 para baixo, 1 por 2 para cima) · <b>Zeladora Íris</b> traz de volta os Radiantes das conquistas que você perdeu ao renascer (50.000 Lumes cada) · o <b>Santuário dos Ecos</b> vende as melhorias permanentes e é onde você renasce.',
         'As melhorias e as lanternas compradas na vila se perdem ao renascer.',
       ]],

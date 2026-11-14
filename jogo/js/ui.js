@@ -26,7 +26,7 @@
     if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.17.2';
+  const VERSAO = '1.17.3';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -127,6 +127,27 @@
     document.querySelectorAll('.ap-alvo').forEach((x) => x.classList.remove('ap-alvo'));
     game.pausaAviso = false;
   };
+  /* começo na vila (v1.17.3): boas-vindas e o caminho para a primeira descida */
+  function avisoVila(depois) {
+    const verbo = LV.movel ? LV.t('toque') : LV.t('clique');
+    const av = S().avisados;
+    if (!av.includes('vila:inicio')) av.push('vila:inicio');
+    game.pausaAviso = true;
+    setTimeout(() => ui.avisoPausa({
+      olho: LV.t('Vila de Alvorada'),
+      texto: LV.t('Esta é <b>Alvorada</b>, a última vila ainda acesa. Aqui você compra lanternas, troca materiais e fortalece o grupo no <b>Santuário dos Ecos</b>. Quando estiver pronto, siga para a <b>direita</b> e ') +
+        verbo + LV.t(' na <b>placa de saída</b> para descer às <b>Raízes Murmurantes</b>.'),
+      botao: LV.t('Vamos lá!'), aoOk: depois,
+    }), 2600);
+  }
+  /* quem começou na vila vê o objetivo ao chegar pela primeira vez às Raízes Murmurantes */
+  function objetivoPendente() {
+    const s = S(), W = game.W;
+    if (!s || !W || W.lugar || W.idx !== 0 || game.tutorial || ui.inicioVisivel()) return;
+    if (!s.avisados.includes('vila:inicio') || s.avisados.includes('objetivo:0')) return;
+    s.avisados.push('objetivo:0');
+    avisoMeta();
+  }
   /* primeiro mapa de verdade (depois do tutorial ou ao pular): o objetivo, com o jogo parado */
   function avisoMeta(depois) {
     const n = game.metaChefe(), verbo = LV.movel ? LV.t('toque') : LV.t('clique');
@@ -392,7 +413,7 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ui.modalAberto && ui.modalAberto.fechavel !== false) { ui.fecharModal(); e.stopPropagation(); } });
 
     LV.on('toast', (d) => ui.toast(d.t, d.tipo, d.curto));
-    LV.on('nivel', (n) => { ui.toast(LV.t('Nível ') + n + LV.t('! +3 pontos de atributo e +1 ponto de skill'), 'bom'); sujo(['domador', 'equipe', 'vila']); });
+    LV.on('nivel', (n) => { ui.toast(LV.t('Nível ') + n + (game.skGanhoUlt ? LV.t('! +3 pontos de atributo e +1 ponto de skill') : LV.t('! +3 pontos de atributo')), 'bom'); sujo(['domador', 'equipe', 'vila']); });
     LV.on('skill', () => { sujo(['domador']); hud(); });
     LV.on('titulo', () => { sujo(['domador', 'equipe']); hud(); });
     LV.on('podeEvoluir', (p) => { ui.toast(LV.nomePet(p) + LV.t(' já pode evoluir: nível, materiais e Lumes estão completos. Veja na aba Equipe.'), 'bom'); sujo(['equipe']); });
@@ -408,7 +429,7 @@
     LV.on('equipamento', () => { sujo(['domador', 'vila']); ui.npcAtualizar(); });
     LV.on('tutorial', (tu) => ui.tutorial(tu));
     LV.on('atributo', () => sujo(['domador']));
-    LV.on('mapa', (i) => { document.documentElement.style.setProperty('--acc', LV.MAPS[i].pal.acento); sujo(['mapas', 'vila']); ui.tituloMapa(i); fecharNpc(); hud(); });
+    LV.on('mapa', (i) => { document.documentElement.style.setProperty('--acc', LV.MAPS[i].pal.acento); sujo(['mapas', 'vila']); ui.tituloMapa(i); fecharNpc(); hud(); objetivoPendente(); });
     LV.on('lugar', (id) => { document.documentElement.style.setProperty('--acc', game.W.def.pal.acento); sujo(['mapas', 'vila']); ui.tituloLugar(id); fecharNpc(); hud(); });
     LV.on('npc', (id) => ui.abrirNpc(id));
     LV.on('mapas', () => sujo(['mapas']));
@@ -765,7 +786,7 @@
   }
   function subSkills() {
     const d = S().dom;
-    let h = '<div class="qtd-row"><span class="pts">' + LV.t('Pontos de skill: ') + '<b data-k="skpts">' + (d.skillPts || 0) + '</b></span><span class="muted small">' + LV.t('1 por nível do domador') + '</span></div>' +
+    let h = '<div class="qtd-row"><span class="pts">' + LV.t('Pontos de skill: ') + '<b data-k="skpts">' + (d.skillPts || 0) + '</b></span><span class="muted small">' + LV.t('1 a cada 3 níveis do domador') + '</span></div>' +
       '<p class="nota">' + (LV.movel ? LV.t('Use as skills liberadas pelos botões redondos acima dos controles.') : LV.t('Use as skills liberadas pelos botões no canto de baixo da tela ou pelas teclas 4 a 8.')) +
       LV.t(' Liberar custa 1 ponto; os níveis seguintes custam 1 (até o 4), 2 (até o 7) e 3 (até o 10). Ao renascer, as skills voltam a zero.') + '</p><div class="skls">';
     LV.SKILLS.forEach((k) => {
@@ -1012,6 +1033,7 @@
   ui.abrirNpc = function (id) {
     if (id === 'portao') { som('clique'); game.acao.irLugar('treino'); return; }
     if (id === 'portal') { som('brilho'); game.acao.irLugar('vila'); return; }
+    if (id === 'saida') { som('clique'); game.acao.viajar(0); return; }
     if (!LV.NPCS[id]) return;
     if (ui.modalAberto) { if (ui.modalAberto.tipo === 'npc') ui.fecharModal(); else return; }
     ui.modal(htmlNpc(id), { cls: 'npc-m', tipo: 'npc', npc: id });
@@ -2338,11 +2360,12 @@
     ui.abrir(ui.aba);
     hud(); ui.saveStatus();
     if (S().aguardaInicial) { ui.escolhaInicial(true); return; }   // renasceu e ainda não escolheu o pet
-    if (novoJogo) ui.tituloMapa(S().mapa);
+    if (novoJogo) { if (game.W && game.W.lugar) ui.tituloLugar(game.W.lugar); else ui.tituloMapa(S().mapa); }
     if (novoJogo === 'tutorial') { ui.tutorial(game.tutorial); return; }
+    if (!novoJogo) objetivoPendente();
     if (novoJogo) {
       const p = S().pets[0];
-      avisoMeta(() => {                   // as dicas de controle vêm depois do objetivo
+      (game.W && game.W.lugar === 'vila' ? avisoVila : avisoMeta)(() => {   // as dicas de controle vêm depois
         ui.toast(LV.t('Bem-vindo, ') + S().dom.nome + '. ' + (p ? LV.nomePet(p) + LV.t(' está ao seu lado.') : ''), 'bom');
         if (LV.movel) {                   // celular: dicas de toque, em duas mensagens curtas
           setTimeout(() => ui.toast(LV.t('Use ◀ ▶ para andar, ▲ para pular ou subir escadas e ▼ para descer.')), 1500);
