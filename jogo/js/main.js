@@ -113,6 +113,7 @@
   LV.salvar = function (comNuvem) {
     if (!game.S || !game.slot || !game.S.inicial) return;
     game.S.salvoEm = Date.now();
+    game.S.noLugar = (game.W && game.W.lugar) || null;   // fechou na vila/treino: sem ganho fora do jogo
     gravarJSON(CHAVE_SLOT(game.slot), game.S);
     if (comNuvem) salvarNuvem();
     ui.saveStatus();
@@ -234,6 +235,12 @@
     if (seg < 90) return;
     const base = ui.afk.foto();
     const r = game.calcOffline(seg);
+    if (r && r.lugar) {                   // na vila ou no treino as Centelhas não caçam
+      ui.toast(r.lugar === 'vila' ? LV.t('Enquanto você esteve fora, as Centelhas descansaram com você na vila: sem caçada, nada foi ganho.')
+        : LV.t('Enquanto você esteve fora, as Centelhas descansaram com você no Campo de Treino: sem caçada, nada foi ganho.'));
+      game.S.noLugar = (game.W && game.W.lugar) || null;
+      return;
+    }
     if (r) {
       if (ui.afk.ativo) { /* já aberta: os números se atualizam sozinhos */ }
       else if (!ui.afk.entrar('offline', base, seg, r)) ui.modalOffline(r);

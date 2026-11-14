@@ -26,7 +26,7 @@
     if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.17.3';
+  const VERSAO = '1.17.4';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -1912,17 +1912,21 @@
     if (!afk.ativo || !S()) return;
     const d = difAfk(), s = S(), meta = game.metaChefe();
     $('#afk-titulo').textContent = LV.fmtTempo(d.seg);
-    $('#afk-olho').textContent = afk.origem === 'offline' ? LV.t('Enquanto você estava fora') : LV.t('Descansando na trilha');
-    let sub = afk.origem === 'offline' ? LV.t('Suas Centelhas seguiram caçando sozinhas. Veja o que trouxeram.') : LV.t('Você ficou um tempo sem mexer no jogo. Suas Centelhas seguem caçando.');
-    if (afk.info && afk.info.segReal > afk.info.seg) sub += LV.t(' O acampamento rende até ') + afk.info.cap + LV.t('h fora do jogo (melhore com o Mestre Bigorna, na Vila).');
-    if (!(s.op.auto && game.autoLiberada())) sub += LV.t(' Com a caçada automática ligada você rende bem mais.');
+    const lugar = game.W && game.W.lugar;   // na vila e no treino não há caçada (v1.17.4)
+    $('#afk-olho').textContent = lugar ? (lugar === 'vila' ? LV.t('Descansando na vila') : LV.t('Descansando no Campo de Treino')) : afk.origem === 'offline' ? LV.t('Enquanto você estava fora') : LV.t('Descansando na trilha');
+    let sub = lugar ? LV.t('Aqui não há caçada: as Centelhas descansam com você e nada é ganho. Volte às profundezas para ganhar XP e Lumes.')
+      : afk.origem === 'offline' ? LV.t('Suas Centelhas seguiram caçando sozinhas. Veja o que trouxeram.') : LV.t('Você ficou um tempo sem mexer no jogo. Suas Centelhas seguem caçando.');
+    if (!lugar && afk.info && afk.info.segReal > afk.info.seg) sub += LV.t(' O acampamento rende até ') + afk.info.cap + LV.t('h fora do jogo (melhore com o Mestre Bigorna, na Vila).');
+    if (!lugar && !(s.op.auto && game.autoLiberada())) sub += LV.t(' Com a caçada automática ligada você rende bem mais.');
     $('#afk-sub').textContent = sub;
+    const dica = document.querySelector('#afk .afk-dica');
+    if (dica) dica.hidden = !!lugar;
     const item = (rot, v, extra) => '<div><dt>' + rot + '</dt><dd class="' + (v ? '' : 'zero') + '">' + v + (extra ? ' <small>' + extra + '</small>' : '') + '</dd></div>';
     let h = item(LV.t('Inimigos derrotados'), fmt(d.kills)) + item(ICON.lumes + LV.t(' Lumes'), d.kills || d.lumes ? '+' + fmt(d.lumes) : '0') +
       item(LV.t('Nível do domador'), s.dom.nivel, d.niveis ? '+' + d.niveis : '');
     for (const k in d.mats) h += item('<i class="dot" style="--c:' + LV.MAT[k].cor + '"></i>' + LV.MAT[k].nome, '+' + fmt(d.mats[k]));
     for (const k in d.moedas) h += item(iconeMoeda(LV.moeda(k)) + LV.moeda(k).nome, '+' + fmt(d.moedas[k]));
-    h += item(LV.t('Guardião'), Math.min(s.mapas[s.mapa].kills, meta) + '/' + meta);
+    if (!lugar) h += item(LV.t('Guardião'), Math.min(s.mapas[s.mapa].kills, meta) + '/' + meta);
     $('#afk-grade').innerHTML = h;
     $('#afk-pets').innerHTML = d.pets.map((x) => '<span class="ap"><img src="' + art.retrato(x.p.sp, x.p.est, 64) + '" alt="">' + esc(LV.nomePet(x.p)) + LV.t(' Nv ') + x.de + ' → <b class="sobe">' + x.p.nivel + '</b></span>').join('');
   }

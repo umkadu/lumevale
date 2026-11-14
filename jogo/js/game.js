@@ -59,6 +59,7 @@
     const o = d;
     o.criado = numOr(s.criado, d.criado, 0, 9e15);
     o.salvoEm = numOr(s.salvoEm, d.salvoEm, 0, 9e15);
+    o.noLugar = typeof s.noLugar === 'string' && LV.LUGARES[s.noLugar] ? s.noLugar : null;   // salvo na vila/treino: sem ganho fora do jogo
     const sd = s.dom || {};
     o.dom.nome = typeof sd.nome === 'string' && sd.nome.trim() ? sd.nome.trim().slice(0, 24) : LV.t('Viajante');
     o.dom.nivel = intOr(sd.nivel, 1, 1, 999);
@@ -3119,16 +3120,35 @@
     iniciarMapa(S.mapa);
   };
 
+  /* caçada média num mapa (v1.17.4), usada no ganho fora do jogo: o DPS base das Centelhas da equipe
+     (ataque × velocidade; sem o domador, skills nem ataques especiais) contra a vida média das criaturas do mapa.
+     O nível médio respeita o limite de nascimento (domador + 2) e o EFIC desconta andar, errar e trocar de alvo. */
+  const OFF_EFIC = 0.5, OFF_MAX = 1.2;     // fração da caçada ativa; teto de abates por segundo (ninhos)
+  game.cacadaMedia = function (idx) {
+    if (!S) return null;
+    const def = LV.MAPS[idx];
+    if (!def) return null;
+    const dif = LV.DIFICULDADE[idx] || LV.DIFICULDADE[0], premio = 1 + (dif.hp - 1) * 0.5;
+    const lo = def.lv[0], lv = LV.clamp(Math.round((def.lv[0] + def.lv[1]) / 2), lo, Math.max(lo, Math.min(def.lv[1], S.dom.nivel + 2)));
+    const b = F.ini(lv), est = lv >= 46 ? 0.72 : lv >= 24 ? 0.25 : 0;
+    const hp = b.hp * 1.05 * (1 + 0.25 * est) * dif.hp;
+    let dps = 0;
+    S.ativos.forEach((uid) => { const p = S.pets.find((q) => q.uid === uid); if (p) { const st = petStats(p); dps += st.atk * st.spd; } });
+    const abatesSeg = Math.min(OFF_MAX, (dps / hp) * OFF_EFIC);
+    return { lv, hp, dps, abatesSeg, xp: b.xp * (1 + 0.2 * est) * premio, lumes: b.lumes * premio };
+  };
   game.calcOffline = function (seg) {
     if (!S || !S.inicial || !S.ativos.length) return null;
     const ds = domStats(), cap = ds.offlineH * 3600, s = Math.min(seg, cap);
-    let taxa = S.st.taxa > 0 ? S.st.taxa : 0.12;
-    taxa = Math.min(taxa, 2.5);
-    const kills = Math.floor(s * taxa * 0.6);
+    // na vila e no Campo de Treino não há caçada: nada a ganhar (S.noLugar = salvo lá, para quem fechou o jogo)
+    const lugar = (W && W.lugar) || S.noLugar;
+    if (lugar) return { lugar, seg: s, segReal: seg, kills: 0 };
+    const M = game.cacadaMedia(S.mapa);
+    const kills = M ? Math.floor(s * M.abatesSeg) : 0;
     if (kills <= 0) return null;
-    const def = LV.MAPS[S.mapa], b = F.ini(Math.round((def.lv[0] + def.lv[1]) / 2));
-    const xp = Math.round(kills * b.xp * ds.xp), xpPet = Math.round(kills * b.xp * ds.xpPet);
-    const lumes = Math.round(kills * b.lumes * ds.coleta * ds.lumesMult), mats = Math.round(kills * 0.35 * 1.5 * ds.coleta);
+    const def = LV.MAPS[S.mapa];
+    const xp = Math.round(kills * M.xp * ds.xp), xpPet = Math.round(kills * M.xp * ds.xpPet);
+    const lumes = Math.round(kills * M.lumes * ds.coleta * ds.lumesMult), mats = Math.round(kills * 0.35 * 1.5 * ds.coleta);
     const nv0 = S.dom.nivel;
     game.silencioso = true;
     ganharXPDom(xp);

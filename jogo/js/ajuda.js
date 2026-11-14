@@ -111,6 +111,7 @@
       ]],
       ['Away from the game', [
         'Your Glimmers keep hunting while you are away (up to the Campsite limit, upgradable with Master Anvil). When you return you see what they earned.',
+        'Away from the game they earn an average for the depth you are in, based on the damage of the Glimmers in your team (without the tamer, skills or special attacks): about half of what you get hunting actively. In the village and the Training Ground there is no hunting, so nothing is earned.',
         'After a few idle minutes the rest screen appears (adjust it in Settings).',
       ]],
       ['Saves, language and updates', [
@@ -211,6 +212,7 @@
       ]],
       ['Fora do jogo', [
         'Suas Centelhas continuam caçando enquanto você está fora (até o limite do Acampamento, que melhora com o Mestre Bigorna). Na volta, você vê o que elas ganharam.',
+        'Fora do jogo, elas rendem uma média da profundeza em que você está, calculada pelo dano das Centelhas da equipe (sem o domador, skills nem ataques especiais): cerca de metade do que se ganha caçando ativamente. Na vila e no Campo de Treino não há caçada, então nada é ganho.',
         'Parado por alguns minutos, aparece a tela de descanso (ajuste em Configurações).',
       ]],
       ['Saves, idioma e atualizações', [

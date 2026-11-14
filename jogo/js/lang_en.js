@@ -1144,5 +1144,10 @@
     "1 a cada 3 níveis do domador": "1 every 3 tamer levels",
     "Esta é <b>Alvorada</b>, a última vila ainda acesa. Aqui você compra lanternas, troca materiais e fortalece o grupo no <b>Santuário dos Ecos</b>. Quando estiver pronto, siga para a <b>direita</b> e ": "This is <b>Daybreak</b>, the last village still lit. Here you buy lanterns, trade materials and strengthen your group at the <b>Sanctuary of Echoes</b>. When you are ready, head <b>right</b> and ",
     " na <b>placa de saída</b> para descer às <b>Raízes Murmurantes</b>.": " the <b>exit sign</b> to go down to the <b>Whispering Roots</b>.",
+    "Enquanto você esteve fora, as Centelhas descansaram com você na vila: sem caçada, nada foi ganho.": "While you were away, your Glimmers rested with you in the village: no hunting, nothing was earned.",
+    "Enquanto você esteve fora, as Centelhas descansaram com você no Campo de Treino: sem caçada, nada foi ganho.": "While you were away, your Glimmers rested with you at the Training Ground: no hunting, nothing was earned.",
+    "Descansando na vila": "Resting in the village",
+    "Descansando no Campo de Treino": "Resting at the Training Ground",
+    "Aqui não há caçada: as Centelhas descansam com você e nada é ganho. Volte às profundezas para ganhar XP e Lumes.": "There is no hunting here: your Glimmers rest with you and nothing is earned. Go back to the depths to earn XP and Lumes.",
   });
 })();
