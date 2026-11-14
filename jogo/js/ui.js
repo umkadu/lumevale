@@ -26,7 +26,7 @@
     if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.17.5';
+  const VERSAO = '1.17.6';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -133,12 +133,15 @@
     const av = S().avisados;
     if (!av.includes('vila:inicio')) av.push('vila:inicio');
     game.pausaAviso = true;
-    setTimeout(() => ui.avisoPausa({
+    setTimeout(() => {
+      if (!game.W || game.W.lugar !== 'vila') { game.pausaAviso = false; if (depois) depois(); return; }   // já saiu da vila
+      ui.avisoPausa({
       olho: LV.t('Vila de Alvorada'),
       texto: LV.t('Esta é <b>Alvorada</b>, a última vila ainda acesa. Aqui você compra lanternas, troca materiais e fortalece o grupo no <b>Santuário dos Ecos</b>. Quando estiver pronto, siga para a <b>direita</b> e ') +
         verbo + LV.t(' na <b>placa de saída</b> para descer às <b>Raízes Murmurantes</b>.'),
       botao: LV.t('Vamos lá!'), aoOk: depois,
-    }), 2600);
+      });
+    }, 2600);
   }
   /* quem começou na vila vê o objetivo ao chegar pela primeira vez às Raízes Murmurantes */
   function objetivoPendente() {
@@ -152,13 +155,23 @@
   function avisoMeta(depois) {
     const n = game.metaChefe(), verbo = LV.movel ? LV.t('toque') : LV.t('clique');
     game.pausaAviso = true;
-    setTimeout(() => ui.avisoPausa({
+    setTimeout(() => {
+      // saiu do mapa antes do aviso (foi à vila ou ao treino): mostra na próxima chegada às Raízes
+      if (!game.W || game.W.lugar || game.tutorial) {
+        game.pausaAviso = false;
+        const av = S() && S().avisados, i = av ? av.indexOf('objetivo:0') : -1;
+        if (i >= 0) av.splice(i, 1);
+        if (depois) depois();
+        return;
+      }
+      ui.avisoPausa({
       olho: LV.t('Seu objetivo'),
       texto: LV.t('Derrote ') + '<b>' + n + LV.t(' criaturas</b> neste mapa para chamar ') + '<b>' + esc(game.W.def.chefe.nome) + '</b>' +
         LV.t(', o Guardião que prende a luz desta camada. O contador fica no alto, à direita. Quando ele encher, ') +
         verbo + LV.t(' em <b>Desafiar Guardião</b>: vencer solta a luz e abre o caminho para o próximo mapa.'),
       botao: LV.t('Vamos lá!'), destaque: '.hud-map', aoOk: depois,
-    }), 2600);   // deixa o nome do mapa aparecer e sumir antes
+      });
+    }, 2600);   // deixa o nome do mapa aparecer e sumir antes
   }
 
   /* =================== TUTORIAL =================== */
@@ -940,15 +953,14 @@
   /* =================== VILA DE ALVORADA (v1.16): aba, moradores e trocas =================== */
   /* Alvorada na aba Mapas (v1.16.1): a vila e o campo de treino, sem inimigos */
   function secaoAlvorada() {
-    const s = S(), W = game.W, lugar = W && W.lugar;
-    const voltar = '<button class="btn" data-act="sairLugar">' + LV.t('Voltar a ') + esc(LV.MAPS[s.mapa].nome) + '</button>';
+    const W = game.W, lugar = W && W.lugar;
     const cartao = (id, nota, txtIr) => {
       const Lg = LV.LUGARES[id], aqui = lugar === id;
       return '<article class="mapa lugar' + (aqui ? ' aqui' : '') + '" style="--ma:' + Lg.pal.acento + '">' +
         '<div class="mthumb" style="background-image:url(img/fundos/' + id + '.webp)"></div><div class="mbody">' +
         '<div class="mtit"><h3>' + Lg.nome + '</h3>' + (aqui ? '<span class="okk small">' + LV.t('você está aqui') + '</span>' : '') + '</div>' +
         '<p class="small muted">' + Lg.sub + '</p><p class="nota">' + nota + '</p>' +
-        '<div class="row">' + (aqui ? voltar : '<button class="btn' + (id === 'vila' ? ' pri' : '') + '" data-act="irLugar" data-id="' + id + '"' + (game.tutorial ? ' disabled' : '') + '>' + txtIr + '</button>') + '</div></div></article>';
+        (aqui ? '' : '<div class="row"><button class="btn' + (id === 'vila' ? ' pri' : '') + '" data-act="irLugar" data-id="' + id + '"' + (game.tutorial ? ' disabled' : '') + '>' + txtIr + '</button></div>') + '</div></article>';
     };
     return '<section class="sec"><header class="sec-h"><h2>' + LV.t('Alvorada') + '</h2><span class="muted">' + LV.t('Sem inimigos') + '</span></header><div class="mapas">' +
       cartao('vila', LV.t('Lanternas, capas, melhorias, trocas, Radiantes e o Santuário dos Ecos. Clique num morador para falar com ele.'), LV.t('Ir para a Vila')) +
@@ -1561,7 +1573,7 @@
     const lugar = W.lugar || null;
     const m = s.mapas[s.mapa], meta = game.metaChefe(), pronto = m.kills >= meta && !game.tutorial && !lugar, reserva = Math.floor(m.reserva || 0);
     const bSair = document.getElementById('b-sair');
-    bSair.hidden = !lugar;
+    bSair.hidden = !(lugar && W.veioDeMapa);    // só depois de sair de um mapa (v1.17.6)
     if (lugar) { const tx = LV.t('Voltar a ') + LV.MAPS[s.mapa].nome; if (bSair.textContent !== tx) bSair.textContent = tx; }
     el.bAuto.hidden = !!lugar;
     document.getElementById('b-lant').hidden = !!lugar;

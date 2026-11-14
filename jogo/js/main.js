@@ -144,6 +144,7 @@
     game.acao.escolherInicial(sp);
     game.pausado = false;
     game.acao.irLugar('vila');            // a aventura começa na Vila de Alvorada (v1.17.3)
+    if (game.W) game.W.veioDeMapa = false; // o mapa carregado por baixo não conta: ainda não houve descida
     LV.salvar(true);
     ui.entrarNoJogo(true);
   };

@@ -3185,6 +3185,8 @@
     if (!LV.LUGARES[id] || !S) return false;
     if (W && W.chefe) falharChefe('abandonou');
     const def = defLugar(id), ds = domStats(), de = W && W.lugar;
+    // veio de um mapa de verdade (não do tutorial)? Passando de um lugar para outro (vila ⇄ treino), mantém o que era
+    const veioDeMapa = !W ? false : W.lugar ? !!W.veioDeMapa : !(W.L && W.L.tutorial);
     const L = id === 'vila' ? N().gerarVila(def) : N().gerarTreino(def);
     // vindo do outro lugar, chega pela porta (portão da vila / portal do treino)
     const porta = de && (L.npcs || []).find((n) => n.id === (id === 'vila' ? 'portao' : 'portal'));
@@ -3194,7 +3196,7 @@
       tam: { x: x0, y: G, vy: 0, sup: 0, esc: null, et: 0, ign: -1, ignT: 0, face: 1, hp: ds.hp, hpMax: ds.hp, cd: 1, mov: 0, manual: 0, alvoX: null, caido: 0, flash: 0, atk: 0, el: null, arVx: 0, escVx: 0, h: LV.HEROI.alt },
       pets: [], ini: [], proj: [], drops: [], fx: [], nums: [], parts: [], lant: [], areas: [],
       spawn: 0, chefe: null, killLog: [], seq: 1, taxaT: 0, amb: null, inicioReal: performance.now(),
-      bg: art.criarFundo(def, game.bgScale), zonas: [], npcs: [],
+      bg: art.criarFundo(def, game.bgScale), zonas: [], npcs: [], veioDeMapa,
     };
     game.captura = null; game.pausado = false;
     montarPets();
