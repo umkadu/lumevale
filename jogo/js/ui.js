@@ -26,7 +26,7 @@
     if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.17.4';
+  const VERSAO = '1.17.5';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -2346,6 +2346,8 @@
 
   /* =================== MENU INICIAL =================== */
   let inicioVista = 'menu', novo = { slot: 1, sp: null, confirmar: false };
+  let apagando = null;      // espaço com a confirmação de apagar aberta (tela Carregar jogo)
+  const LIXEIRA = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h11M6 4V2.6h4V4M4 4l.8 9.4h6.4L12 4M6.6 6.6v4.6M9.4 6.6v4.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   ui.inicioVisivel = () => el.inicio && !el.inicio.hidden;
   ui.inicioOpcoes = function () { inicioVista = 'opcoes'; ui.atualizarInicio(); };
   ui.mostrarInicio = function () {
@@ -2388,7 +2390,16 @@
     const quando = r.salvoEm ? new Date(r.salvoEm).toLocaleString(LV.locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
     const corpo = img + LV.t('<span class="sinfo"><span class="snum">Espaço ') + n + '</span><b>' + esc(r.nome) + LV.t('</b><span class="small muted">Nv ') + r.nivel + ' · ' + r.rank + ' · ' + r.mapa + '</span>' +
       '<span class="small muted">' + r.pets + LV.t(' Centelhas · ') + LV.fmtTempo(r.tempo) + LV.t(' de jogo') + (quando ? ' · ' + quando : '') + '</span></span>';
-    if (modo === 'carregar') return '<button class="slot" data-i="carregar" data-n="' + n + '">' + corpo + '</button>';
+    if (modo === 'carregar') {
+      if (apagando === n) {
+        return '<div class="slot confirma-apagar" role="alertdialog" aria-labelledby="apg-' + n + '"><p id="apg-' + n + '">' + LV.t('Apagar o save de ') + '<b>' + esc(r.nome) + '</b>' + LV.t(' (Espaço ') + n + ')?</p>' +
+          '<p class="small">' + LV.t('Todo o progresso deste espaço some, inclusive conquistas, Ecos e Bestiário. Não dá para desfazer.') + '</p>' +
+          '<div class="row end"><button class="btn" data-i="naoApagar">' + LV.t('Cancelar') + '</button><button class="btn perigo" data-i="simApagar" data-n="' + n + '">' + LV.t('Apagar save') + '</button></div></div>';
+      }
+      const rot = LV.t('Apagar o save do Espaço ') + n;
+      return '<div class="slot-linha"><button class="slot" data-i="carregar" data-n="' + n + '">' + corpo + '</button>' +
+        '<button class="btn-apagar" data-i="apagar" data-n="' + n + '" title="' + rot + '" aria-label="' + rot + '">' + LIXEIRA + '</button></div>';
+    }
     return '<button class="slot' + (novo.slot === n ? LV.t(' sel') : '') + '" data-i="slot" data-n="' + n + '">' + corpo + '</button>';
   }
   ui.atualizarInicio = function () {
@@ -2446,9 +2457,20 @@
     som('clique');
     const a = b.dataset.i;
     if (a === 'novo') { inicioVista = 'novo'; novo = { slot: LV.slots.primeiroVazio() || 1, sp: null, nome: '' }; ui.atualizarInicio(); setTimeout(() => { const i = document.getElementById('novo-nome'); if (i) i.focus(); }, 30); }
-    else if (a === 'vcarregar') { inicioVista = 'carregar'; ui.atualizarInicio(); }
+    else if (a === 'vcarregar') { inicioVista = 'carregar'; apagando = null; ui.atualizarInicio(); }
+    else if (a === 'apagar') { apagando = +b.dataset.n; ui.atualizarInicio(); setTimeout(() => { const c = el.inicio.querySelector('[data-i="naoApagar"]'); if (c) c.focus(); }, 30); }
+    else if (a === 'naoApagar') { apagando = null; ui.atualizarInicio(); }
+    else if (a === 'simApagar') {
+      const n = +b.dataset.n;
+      LV.slots.apagar(n);
+      if (game.slot === n) game.slot = null;
+      apagando = null;
+      ui.toast(LV.t('Save do Espaço ') + n + LV.t(' apagado.'));
+      if (![1, 2, 3].some((k) => LV.slots.resumo(k))) inicioVista = 'menu';   // sem saves: volta ao menu
+      ui.atualizarInicio();
+    }
     else if (a === 'opcoes') { inicioVista = 'opcoes'; ui.atualizarInicio(); }
-    else if (a === 'voltar') { inicioVista = 'menu'; ui.atualizarInicio(); }
+    else if (a === 'voltar') { inicioVista = 'menu'; apagando = null; ui.atualizarInicio(); }
     else if (a === 'sp') { novo.sp = b.dataset.sp; inicioValidar(); el.inicio.querySelectorAll('.ini').forEach((x) => x.classList.toggle('sel', x.dataset.sp === novo.sp)); }
     else if (a === 'slot') { inicioValidar(); novo.slot = +b.dataset.n; ui.atualizarInicio(); }
     else if (a === 'carregar') { if (!LV.carregarJogo(+b.dataset.n)) ui.toast(LV.t('Não foi possível carregar este espaço.'), 'ruim', true); }
@@ -2458,6 +2480,7 @@
   /* "voltar" do Android no menu inicial: sobe um nível; no menu principal devolve false (sai do app) */
   ui.inicioVoltar = function () {
     if (inicioVista === 'menu') return false;
+    if (apagando != null) { apagando = null; ui.atualizarInicio(); return true; }   // fecha a confirmação de apagar
     inicioVista = 'menu'; ui.atualizarInicio();
     return true;
   };

@@ -1149,5 +1149,12 @@
     "Descansando na vila": "Resting in the village",
     "Descansando no Campo de Treino": "Resting at the Training Ground",
     "Aqui não há caçada: as Centelhas descansam com você e nada é ganho. Volte às profundezas para ganhar XP e Lumes.": "There is no hunting here: your Glimmers rest with you and nothing is earned. Go back to the depths to earn XP and Lumes.",
+    "Apagar o save de ": "Delete the save of ",
+    " (Espaço ": " (Slot ",
+    "Todo o progresso deste espaço some, inclusive conquistas, Ecos e Bestiário. Não dá para desfazer.": "All progress in this slot is lost, including achievements, Echoes and the Bestiary. This can't be undone.",
+    "Apagar save": "Delete save",
+    "Apagar o save do Espaço ": "Delete the save in Slot ",
+    "Save do Espaço ": "Save in Slot ",
+    " apagado.": " deleted.",
   });
 })();

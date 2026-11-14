@@ -115,7 +115,7 @@
         'After a few idle minutes the rest screen appears (adjust it in Settings).',
       ]],
       ['Saves, language and updates', [
-        '3 save slots. Progress stays on this device; to take it to another, use Settings › Transfer progress.',
+        '3 save slots. Progress stays on this device; to take it to another, use Settings › Transfer progress. To delete a save, use the trash button next to it in <b>Load game</b> (it asks before deleting and can’t be undone).',
         'Change the language in Settings. The app installed from the website updates itself.',
       ]],
     ];
@@ -216,7 +216,7 @@
         'Parado por alguns minutos, aparece a tela de descanso (ajuste em Configurações).',
       ]],
       ['Saves, idioma e atualizações', [
-        '3 espaços de save. O progresso fica neste aparelho; para levar a outro, use Configurações › Levar o progresso.',
+        '3 espaços de save. O progresso fica neste aparelho; para levar a outro, use Configurações › Levar o progresso. Para apagar um save, use a lixeira ao lado dele em <b>Carregar jogo</b> (ela pede confirmação e não dá para desfazer).',
         'O idioma fica em Configurações. O app instalado pelo site se atualiza sozinho.',
       ]],
     ];

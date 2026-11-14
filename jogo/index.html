@@ -675,6 +675,15 @@
   .slot:hover, .slot.sel { border-color: color-mix(in srgb, var(--acc) 60%, transparent); }
   .slot.sel { background: color-mix(in srgb, var(--acc) 7%, transparent); }
   .slot img { width: 48px; height: 48px; object-fit: contain; }
+  /* apagar save (v1.17.5) */
+  .slot-linha { display: flex; gap: 8px; align-items: stretch; min-width: 0; }
+  .slot-linha .slot { flex: 1; }
+  .btn-apagar { flex: 0 0 46px; display: grid; place-items: center; padding: 0; background: rgba(255, 255, 255, 0.025); border: 1px solid var(--linha); color: var(--tinta); opacity: 0.7; cursor: pointer; }
+  .btn-apagar svg { width: 18px; height: 18px; }
+  .btn-apagar:hover, .btn-apagar:focus-visible { opacity: 1; color: var(--ruim); border-color: var(--ruim); background: color-mix(in srgb, var(--ruim) 8%, transparent); }
+  .slot.confirma-apagar { grid-template-columns: 1fr; gap: 6px; cursor: default; border-color: var(--ruim); background: color-mix(in srgb, var(--ruim) 7%, transparent); }
+  .slot.confirma-apagar p { margin: 0; }
+  .slot.confirma-apagar .small { opacity: 0.8; }
   .sinfo { display: grid; gap: 1px; min-width: 0; }
   .sinfo b { font: 18px var(--f-disp); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .snum { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fraco); }
