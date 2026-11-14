@@ -52,13 +52,13 @@
         olho: 'Fim da primeira descida', titulo: 'O Lume volta a subir',
         txt: [
           'A febre do Coração cede. Uma coluna de luz sobe pelas cinzas, atravessa as minas, a cidade afogada, a cripta e as raízes, e chega ao alto do vale.',
-          'Em Alvorada, o grande lampião volta a brilhar. Os rios clareiam, as florestas respiram e, pela primeira vez em uma geração, as janelas da vila se acendem sozinhas.',
+          'Em Alvorada, o grande lampião volta a brilhar. Os rios clareiam e as florestas respiram.',
         ],
         citacao: '“Agora o vale tem quem o guarde.”', autor: 'o eco de Mestra Candeia',
         lenda: 'Em Alvorada, já chamam você de <b>Lenda de Lumevale</b>.',
         gancho: 'Mas, no silêncio depois da febre, algo se mexe abaixo do Coração…',
         depois: 'A cicatriz do Coração nunca fecha de todo: os Guardiões ainda despertam de tempos em tempos. Continue caçando, renasça para ficar mais forte e mantenha a luz subindo.',
-        botao: 'Continuar',
+        botao: 'Retornar à vila',
       },
       resumoT: 'A história',
       resumo: [
@@ -121,13 +121,13 @@
         olho: 'End of the first descent', titulo: 'The Lume rises again',
         txt: [
           'The Heart’s fever breaks. A column of light rises through the ashes, through the mines, the drowned city, the crypt and the roots, and reaches the top of the valley.',
-          'In Daybreak, the great lamp shines again. The rivers clear, the forests breathe and, for the first time in a generation, the village windows light up on their own.',
+          'In Daybreak, the great lamp shines again. The rivers clear and the forests breathe.',
         ],
         citacao: '“Now the valley has someone to watch over it.”', autor: 'the echo of Master Candeia',
         lenda: 'In Daybreak, they already call you the <b>Legend of Lumevale</b>.',
         gancho: 'But in the silence after the fever, something stirs beneath the Heart…',
         depois: 'The Heart’s scar never fully heals: the Guardians still awaken from time to time. Keep hunting, be reborn to grow stronger and keep the light rising.',
-        botao: 'Continue',
+        botao: 'Return to the village',
       },
       resumoT: 'The story',
       resumo: [

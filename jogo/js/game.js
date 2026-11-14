@@ -28,6 +28,7 @@
       autoVagas: 0,                              // vagas de automação já pagas (continuam após redefinir)
       diario: [],                                // páginas do Diário de Candeia já encontradas (uma por Guardião)
       finalVisto: false,                         // o final (Coração Ígneo vencido) já foi mostrado
+      vistos: [],                                // explicações já vistas neste save, valem para todas as jornadas (ex.: 'minijogo')
       equip: { capa: 'padrao', lanterna: 'simples' },   // capa e lanterna escolhidas (se o item sumir, volta ao padrão)
       compras: [],                               // itens visuais comprados na Loja (ficam para sempre)
       titulo: null,                              // título equipado (v1.17); sem título, aparece a patente do nível
@@ -154,6 +155,9 @@
     o.mapas.forEach((m, i) => { if (m.chefe && !o.meta.diario.includes(i)) o.meta.diario.push(i); });
     o.meta.diario.sort((a, b) => a - b);
     o.meta.finalVisto = !!smh.finalVisto;
+    // explicações vistas (v1.17.7): ficam no meta para não voltarem ao renascer. Saves antigos: já capturou = já viu o minijogo
+    o.meta.vistos = Array.isArray(smh.vistos) ? smh.vistos.filter((k) => typeof k === 'string').slice(0, 60) : [];
+    if (!o.meta.vistos.includes('minijogo') && ((o.meta.tot.capt || 0) > 0 || (Array.isArray(s.avisados) && s.avisados.includes('minijogo')))) o.meta.vistos.push('minijogo');
     // equipamento: escolha guardada no Santuário; compras visuais da Loja ficam para sempre
     const eq = smh.equip || {};
     o.meta.equip = { capa: LV.capa(eq.capa) ? eq.capa : 'padrao', lanterna: typeof eq.lanterna === 'string' ? eq.lanterna : 'simples' };
@@ -1852,7 +1856,7 @@
       if (a.veneno) {
         a.veneno.t -= dt; a.veneno.tick -= dt;
         if (a.veneno.tick <= 0 && a.hp > 0 && !(a.desm > 0) && !(a === W.tam && a.caido > 0)) { a.veneno.tick = 0.5; danoAliado(a, a.veneno.dps * 0.5, null, null); }
-        if (a.veneno.t <= 0) a.veneno = null;
+        if (a.veneno && a.veneno.t <= 0) a.veneno = null;   // o tique pode encerrar a batalha e limpar o veneno (v1.17.9)
       }
     }
   }
@@ -1888,9 +1892,10 @@
         if (e.dash) {                                   // estocada: atravessa o campo e acerta quem estiver no caminho
           vx = e.dash.vx; e.dash.t -= dt;
           if (Math.random() < 0.4) fx({ tipo: 'spr', img: 'respingo', x: e.x - Math.sign(e.dash.vx) * 34, y: chaoY(e.x) + 4, h: 48, cresce: [0.6, 1], vida: 0.4, flip: e.dash.vx < 0 });
-          al.forEach((a) => { if (!e.dash.atingidos.has(a) && Math.abs(a.x - e.x) < 46 && alvoY(a) > G - 150) { e.dash.atingidos.add(a); danoAliado(a, e.atk * 1.2, e.el, e); a.x += Math.sign(e.dash.vx) * 40; } });
+          // o golpe pode encerrar a batalha no meio (último aliado caído): aí e.dash vira null (v1.17.9)
+          al.forEach((a) => { if (e.dash && !e.dash.atingidos.has(a) && Math.abs(a.x - e.x) < 46 && alvoY(a) > G - 150) { e.dash.atingidos.add(a); danoAliado(a, e.atk * 1.2, e.el, e); a.x += Math.sign(vx) * 40; } });
           if (Math.random() < 0.6) particula({ x: e.x - Math.sign(vx) * 30, y: G - LV.rand(10, 70), vx: -vx * 0.2, vy: LV.rand(-60, -10), g: 300, vida: 0.5, t: 0, r: 2.5, cor: '#9fe6ff', tipo: 'luz' });
-          if (e.dash.t <= 0 || e.x <= 70 || e.x >= W.w - 70) e.dash = null;
+          if (!e.dash || e.dash.t <= 0 || e.x <= 70 || e.x >= W.w - 70) e.dash = null;
         } else if (alvo) {
           const d = alvo.x - e.x, s = Math.sign(d) || 1;
           if (e.carga <= 0 && Math.abs(d) > 20) virar(e, s, dt, 0.3);
@@ -3095,8 +3100,15 @@
     art.drawTile(c, bg.frente, 1.35, cam, vw);
     if (cfg().particulas !== false) desenharAmb(c);
     art.drawTile(c, bg.nevoa, 1.1, cam, vw, -t * 16, 70, 0.45);
+    if (W.lugar === 'vila') setaSaidaTela(c, vw, t);   // ainda nas coordenadas do cenário
     c.setTransform(1, 0, 0, 1, 0, 0);
-    if (game.vinheta) c.drawImage(game.vinheta, 0, 0);
+    const vilaClara = W.lugar === 'vila' && S && S.meta.finalVisto;
+    if (game.vinheta) { if (vilaClara) c.globalAlpha = 0.5; c.drawImage(game.vinheta, 0, 0); c.globalAlpha = 1; }
+    if (vilaClara) {                                    // luz quente subindo do chão da vila
+      const g = c.createLinearGradient(0, ch, 0, 0);
+      g.addColorStop(0, 'rgba(255,190,110,0.12)'); g.addColorStop(0.55, 'rgba(255,190,110,0.03)'); g.addColorStop(1, 'rgba(255,190,110,0)');
+      c.globalCompositeOperation = 'lighter'; c.fillStyle = g; c.fillRect(0, 0, cw, ch); c.globalCompositeOperation = 'source-over';
+    }
     if (W.flashTela > 0) { c.fillStyle = 'rgba(255,250,235,' + Math.min(0.85, W.flashTela).toFixed(3) + ')'; c.fillRect(0, 0, cw, ch); }
   };
 
@@ -3262,11 +3274,14 @@
   /* prédios, enfeites e moradores (atrás do herói) */
   function desenharLugar(c, cam, vw, t) {
     const L = W.L, vis = (x, m) => x > cam - m && x < cam + vw + m;
+    const festa = W.lugar === 'vila' && S.meta.finalVisto;      // depois do Coração: a vila iluminada (v1.17.7)
+    if (festa) vilaFestiva(c, cam, vw, t, vis);
     for (const d of L.deco || []) {
       if (!vis(d.x, 200)) continue;
       if (SPR().garantir(d.img)) { const im = SPR().get(d.img), w = (im.naturalWidth / im.naturalHeight) * d.h; c.drawImage(im, d.x - w / 2, d.y - d.h, w, d.h); }
       else if (d.img === 'vila/lampiao') { c.fillStyle = '#1a120c'; c.fillRect(d.x - 5, d.y - d.h, 10, d.h); c.fillRect(d.x - 22, d.y - d.h, 44, 8); }
-      if (d.luz) art.glow(c, d.x, d.y - d.h * 0.86, 130, W.def.pal.luz, 0.35 + 0.08 * Math.sin(t * 2.3));
+      if (d.luz && festa) { colunaDeLuz(c, d.x, d.y - d.h * 0.86, t); art.glow(c, d.x, d.y - d.h * 0.86, 240, W.def.pal.luz, 0.62 + 0.12 * Math.sin(t * 2.3)); }
+      else if (d.luz) art.glow(c, d.x, d.y - d.h * 0.86, 130, W.def.pal.luz, 0.35 + 0.08 * Math.sin(t * 2.3));
     }
     for (const n of W.npcs || []) {
       if (!vis(n.x, 200)) continue;
@@ -3290,6 +3305,77 @@
         }
       }
     }
+    if (festa) lumeSubindo(c, cam, vw, t, vis);
+  }
+  /* ---- vila depois do Coração (v1.17.7): o grande lampião com uma coluna de luz, varais de luzinhas,
+     chão aquecido e gotas de Lume subindo, como no final ("o Lume volta a subir") ---- */
+  const CORES_VARAL = ['#ffd27a', '#ffe9a6', '#ffb35c', '#b9e68f', '#9fd8ff', '#ffc4d6'];
+  function varal(c, x0, y0, x1, y1, curva, t, k) {
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2 + curva * 2;
+    c.strokeStyle = 'rgba(38,24,14,0.9)'; c.lineWidth = 1.6;
+    c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo(cx, cy, x1, y1); c.stroke();
+    const n = Math.max(4, Math.round(Math.abs(x1 - x0) / 32));
+    for (let i = 1; i < n; i++) {
+      const u = i / n, a = (1 - u) * (1 - u), b = 2 * (1 - u) * u, d = u * u;
+      const x = a * x0 + b * cx + d * x1, y = a * y0 + b * cy + d * y1 + 4;
+      const cor = CORES_VARAL[(i + k) % CORES_VARAL.length], tw = 0.7 + 0.3 * Math.sin(t * 2.4 + i * 1.7 + k * 2.1);
+      art.glow(c, x, y, 18, cor, 0.6 * tw);
+      c.fillStyle = cor; c.beginPath(); c.arc(x, y, 2.7, 0, TAU); c.fill();
+    }
+  }
+  function colunaDeLuz(c, x, y, t) {
+    c.save();
+    c.globalCompositeOperation = 'lighter';
+    const alto = 620, w = 22 + 5 * Math.sin(t * 1.3);
+    const g = c.createLinearGradient(0, y, 0, y - alto);
+    g.addColorStop(0, 'rgba(255,226,150,0.36)'); g.addColorStop(0.6, 'rgba(255,226,150,0.12)'); g.addColorStop(1, 'rgba(255,226,150,0)');
+    c.fillStyle = g;
+    c.beginPath(); c.moveTo(x - w * 0.45, y); c.lineTo(x - w * 1.7, y - alto); c.lineTo(x + w * 1.7, y - alto); c.lineTo(x + w * 0.45, y); c.closePath(); c.fill();
+    c.restore();
+  }
+  function vilaFestiva(c, cam, vw, t, vis) {
+    const L = W.L, A = L.sup[1], C = L.sup[2];
+    for (let x = 0; x <= L.w; x += 250) if (vis(x, 260)) art.glow(c, x, G - 26, 230, '#ffcf7a', 0.1 + 0.03 * Math.sin(t * 1.4 + x));
+    // cada ponta presa em algo (medido nas ilustrações, nas posições de nivel.gerarVila)
+    const meio = (A.x0 + A.x1) / 2;
+    const V = [
+      [168, G - 150, 308, G - 141, 18],                 // viga do portão → poste da barraca do Pavio
+      [385, G - 121, 562, G - 172, 24],                 // ponta do toldo do Pavio → braço do grande lampião
+      [598, G - 172, A.x0 + 2, A.y + 6, 22],            // outro braço do lampião → ponta da plataforma (topo da escada)
+      [A.x0 + 6, A.y + 24, meio, A.y + 24, 16], [meio, A.y + 24, A.x1 - 6, A.y + 24, 16],   // frente da plataforma
+      [C.x0 + 6, C.y + 24, C.x1 - 6, C.y + 24, 14],     // frente da plataforma de cima
+      [A.x1 - 4, A.y + 24, 1639, G - 95, 20],           // ponta da plataforma → viga da carroça do Escambo
+      [1750, G - 95, 1905, G - 87, 18],                 // outra ponta da viga → tábua da placa de saída
+    ];
+    V.forEach((v, k) => { if (vis(v[0], 40) || vis(v[2], 40) || (v[0] < cam && v[2] > cam + vw)) varal(c, v[0], v[1], v[2], v[3], v[4], t, k); });
+  }
+  function lumeSubindo(c, cam, vw, t, vis) {
+    c.save();
+    c.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 90; i++) {
+      const x = ((i * 211.7) % W.L.w) + Math.sin(t * 0.7 + i) * 14;
+      if (!vis(x, 30)) continue;
+      const vel = 14 + (i % 5) * 5, f = ((t * vel + i * 97) % 460) / 460;      // 0 no chão → 1 no alto
+      c.globalAlpha = Math.sin(f * Math.PI) * (0.55 + 0.3 * Math.sin(t * 3 + i));
+      c.fillStyle = i % 4 ? '#ffe9a6' : '#fff6d8';
+      c.beginPath(); c.arc(x, G + 6 - f * 460, 1.1 + (i % 3) * 0.6, 0, TAU); c.fill();
+    }
+    c.restore();
+  }
+  /* seta de saída (v1.17.8): pequena seta pintada como a da placa, na borda direita, quase transparente.
+     game.setaSaida é decidido pela interface (primeiro acesso, sem aviso aberto, placa ainda fora da tela) */
+  function setaSaidaTela(c, vw, t) {
+    const a = (game.setaSaidaA = LV.lerp(game.setaSaidaA || 0, game.setaSaida ? 1 : 0, 0.08));
+    if (a < 0.02) return;
+    const x = vw - 26 + Math.sin(t * 2) * 3, y = G - 66, L = 24, hh = 9, sh = 3.6, hl = 10;
+    c.save();
+    c.globalAlpha = a * (0.4 + 0.1 * Math.sin(t * 2));
+    c.beginPath();
+    c.moveTo(x - L / 2, y - sh); c.lineTo(x + L / 2 - hl, y - sh); c.lineTo(x + L / 2 - hl, y - hh); c.lineTo(x + L / 2, y);
+    c.lineTo(x + L / 2 - hl, y + hh); c.lineTo(x + L / 2 - hl, y + sh); c.lineTo(x - L / 2, y + sh); c.closePath();
+    c.fillStyle = '#f2deaa'; c.fill();
+    c.lineJoin = 'round'; c.lineWidth = 2.6; c.strokeStyle = '#281a10'; c.stroke();
+    c.restore();
   }
   /* altar da Zeladora Íris (v1.17.3): a estrela pulsa, solta raios girando e faíscas que sobem */
   function brilhoAltar(c, n, t) {

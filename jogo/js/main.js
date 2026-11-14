@@ -301,10 +301,11 @@
       if (!game.pausado && !game.pausaMenu && !game.pausaAviso) {      // pausaMenu: aba Mapas · pausaAviso: cartão de instrução
         acc += dt * game.S.op.vel;
         let n = 0;
-        while (acc >= 1 / 60 && n < 14) { game.step(1 / 60); acc -= 1 / 60; n++; }
+        // um erro num quadro não pode parar o laço (antes, o jogo congelava de vez) (v1.17.9)
+        try { while (acc >= 1 / 60 && n < 14) { game.step(1 / 60); acc -= 1 / 60; n++; } } catch (e) { console.error(e); acc = 0; }
         if (n >= 14) acc = 0;
       } else game.W.t += dt;
-      if (game.captura) game.atualizarCaptura(dt);
+      if (game.captura) try { game.atualizarCaptura(dt); } catch (e) { console.error(e); }
       // com a tela de descanso aberta o jogo segue rodando, mas não é desenhado (poupa bateria)
       if (!ui.afk.ativo) try { game.render(ctx, cv.width, cv.height); } catch (e) { console.error(e); }
     }

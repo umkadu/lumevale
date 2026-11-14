@@ -26,7 +26,7 @@
     if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.17.6';
+  const VERSAO = '1.18.0';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -102,7 +102,7 @@
     const F = LV.historia().final;
     ui.modal('<div class="final"><div class="eyebrow">' + F.olho + '</div><h2>' + F.titulo + '</h2>' + F.txt.map((x) => '<p>' + x + '</p>').join('') +
       '<blockquote>' + F.citacao + '<cite>— ' + F.autor + '</cite></blockquote><p>' + F.lenda + '</p><p class="gancho">' + F.gancho + '</p><p class="muted small">' + F.depois + '</p>' +
-      '<div class="row end"><button class="btn pri" data-m="fechar">' + F.botao + '</button></div></div>', { cls: 'final-m', fechavel: false });
+      '<div class="row end"><button class="btn pri" data-m="voltarVila">' + F.botao + '</button></div></div>', { cls: 'final-m', fechavel: false });
     som('evolucao');
   };
 
@@ -142,6 +142,20 @@
       botao: LV.t('Vamos lá!'), aoOk: depois,
       });
     }, 2600);
+  }
+  /* seta de saída (v1.17.7): no primeiro acesso à vila, depois das boas-vindas, aponta para a direita até a placa
+     aparecer na tela; some de vez quando o jogador desce pela primeira vez */
+  function marcarDescida() {
+    const av = S() && S().avisados;
+    if (av && av.includes('vila:inicio') && !av.includes('vila:desceu')) av.push('vila:desceu');
+  }
+  function setaSaida(W, s) {
+    let ver = false;
+    if (W && W.lugar === 'vila' && !game.pausaAviso && !ui.modalAberto && s.avisados.includes('vila:inicio') && !s.avisados.includes('vila:desceu')) {
+      const pl = (W.npcs || []).find((n) => n.id === 'saida');
+      ver = !!pl && pl.x - 30 > W.cam + game.viewW;       // a placa ainda não apareceu
+    }
+    game.setaSaida = ver;                                 // desenhada no cenário (game.js, setaSaidaTela)
   }
   /* quem começou na vila vê o objetivo ao chegar pela primeira vez às Raízes Murmurantes */
   function objetivoPendente() {
@@ -368,6 +382,7 @@
       som('clique');
       if (b.dataset.m === 'fechar') ui.fecharModal();
       else if (b.dataset.m === 'mapas') { ui.fecharModal(); ui.abrir('mapas'); ui.diario(true); }
+      else if (b.dataset.m === 'voltarVila') { ui.fecharModal(); game.acao.irLugar('vila'); ui.render(); LV.salvarLogo(); }
       else if (b.dataset.m === 'proxmapa') { ui.fecharModal(); game.acao.viajar(+b.dataset.i); ui.render(); LV.salvarLogo(); }
       else if (b.dataset.m === 'console') { ui.fecharModal(); ui.abrirConsole(); }
       else if (b.dataset.m === 'inicial') escolherInicial(b.dataset.sp);
@@ -442,7 +457,7 @@
     LV.on('equipamento', () => { sujo(['domador', 'vila']); ui.npcAtualizar(); });
     LV.on('tutorial', (tu) => ui.tutorial(tu));
     LV.on('atributo', () => sujo(['domador']));
-    LV.on('mapa', (i) => { document.documentElement.style.setProperty('--acc', LV.MAPS[i].pal.acento); sujo(['mapas', 'vila']); ui.tituloMapa(i); fecharNpc(); hud(); objetivoPendente(); });
+    LV.on('mapa', (i) => { document.documentElement.style.setProperty('--acc', LV.MAPS[i].pal.acento); sujo(['mapas', 'vila']); ui.tituloMapa(i); fecharNpc(); hud(); marcarDescida(); objetivoPendente(); });
     LV.on('lugar', (id) => { document.documentElement.style.setProperty('--acc', game.W.def.pal.acento); sujo(['mapas', 'vila']); ui.tituloLugar(id); fecharNpc(); hud(); });
     LV.on('npc', (id) => ui.abrirNpc(id));
     LV.on('mapas', () => sujo(['mapas']));
@@ -1574,6 +1589,7 @@
     const m = s.mapas[s.mapa], meta = game.metaChefe(), pronto = m.kills >= meta && !game.tutorial && !lugar, reserva = Math.floor(m.reserva || 0);
     const bSair = document.getElementById('b-sair');
     bSair.hidden = !(lugar && W.veioDeMapa);    // só depois de sair de um mapa (v1.17.6)
+    setaSaida(W, s);
     if (lugar) { const tx = LV.t('Voltar a ') + LV.MAPS[s.mapa].nome; if (bSair.textContent !== tx) bSair.textContent = tx; }
     el.bAuto.hidden = !!lugar;
     document.getElementById('b-lant').hidden = !!lugar;
@@ -1787,6 +1803,7 @@
 
   /* Guardião derrotado: moeda → pet novo → mecânicas liberadas (todas com o mesmo destaque) → caminho aberto */
   ui.modalChefe = function (d) {
+    if (d.final) { ui.modalFinal(); return; }   // primeira vitória sobre o Coração: só o final (v1.17.7)
     const H = LV.historia();
     let h = LV.t('<div class="eyebrow">Guardião derrotado</div><h2>') + esc(d.nome) + LV.t(' caiu</h2>');
     if (d.primeira && d.mapaIdx != null) h += '<p class="efeito-lore">' + H.efeito[d.mapaIdx] + '</p>';
@@ -1813,7 +1830,6 @@
     h += LV.t('<div class="row end"><button class="btn" data-m="fechar">Continuar aqui</button>') +
       (d.proximoIdx != null ? '<button class="btn pri" data-m="proxmapa" data-i="' + d.proximoIdx + LV.t('">Ir ao próximo mapa</button>') : '') + '</div>';
     ui.modal(h, { fechavel: false });
-    if (d.final) ui.modalFinal();      // entra na fila: aparece quando esta janela fechar
   };
 
   /* clarão da evolução: luz que nasce no pet e toma a tela inteira, com um anel se expandindo e a janela tremendo */
@@ -2117,9 +2133,9 @@
         const barra = box.querySelector('#mini-barra'), relogio = box.querySelector('#mini-relogio');
         let t0 = performance.now();
         let tRes = 0;
-        // explicação congelada antes do relógio: no tutorial e na primeira captura de quem pulou o tutorial
-        const avisados = S().avisados || (S().avisados = []);
-        let comecou = !(game.tutorial || !avisados.includes('minijogo'));
+        // explicação congelada antes do relógio: no tutorial e na primeira captura do save (S.meta.vistos: não volta ao renascer)
+        const vistos = S().meta.vistos || (S().meta.vistos = []);
+        let comecou = !(game.tutorial || !vistos.includes('minijogo'));
         if (!comecou) {
           const intro = document.createElement('div');
           intro.className = 'mini-intro';
@@ -2134,7 +2150,7 @@
         function comecar() {
           if (comecou) return;
           comecou = true;
-          if (!avisados.includes('minijogo')) avisados.push('minijogo');
+          if (!vistos.includes('minijogo')) vistos.push('minijogo');
           const intro = box.querySelector('.mini-intro');
           if (intro) intro.remove();
           t0 = performance.now(); ultimo = t0;

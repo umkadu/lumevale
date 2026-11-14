@@ -210,17 +210,18 @@
   /* moedas que um Guardião solta: primeira vitória rende mais */
   LV.moedasChefe = (idx, primeira) => (primeira ? 8 + idx * 2 : 3 + idx);
 
-  /* ---------- curva de dificuldade (v1.11) ----------
-     Multiplicadores por mapa sobre as fórmulas. Sem eles a vida dos Guardiões crescia 3x, 6x, 9x e 21x de um para o
-     outro, e o grupo cresce quase em linha reta: os mapas 1 a 3 caíam em ~20 s e o 4 virava um muro. Com eles cada
-     Guardião pede ~2x mais poder que o anterior (em relação ao crescimento natural do grupo), então a partir do mapa 2
-     renascer passa a ser o caminho para avançar. Criaturas mais fortes também rendem um pouco mais (metade do aumento). */
+  /* ---------- curva de dificuldade (v1.11; Guardiões refeitos na v1.18.0) ----------
+     Multiplicadores por mapa sobre as fórmulas. Criaturas mais fortes também rendem um pouco mais (metade do aumento).
+     v1.18.0: medido no simulador (ferramentas/simulador, 12 jornadas automáticas). Antes os mapas 1 a 4 caíam em
+     ~1,5–7 h e o Coração pedia ~45 h sozinho. Agora as paredes crescem aos poucos (primeira vitória, em média):
+     Mãe-Raiz ~5 min · Rei Bolor ~1,5 h · Sentinela ~5 h · Matriarca ~19 h · Coração ~37 h (o jogador automático;
+     uma pessoa leva um pouco mais). A vida do Guardião é o que mais pesa: pequenas mudanças mexem em horas. */
   LV.DIFICULDADE = [
-    { hp: 1, atk: 1, chefeHp: 1, chefeAtk: 1 },            // Raízes: primeiro contato, continua fácil
-    { hp: 1.35, atk: 1.2, chefeHp: 2.1, chefeAtk: 1.35 },  // Cripta
-    { hp: 1.8, atk: 1.4, chefeHp: 3.4, chefeAtk: 1.6 },    // Cidade Afogada
-    { hp: 1.6, atk: 1.35, chefeHp: 2.2, chefeAtk: 1.5 },   // Minas
-    { hp: 1.3, atk: 1.2, chefeHp: 0.75, chefeAtk: 1.2 },   // Coração (já era um salto enorme)
+    { hp: 1, atk: 1, chefeHp: 1, chefeAtk: 1 },            // Raízes: primeiro contato, cai rápido
+    { hp: 1.35, atk: 1.2, chefeHp: 20, chefeAtk: 3 },      // Cripta: primeira parede, ainda na primeira jornada
+    { hp: 1.8, atk: 1.4, chefeHp: 9, chefeAtk: 2.4 },      // Cidade Afogada: pede os primeiros renascimentos
+    { hp: 1.6, atk: 1.35, chefeHp: 5.2, chefeAtk: 2.12 },  // Minas
+    { hp: 1.3, atk: 1.2, chefeHp: 0.62, chefeAtk: 1.07 },  // Coração (as fórmulas já sobem muito até o nível 74)
   ];
 
   /* ---------- melhorias da Loja ----------
