@@ -210,18 +210,19 @@
   /* moedas que um Guardião solta: primeira vitória rende mais */
   LV.moedasChefe = (idx, primeira) => (primeira ? 8 + idx * 2 : 3 + idx);
 
-  /* ---------- curva de dificuldade (v1.11; Guardiões refeitos na v1.18.0) ----------
+  /* ---------- curva de dificuldade (v1.11; Guardiões refeitos na v1.18.0 e v1.18.1) ----------
      Multiplicadores por mapa sobre as fórmulas. Criaturas mais fortes também rendem um pouco mais (metade do aumento).
-     v1.18.0: medido no simulador (ferramentas/simulador, 12 jornadas automáticas). Antes os mapas 1 a 4 caíam em
+     Medido no simulador (ferramentas/simulador, 12 jornadas automáticas). Antes da v1.18 os mapas 1 a 4 caíam em
      ~1,5–7 h e o Coração pedia ~45 h sozinho. Agora as paredes crescem aos poucos (primeira vitória, em média):
-     Mãe-Raiz ~5 min · Rei Bolor ~1,5 h · Sentinela ~5 h · Matriarca ~19 h · Coração ~37 h (o jogador automático;
-     uma pessoa leva um pouco mais). A vida do Guardião é o que mais pesa: pequenas mudanças mexem em horas. */
+     Mãe-Raiz ~35 min · Rei Bolor ~1,5 h · Sentinela ~4,5 h · Matriarca ~20 h · Coração ~42 h (o jogador automático;
+     uma pessoa leva um pouco mais). A vida do Guardião é o que mais pesa: pequenas mudanças mexem em horas.
+     Cada jornada refaz todos os Guardiões, então deixar um dos primeiros mais forte também atrasa o fim do jogo. */
   LV.DIFICULDADE = [
-    { hp: 1, atk: 1, chefeHp: 1, chefeAtk: 1 },            // Raízes: primeiro contato, cai rápido
-    { hp: 1.35, atk: 1.2, chefeHp: 20, chefeAtk: 3 },      // Cripta: primeira parede, ainda na primeira jornada
+    { hp: 1, atk: 1, chefeHp: 13, chefeAtk: 1.5 },         // Raízes: primeira parede (~20–70 min na primeira jornada)
+    { hp: 1.35, atk: 1.2, chefeHp: 26, chefeAtk: 3.3 },    // Cripta: ainda na primeira jornada
     { hp: 1.8, atk: 1.4, chefeHp: 9, chefeAtk: 2.4 },      // Cidade Afogada: pede os primeiros renascimentos
-    { hp: 1.6, atk: 1.35, chefeHp: 5.2, chefeAtk: 2.12 },  // Minas
-    { hp: 1.3, atk: 1.2, chefeHp: 0.62, chefeAtk: 1.07 },  // Coração (as fórmulas já sobem muito até o nível 74)
+    { hp: 1.6, atk: 1.35, chefeHp: 4.1, chefeAtk: 1.95 },  // Minas
+    { hp: 1.3, atk: 1.2, chefeHp: 0.55, chefeAtk: 1 },     // Coração (as fórmulas já sobem muito até o nível 74)
   ];
 
   /* ---------- melhorias da Loja ----------
