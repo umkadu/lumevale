@@ -181,7 +181,8 @@
       { id: 'iris', x: 1060, sup: 2, img: 'vila/npc_iris', h: 74, estr: 'vila/altar_iris', eh: 96, ex: 40 },
       { id: 'santuario', x: 1255, sup: 2, estr: 'vila/santuario', eh: 160 },
       { id: 'bigorna', x: 1410, sup: 1, img: 'vila/npc_bigorna', h: 76, estr: 'vila/forja_bigorna', eh: 130, ex: 34 },
-      { id: 'escambo', x: 1660, sup: 0, img: 'vila/npc_escambo', h: 72, estr: 'vila/barraca_escambo', eh: 140, ex: 36 },
+      { id: 'escambo', x: 1625, sup: 0, img: 'vila/npc_escambo', h: 72, estr: 'vila/barraca_escambo', eh: 140, ex: 36 },
+      { id: 'roleta', x: 1785, sup: 0, estr: 'vila/roleta', eh: 150 },
       { id: 'saida', x: 1935, sup: 0, estr: 'vila/placa_saida', eh: 112 },
     ].map((n) => Object.assign(n, { y: sup[n.sup].y }));
     const deco = [{ img: 'vila/lampiao', x: 580, y: G + 2, h: 250, luz: true }];

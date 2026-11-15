@@ -26,7 +26,7 @@
     if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.18.3';
+  const VERSAO = '1.19.0';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -381,6 +381,17 @@
       if (!b) { clique(e); configClique(e); return; }
       som('clique');
       if (b.dataset.m === 'fechar') ui.fecharModal();
+      else if (b.dataset.m === 'girar') ui.girarRoleta(b.dataset.pago === '1');
+      else if (b.dataset.m === 'libConfirmar') {
+        const n = ui.lib ? ui.lib.length : 0, v = ui.lib ? game.acao.libertarVarias(ui.lib.slice()) : 'nada';
+        ui.fecharModal();
+        if (typeof v === 'number') {
+          ui.toast((n === 1 ? LV.t('Centelha libertada. +') : n + LV.t(' Centelhas libertadas. +')) + fmt(v) + LV.t(' Lumes'), 'bom', true);
+          ui.lib = null;
+          if (!S().pets.some((p) => p.uid === ui.sel)) ui.sel = null;
+        } else ui.toast(v === 'campo' ? LV.t('Pelo menos uma Centelha precisa ficar em campo') : LV.t('Pelo menos uma Centelha precisa ficar na coleção'), 'ruim', true);
+        ui.render(); LV.salvarLogo();
+      }
       else if (b.dataset.m === 'mapas') { ui.fecharModal(); ui.abrir('mapas'); ui.diario(true); }
       else if (b.dataset.m === 'voltarVila') { ui.fecharModal(); game.acao.irLugar('vila'); ui.render(); LV.salvarLogo(); }
       else if (b.dataset.m === 'proxmapa') { ui.fecharModal(); game.acao.viajar(+b.dataset.i); ui.render(); LV.salvarLogo(); }
@@ -514,7 +525,7 @@
 
   ui.abrir = function (aba) {
     if (!ABAS.some((x) => x[0] === aba)) aba = 'equipe';
-    ui.aba = aba; ui.confirmar = null;
+    ui.aba = aba; ui.confirmar = null; ui.lib = null;
     if (aba === 'domador') ui.domSub = null;      // ao abrir a aba, todos os submenus começam fechados
     el.tabs.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.aba === aba)));
     ui.render();
@@ -659,17 +670,29 @@
     });
     for (let i = ativos.length; i < vagas; i++) h += '<div class="pcard vazio" data-slot="' + i + LV.t('"><span>Vaga livre</span><small>') + (LV.movel ? LV.t('Segure uma Centelha da coleção e arraste até aqui') : LV.t('Arraste uma Centelha da coleção até aqui')) + '</small></div>';
     h += '</div></section>';
-    h += LV.t('<section class="sec"><header class="sec-h"><h2>Coleção</h2><span class="muted">') + s.pets.length + LV.t(' criaturas</span></header><div class="grade" data-drop="colecao">');
+    // Libertar (v1.19): botão pequeno no topo da coleção; abre a seleção (marca no canto de cada Centelha) e pede confirmação
+    const lib = ui.lib ? ui.lib.filter((u) => s.pets.some((p) => p.uid === u)) : null;
+    if (lib) ui.lib = lib;
+    const botoesLib = !lib
+      ? '<button class="btn mini lib" data-act="libModo"' + (s.pets.length <= 1 ? ' disabled' : '') + '>' + LV.t('Libertar') + '</button>'
+      : '<button class="btn mini lib' + (lib.length ? '' : ' cinza') + '" data-act="libPedir"' + (lib.length ? '' : ' disabled') + '>' + LV.t('Libertar') + (lib.length ? ' (' + lib.length + ')' : '') + '</button>' +
+        '<button class="btn mini" data-act="libCancelar">' + LV.t('Cancelar') + '</button>';
+    h += LV.t('<section class="sec"><header class="sec-h"><h2>Coleção</h2><span class="muted">') + s.pets.length + LV.t(' criaturas</span>') +
+      '<span class="lib-acoes">' + botoesLib + '</span></header>';
+    if (lib) h += '<p class="nota lib-nota">' + (LV.movel ? LV.t('Toque nas Centelhas que deseja libertar.') : LV.t('Clique nas Centelhas que deseja libertar.')) + '</p>';
+    h += '<div class="grade' + (lib ? ' libertando' : '') + '" data-drop="colecao">';
     s.pets.forEach((p) => {
-      const ev = game.podeEvoluir(p).ok;
-      h += '<button class="tile' + (ui.sel === p.uid ? LV.t(' sel') : '') + (s.ativos.includes(p.uid) ? LV.t(' ativo') : '') + (p.especial ? LV.t(' especial') : '') + '" data-act="sel" data-uid="' + p.uid + '" data-arrasta="1" title="' + esc(LV.nomePet(p)) + '">' +
+      const ev = game.podeEvoluir(p).ok, marcada = !!lib && lib.includes(p.uid);
+      h += '<button class="tile' + (!lib && ui.sel === p.uid ? LV.t(' sel') : '') + (s.ativos.includes(p.uid) ? LV.t(' ativo') : '') + (p.especial ? LV.t(' especial') : '') + (marcada ? ' marcada' : '') +
+        '" data-act="' + (lib ? 'libMarcar' : 'sel') + '" data-uid="' + p.uid + '"' + (lib ? ' aria-pressed="' + marcada + '"' : ' data-arrasta="1"') + ' title="' + esc(LV.nomePet(p)) + '">' +
         '<img src="' + art.retrato(p.sp, p.est, 64) + '" alt="" width="52" height="52"><span class="tn">' + esc(LV.nomePet(p)) + LV.t('</span><span class="tl">Nv ') + p.nivel + '</span>' +
-        (ev ? LV.t('<span class="tag-evo" title="Pode evoluir">▲</span>') : '') +
-        (p.bonus ? LV.t('<span class="tag-tal" title="Talento ') + LV.TALENTOS[p.bonus.t].nome + '">★</span>' : '') + '</button>';
+        (ev && !lib ? LV.t('<span class="tag-evo" title="Pode evoluir">▲</span>') : '') +
+        (p.bonus ? LV.t('<span class="tag-tal" title="Talento ') + LV.TALENTOS[p.bonus.t].nome + '">★</span>' : '') +
+        (lib ? '<span class="tag-lib" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.6 6.3 5 8.6 9.6 3.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' : '') + '</button>';
     });
     h += '</div>';
     const sel = s.pets.find((p) => p.uid === ui.sel);
-    if (sel) h += detalhePet(sel);
+    if (sel && !lib) h += detalhePet(sel);
     h += '</section>';
     return h;
   }
@@ -682,7 +705,7 @@
       '<h3>' + esc(LV.nomePet(p)) + '</h3><div class="dsub">' + elChip(sp.el) + espChip(p.sp) + LV.t(' <span class="muted">Forma ') + (p.est + 1) + LV.t(' de 3 · ') + LV.ESTILOS[st.estilo] + '</span></div>' +
       (LV.especDe(p.sp) ? '<p class="nota esp-nota">' + LV.especDe(p.sp).nome + ': ' + LV.especDe(p.sp).desc + '</p>' : '') +
       '<p class="desc">' + esc(sp.desc) + '</p>' +
-      (p.especial ? '<p class="nota rad-nota">★ ' + LV.t('Radiante: +30% de vida e ataque e +10% de velocidade.') + ' ' + (p.radCapt ? LV.t('Encontrada numa captura: a Zeladora Íris não traz de volta se você a perder.') : LV.t('Veio de uma conquista: a Zeladora Íris traz de volta se você a perder.')) + '</p>' : '') +
+      (p.especial ? '<p class="nota rad-nota">★ ' + LV.t('Radiante: +30% de vida e ataque e +10% de velocidade.') + ' ' + (p.radRoleta ? LV.t('Ganha na Roleta da Sorte: a Zeladora Íris não traz de volta se você a perder.') : p.radCapt ? LV.t('Encontrada numa captura: a Zeladora Íris não traz de volta se você a perder.') : LV.t('Veio de uma conquista: a Zeladora Íris traz de volta se você a perder.')) + '</p>' : '') +
       (p.bonus ? LV.t('<p class="talento-l">★ Talento <b>') + LV.TALENTOS[p.bonus.t].nome + '</b>: ' + LV.TALENTOS[p.bonus.t].desc(p.bonus.v) + '</p>' : '') + '</div></div>';
     h += '<div class="cadeia">';
     for (let i = 0; i < 3; i++) {
@@ -737,9 +760,6 @@
     h += '<div class="dacoes">';
     if (ativo) h += '<button class="btn" data-act="retirar" data-uid="' + p.uid + '"' + (s.ativos.length <= 1 ? LV.t(' disabled') : '') + LV.t('>Tirar de campo</button>');
     else h += '<button class="btn pri" data-act="ativar" data-uid="' + p.uid + '"' + (s.ativos.length >= game.slots() ? LV.t(' disabled title="Sem vagas livres"') : '') + LV.t('>Colocar em campo</button>');
-    const valor = Math.round(10 * p.nivel * (1 + p.est));
-    if (ui.confirmar === 'lib' + p.uid) h += '<button class="btn perigo" data-act="libertar" data-uid="' + p.uid + LV.t('">Confirmar: libertar por ') + fmt(valor) + LV.t(' Lumes</button>');
-    else h += '<button class="btn fantasma" data-act="pedirLib" data-uid="' + p.uid + '"' + (s.pets.length <= 1 ? LV.t(' disabled') : '') + LV.t('>Libertar</button>');
     h += '</div></article>';
     return h;
   }
@@ -1061,6 +1081,7 @@
     if (id === 'portao') { som('clique'); game.acao.irLugar('treino'); return; }
     if (id === 'portal') { som('brilho'); game.acao.irLugar('vila'); return; }
     if (id === 'saida') { som('clique'); game.acao.viajar(0); return; }
+    if (id === 'roleta') { ui.abrirRoleta(); return; }
     if (!LV.NPCS[id]) return;
     if (ui.modalAberto) { if (ui.modalAberto.tipo === 'npc') ui.fecharModal(); else return; }
     ui.modal(htmlNpc(id), { cls: 'npc-m', tipo: 'npc', npc: id });
@@ -1127,6 +1148,114 @@
     if (m.autoAttr.length >= m.autoVagas && LV.custoAutoAttr(m.autoVagas) == null) { if (volta) volta(); return; }
     ui.autoSel = null;
     ui.modal(htmlEscolhaAuto(), { cls: 'auto-m', tipo: 'auto', aoFechar: volta });
+  };
+  /* =================== ROLETA DA SORTE (v1.19) =================== */
+  // [cor da fatia (tinge a madeira da roda pintada), cor do texto]
+  const ROLETA_COR = { lumes: ['#d0902c', '#ffe7a8'], nada: ['#5a4566', '#e6dcef'], xp: ['#2c8aa0', '#bff0ff'], lanternas: ['#c0592a', '#ffd2a8'], radiante: ['#f0c23c', '#fff3c4'] };
+  ui.roletaRot = 0;
+  // A roda é a arte pintada (img/ui/roleta_roda.webp, alinhada por ferramentas/roda_roleta.js: raios dourados nas
+  // divisas, aro por dentro em r = 125 de 160). Por cima, cada painel de madeira entre os raios ganha a cor do prêmio
+  // e o texto vai ao longo do raio.
+  const RL_C = 160, RL_IN = 48, RL_OUT = 124, RL_RAIO = 4.5;
+  function fatiaSvg(f, i, n, R) {
+    const meia = Math.PI / n, d1 = Math.asin(RL_RAIO / RL_IN), d2 = Math.asin(RL_RAIO / RL_OUT);
+    const pt = (r, a) => (RL_C + Math.sin(a) * r).toFixed(1) + ' ' + (RL_C - Math.cos(a) * r).toFixed(1);
+    const [cor, tinta] = ROLETA_COR[f.tipo];
+    const painel = '<path class="rl-tinta" d="M' + pt(RL_IN, -meia + d1) + 'L' + pt(RL_OUT, -meia + d2) + 'A' + RL_OUT + ' ' + RL_OUT + ' 0 0 1 ' + pt(RL_OUT, meia - d2) +
+      'L' + pt(RL_IN, meia - d1) + 'A' + RL_IN + ' ' + RL_IN + ' 0 0 0 ' + pt(RL_IN, -meia + d1) + 'Z" fill="' + cor + '"/>';
+    let icone = '', l1 = '', l2 = '';
+    if (f.tipo === 'lumes') { icone = '<path d="M0 -8 6.5 0 0 8 -6.5 0Z" fill="#f2d38a" stroke="#140c06" stroke-width="1.5"/>'; l1 = fmt(R.lumes[f.n]); l2 = LV.t('Lumes'); }
+    else if (f.tipo === 'nada') { l1 = LV.t('Não foi'); l2 = LV.t('dessa vez'); }
+    else if (f.tipo === 'xp') { icone = '<path d="M-6.5 4 0 -7 6.5 4Z" fill="#bff0ff" stroke="#140c06" stroke-width="1.5" stroke-linejoin="round"/>'; l1 = 'XP +?%'; l2 = '?' + LV.t(' min'); }
+    else if (f.tipo === 'lanternas') { icone = '<path d="M-5 -2h10l2 10h-14Z" fill="#ffe7b0" stroke="#140c06" stroke-width="1.3"/><path d="M-6 -2 0 -8 6 -2Z" fill="#140c06"/>'; l1 = LV.ROLETA.lanternas.join('–'); l2 = LV.t('lanternas'); }
+    else { icone = '<path d="M0 -9 2.6 -2.8 9 -2.8 3.9 1.1 5.9 7.2 0 3.5 -5.9 7.2 -3.9 1.1 -9 -2.8 -2.6 -2.8Z" fill="#ffd36b" stroke="#140c06" stroke-width="1.3"/>'; l1 = LV.t('Centelha'); l2 = LV.t('Radiante'); }
+    // texto ao longo do raio, lido do centro para a borda
+    const meio = icone ? 76 : 86;
+    return '<g transform="rotate(' + (i * 360 / n) + ' ' + RL_C + ' ' + RL_C + ')">' + painel +
+      (icone ? '<g transform="translate(' + RL_C + ' ' + (RL_C - 112) + ')">' + icone + '</g>' : '') +
+      '<g transform="translate(' + RL_C + ' ' + (RL_C - meio) + ') rotate(-90)" fill="' + tinta + '">' +
+      '<text y="-1.5" text-anchor="middle" class="rl-t1">' + esc(l1) + '</text><text y="9" text-anchor="middle" class="rl-t2">' + esc(l2) + '</text></g></g>';
+  }
+  function htmlRoleta() {
+    const R = game.roleta(), F = LV.ROLETA.fatias;
+    const roda = '<svg viewBox="0 0 320 320" aria-hidden="true"><circle cx="160" cy="160" r="150" fill="#5a3d1c"/>' +
+      '<image href="img/ui/roleta_roda.webp" x="0" y="0" width="320" height="320"/>' + F.map((f, i) => fatiaSvg(f, i, F.length, R)).join('') + '</svg>';
+    const ponteiro = '<svg viewBox="0 0 30 40" aria-hidden="true"><defs><linearGradient id="rl-ouro" x1="0" x2="1"><stop offset="0" stop-color="#8a6420"/><stop offset="0.45" stop-color="#ffe7a0"/><stop offset="1" stop-color="#b8862e"/></linearGradient></defs>' +
+      '<path d="M4 2h22l-3 8h-5l-3 27-3-27h-5Z" fill="url(#rl-ouro)" stroke="#140c06" stroke-width="2" stroke-linejoin="round"/><circle cx="15" cy="6" r="2.4" fill="#ffd36b" stroke="#140c06" stroke-width="1.2"/></svg>';
+    const xp = R.xp ? '<p class="rl-xp">' + LV.t('Bônus de XP ativo: ') + '<b>+' + R.xp.pct + '%</b> · ' + Math.ceil(R.xp.seg / 60) + LV.t(' min de caçada') + '</p>' : '';
+    let botao;
+    if (R.gratis > 0) botao = '<button class="btn pri" data-m="girar" data-pago="0">' + LV.t('Girar grátis') + '</button>';
+    else if (R.pagos > 0) botao = '<button class="btn pri" data-m="girar" data-pago="1"' + (S().lumes < R.preco ? ' disabled' : '') + '>' + LV.t('Girar · ') + ICON.lumes + ' ' + fmt(R.preco) + '</button>';
+    else botao = '<button class="btn" disabled>' + LV.t('Volte amanhã') + '</button>';
+    return '<div class="cabec"><div><div class="eyebrow">' + LV.t('Vila de Alvorada') + '</div><h2>' + LV.t('Roleta da Sorte') + '</h2>' +
+      '<p class="muted small">' + LV.t('1 giro grátis por dia e mais 3 pagando Lumes. Todas as fatias têm a mesma chance.') + '</p></div><button class="btn" data-m="fechar">' + LV.t('Fechar') + '</button></div>' +
+      '<div class="rl-palco"><div class="rl-ponteiro">' + ponteiro + '</div><div class="rl-roda" style="transform:rotate(' + ui.roletaRot + 'deg)">' + roda + '</div></div>' +
+      '<div class="rl-res" aria-live="polite"></div>' +
+      '<div class="rl-info"><span>' + LV.t('Grátis hoje: ') + '<b>' + R.gratis + '</b>/' + LV.ROLETA.gratis + '</span><span>' + LV.t('Pagos hoje: ') + '<b>' + R.pagos + '</b>/' + LV.ROLETA.pagos + '</span></div>' + xp +
+      '<div class="row center rl-acoes">' + botao + '</div>';
+  }
+  ui.abrirRoleta = function () {
+    if (!S()) return;
+    if (ui.modalAberto) { if (ui.modalAberto.tipo === 'npc' || ui.modalAberto.tipo === 'roleta') ui.fecharModal(); else return; }
+    ui.modal(htmlRoleta(), { cls: 'roleta-m', tipo: 'roleta', aoFechar: () => { if (ui.roletaPend) { mostrarPremio(ui.roletaPend, true); ui.roletaPend = null; } } });
+    som('clique');
+  };
+  function textoPremio(r) {
+    if (r.tipo === 'nada') return LV.t('Não foi dessa vez.');
+    if (r.tipo === 'lumes') return '+' + fmt(r.v) + LV.t(' Lumes!');
+    if (r.tipo === 'lanternas') return '+' + r.v + LV.t(' lanternas de captura!');
+    if (r.tipo === 'xp') return '+' + r.pct + LV.t('% de XP por ') + r.min + LV.t(' minutos de caçada!');
+    if (r.cheio) return LV.t('Uma Centelha Radiante, mas a coleção está cheia: +') + fmt(r.v) + LV.t(' Lumes no lugar.');
+    return LV.t('Uma Centelha Radiante: ') + LV.nomePet(r.pet) + '!';
+  }
+  function mostrarPremio(r, comoToast) {
+    if (comoToast) { ui.toast(textoPremio(r), r.tipo === 'nada' ? 'info' : 'bom'); return; }
+    const caixa = el.mbox.querySelector('.rl-res');
+    if (caixa) {
+      caixa.className = 'rl-res ' + r.tipo;
+      caixa.innerHTML = (r.pet ? '<img src="' + art.retrato(r.pet.sp, 0, 64) + '" alt="" width="48" height="48">' : '') + '<b>' + esc(textoPremio(r)) + '</b>';
+    }
+    som(r.tipo === 'nada' ? 'clique' : r.tipo === 'radiante' ? 'nivel' : 'brilho');
+  }
+  ui.girarRoleta = function (pago) {
+    if (ui.roletaGirando) return;
+    const r = game.acao.girarRoleta(pago);
+    if (r.erro) { ui.toast(r.erro === 'lumes' ? LV.t('Lumes insuficientes') : r.erro === 'lugar' ? LV.t('A roleta fica na Vila de Alvorada.') : LV.t('Sem giros agora. Volte amanhã!'), 'ruim', true); return; }
+    LV.salvarLogo(); hud();
+    const n = LV.ROLETA.fatias.length, passo = 360 / n, jitter = (Math.random() - 0.5) * passo * 0.6;
+    // gira 5 voltas e para com a fatia sorteada embaixo do ponteiro (em cima)
+    const alvo = -(r.idx * passo) + jitter, base = ui.roletaRot - (((ui.roletaRot % 360) + 360) % 360);
+    ui.roletaRot = base + 360 * 5 + ((alvo % 360) + 360) % 360;
+    ui.roletaGirando = true; ui.roletaPend = r;
+    const roda = el.mbox.querySelector('.rl-roda'), btn = el.mbox.querySelector('[data-m="girar"]'), caixa = el.mbox.querySelector('.rl-res');
+    if (btn) btn.disabled = true;
+    if (caixa) { caixa.className = 'rl-res'; caixa.textContent = ''; }
+    som('clique');
+    const fim = () => {
+      ui.roletaGirando = false;
+      if (!ui.modalAberto || ui.modalAberto.tipo !== 'roleta') return;
+      ui.roletaPend = null;
+      const res = el.mbox.querySelector('.rl-res'), html = res ? res.outerHTML : '';
+      el.mbox.innerHTML = htmlRoleta();
+      mostrarPremio(r, false);
+      void html;
+      ui.render();
+    };
+    if (!roda) { fim(); return; }
+    roda.style.transform = 'rotate(' + ui.roletaRot + 'deg)';
+    setTimeout(fim, 4700);
+  };
+  /* Libertar (v1.19): confirmação com o total de Lumes */
+  ui.confirmarLibertar = function () {
+    const s = S(), sel = s.pets.filter((p) => ui.lib && ui.lib.includes(p.uid));
+    if (!sel.length) return;
+    const total = sel.reduce((t, p) => t + game.valorLibertar(p), 0), rad = sel.filter((p) => p.especial).length;
+    const fotos = sel.slice(0, 12).map((p) => '<img src="' + art.retrato(p.sp, p.est, 64) + '" alt="" width="40" height="40" title="' + esc(LV.nomePet(p)) + '">').join('') + (sel.length > 12 ? '<span class="muted">+' + (sel.length - 12) + '</span>' : '');
+    ui.modal('<div class="eyebrow">' + LV.t('Libertar') + ' · ' + sel.length + ' ' + (sel.length === 1 ? LV.t('Centelha') : LV.t('Centelhas')) + '</div>' +
+      '<div class="lib-fotos">' + fotos + '</div>' +
+      '<p>' + LV.t('As Centelhas selecionadas serão libertadas, este processo é irreversível. Você ganhará ') + '<b class="lumes-txt">' + ICON.lumes + ' ' + fmt(total) + LV.t(' Lumes') + '</b>' + LV.t(' como recompensa. Deseja continuar?') + '</p>' +
+      (rad ? '<p class="nota rad-nota">★ ' + (rad === 1 ? LV.t('Uma delas é Radiante.') : rad + LV.t(' delas são Radiantes.')) + '</p>' : '') +
+      '<div class="row end"><button class="btn" data-m="fechar">' + LV.t('Cancelar') + '</button><button class="btn perigo" data-m="libConfirmar">' + LV.t('Continuar') + '</button></div>', { cls: 'lib-m' });
   };
   ui.confirmarResetAuto = function (volta) {
     const m = S().meta, taxa = LV.taxaResetAuto(m.autoVagas);
@@ -1299,8 +1428,8 @@
       opt('auto', LV.t('Caçada automática'), autoOk ? LV.t('O domador anda sozinho até os inimigos, usa escadas e coleta o que cair.') : LV.t('Desbloqueia a partir do mapa 2 (vença a ') + LV.MAPS[0].chefe.nome + ').', !autoOk) +
       LV.t('</div><div class="row"><button class="btn" data-act="salvar">Salvar agora</button><span class="muted small" data-k="savetxt"></span></div>') +
       '<p class="nota">' + (LV.movel
-        ? LV.t('Controles: ◀ ▶ para andar, ▲ para pular ou subir escadas, ▼ para descer. Toque no cenário para ir até lá. Toque numa criatura: só o domador ataca. Segure o dedo numa criatura: o domador e as Centelhas atacam juntos.')
-        : LV.t('Controles: A/D ou setas para andar, Espaço para pular, W/↑ para subir escadas, S/↓ para descer. Clique no cenário para ir até lá. Clique esquerdo numa criatura: só o domador ataca. Clique direito: o domador e as Centelhas atacam juntos. 1, 2 e 3 trocam o modo das Centelhas.') +
+        ? LV.t('Controles: ◀ ▶ para andar, ▲ para pular ou subir escadas, ▼ para descer. Toque no cenário para ir até lá. Toque numa criatura: só o domador ataca. Segure o dedo numa criatura: o domador e as Centelhas atacam juntos. Segure o dedo num lugar vazio: as Centelhas correm até lá.')
+        : LV.t('Controles: A/D ou setas para andar, Espaço para pular, W/↑ para subir escadas, S/↓ para descer. Clique no cenário para ir até lá. Clique esquerdo numa criatura: só o domador ataca. Clique direito: o domador e as Centelhas atacam juntos. Clique direito num lugar vazio: as Centelhas correm até lá. 1, 2 e 3 trocam o modo das Centelhas.') +
           ' ' + LV.t('Atalhos: E Equipe · T Domador · L Vila · M Mapas · R Santuário · B Bolsa · H Ajuda · O Bestiário · C Conquistas · Q lanterna.')) +
       '</p></section>';
     return h;
@@ -1388,8 +1517,20 @@
     }
     else if (a === 'ativar') { const r = game.acao.ativar(uid); if (r !== true) ui.toast(r === 'cheio' ? LV.t('Sem vagas livres. Tire alguém de campo ou compre Laço Extra.') : LV.t('Não foi possível'), 'ruim', true); ui.render(); }
     else if (a === 'retirar') { const r = game.acao.retirar(uid); if (r === 'ultimo') ui.toast(LV.t('Pelo menos uma Centelha precisa ficar em campo'), 'ruim', true); ui.render(); }
-    else if (a === 'pedirLib') { ui.confirmar = 'lib' + uid; ui.render(); }
-    else if (a === 'libertar') { const v = game.acao.libertar(uid); if (typeof v === 'number') ui.toast(LV.t('Centelha libertada. +') + fmt(v) + LV.t(' Lumes'), 'bom', true); ui.confirmar = null; ui.sel = null; ui.render(); LV.salvarLogo(); }
+    else if (a === 'libModo') { ui.lib = []; ui.render(); }
+    else if (a === 'libCancelar') { ui.lib = null; ui.render(); }
+    else if (a === 'libMarcar' && ui.lib) {
+      const i = ui.lib.indexOf(uid);
+      if (i >= 0) ui.lib.splice(i, 1);
+      else {
+        const prox = ui.lib.concat([uid]);
+        if (prox.length >= s.pets.length) { ui.toast(LV.t('Pelo menos uma Centelha precisa ficar na coleção'), 'ruim', true); return; }
+        if (s.ativos.length && s.ativos.every((u) => prox.includes(u))) { ui.toast(LV.t('Pelo menos uma Centelha precisa ficar em campo'), 'ruim', true); return; }
+        ui.lib.push(uid);
+      }
+      ui.render();
+    }
+    else if (a === 'libPedir' && ui.lib && ui.lib.length) ui.confirmarLibertar();
     else if (a === 'evoluir') { const r = game.acao.evoluir(uid); if (r !== true) ui.toast(LV.t('Ainda faltam requisitos para evoluir'), 'ruim', true); }
     else if (a === 'hab') {
       const r = game.acao.melhorarHab(uid);
@@ -1584,6 +1725,8 @@
     bq.hidden = !nq; bq.textContent = nq;
     document.getElementById('b-conq').classList.toggle('tem', nq > 0);
     el.lant.textContent = s.lanternas;
+    const xb = document.getElementById('h-xpb'), rx = s.meta.roleta && s.meta.roleta.xp;
+    if (xb) { xb.hidden = !(rx && rx.seg > 0); if (rx && rx.seg > 0) { const tx = 'XP +' + rx.pct + '% · ' + Math.floor(rx.seg / 60) + ':' + String(Math.floor(rx.seg % 60)).padStart(2, '0'); if (xb.textContent !== tx) xb.textContent = tx; } }
     el.mapa.textContent = game.tutorial ? LV.t('Primeira Luz') : W.def.nome;
     const lugar = W.lugar || null;
     const m = s.mapas[s.mapa], meta = game.metaChefe(), pronto = m.kills >= meta && !game.tutorial && !lugar, reserva = Math.floor(m.reserva || 0);
@@ -2017,6 +2160,7 @@
       LV.t('<div><dt>Derrotados') + (sp ? LV.t(' (esta forma)') : '') + '</dt><dd>' + fmt(x.k || 0) + '</dd></div>' +
       (sp ? LV.t('<div><dt>Capturados (esta forma)</dt><dd>') + fmt(x.c || 0) + '</dd></div>' +
         '<div><dt>' + esc(sp.nome[0]) + LV.t(': total derrotados</dt><dd>') + fmt(tot.k || 0) + '</dd></div><div><dt>' + esc(sp.nome[0]) + LV.t(': total capturados</dt><dd>') + fmt(tot.c || 0) + '</dd></div>' +
+        '<div><dt>' + LV.t('Radiantes (esta forma)') + '</dt><dd class="rad-dd">★ ' + fmt(x.r || 0) + '</dd></div><div><dt>' + esc(sp.nome[0]) + LV.t(': total de Radiantes') + '</dt><dd class="rad-dd">★ ' + fmt(tot.r || 0) + '</dd></div>' +
         (b.mapas.length ? (() => {   // chance com a vida cheia no ninho mais raso onde ela aparece
           const lv = Math.max(LV.MAPS[b.mapas[0]].lv[0], [1, 18, 40][b.est]);
           return LV.t('<div><dt>Captura base</dt><dd>') + Math.round(LV.chanceBaseCaptura(sp, lv, b.est) * 100) + '% <small class="muted">' + LV.t('(vida cheia, Nv ') + lv + ')</small></dd></div>';
@@ -2038,12 +2182,16 @@
   function cartaoBesta(b) {
     const v = vista(b.id), x = S().meta.best[b.id] || {}, buff = buffsDe(alvoBuff(b)).some((z) => z.estado === 2 && z.c.rec.buff);
     return '<button class="bcard' + (v ? '' : LV.t(' oculta')) + (ui.bestSel === b.id ? LV.t(' sel') : '') + '" data-m="bsel" data-id="' + b.id + '" aria-label="' + (v ? esc(b.nome) : LV.t('Criatura desconhecida')) + '">' +
-      '<img src="' + urlBesta(b) + '" alt=""><span>' + (v ? esc(b.nome) : '???') + '</span><small>' + (v ? fmt(x.k || 0) + LV.t(' derrotados') : '—') + '</small>' + (buff ? LV.t('<i class="bf" title="Bônus ativo">✦</i>') : '') + '</button>';
+      '<img src="' + urlBesta(b) + '" alt=""><span>' + (v ? esc(b.nome) : '???') + '</span><small>' + (v ? fmt(x.k || 0) + LV.t(' derrotados') : '—') + '</small>' + (buff ? LV.t('<i class="bf" title="Bônus ativo">✦</i>') : '') + (v && x.r ? '<i class="br" title="' + LV.t('Radiantes') + '">★' + fmt(x.r) + '</i>' : '') + '</button>';
   }
   function htmlBestiario() {
     const total = LV.BESTIARIO.length, vistos = LV.BESTIARIO.filter((b) => vista(b.id)).length;
     if (!ui.bestSel || !LV.besta(ui.bestSel)) ui.bestSel = (LV.BESTIARIO.find((b) => vista(b.id)) || LV.BESTIARIO[0]).id;
-    let h = LV.t('<div class="cabec"><div><div class="eyebrow">Bestiário</div><h2>Criaturas de Lumevale</h2><p class="muted small">') + vistos + LV.t(' de ') + total + LV.t(' encontradas · ✦ = bônus ativo</p></div><button class="btn" data-m="fechar">Fechar</button></div>');
+    const tt = S().meta.tot, radC = tt.radCapt || 0, radR = tt.radRoleta || 0;
+    let h = LV.t('<div class="cabec"><div><div class="eyebrow">Bestiário</div><h2>Criaturas de Lumevale</h2><p class="muted small">') + vistos + LV.t(' de ') + total + LV.t(' encontradas · ✦ = bônus ativo</p>') +
+      '<p class="rad-cont" title="' + LV.t('Centelhas Radiantes conseguidas em todas as jornadas') + '"><b>★ ' + fmt(radC + radR) + '</b> ' + (radC + radR === 1 ? LV.t('Centelha Radiante') : LV.t('Centelhas Radiantes')) +
+      ' <span class="muted small">(' + fmt(radC) + LV.t(' capturadas') + (radR ? ' · ' + fmt(radR) + LV.t(' da roleta') : '') + ')</span></p>' +
+      LV.t('</div><button class="btn" data-m="fechar">Fechar</button></div>');
     h += LV.t('<div class="best"><div class="best-grupos"><section><h3>Selvagens (capturáveis) e suas evoluções</h3><div class="best-especies">');
     for (const id in LV.SPECIES) {
       h += '<div class="best-linha">' + [0, 1, 2].map((e) => cartaoBesta(LV.besta(id + '_' + e))).join('<i class="seta-evo" aria-hidden="true">›</i>') + '</div>';
@@ -2280,7 +2428,7 @@
       h += LV.t('<section class="sec"><header class="sec-h"><h2>Jogabilidade</h2></header><div class="opts">') +
         '<button class="opt" role="switch" aria-checked="' + S().op.auto + LV.t('" data-c="auto"><span class="sw"></span><span><b>Caçada automática</b><small>O herói anda sozinho até os inimigos e usa escadas.</small></span></button></div>') +
         (LV.movel
-          ? LV.t('<p class="nota">Controles: ◀ ▶ andar · ▲ pular ou subir escadas · ▼ descer escadas e atravessar plataformas · toque no cenário para ir até um ponto · toque numa criatura: só o domador ataca · segure o dedo nela: o domador e as Centelhas atacam juntos · a engrenagem abre esta janela.</p></section>')
+          ? LV.t('<p class="nota">Controles: ◀ ▶ andar · ▲ pular ou subir escadas · ▼ descer escadas e atravessar plataformas · toque no cenário para ir até um ponto · toque numa criatura: só o domador ataca · segure o dedo nela: o domador e as Centelhas atacam juntos · segure o dedo num lugar vazio: as Centelhas correm até lá · a engrenagem abre esta janela.</p></section>')
           : LV.t('<p class="nota">Controles: A/D andar · Espaço pular · W/S subir ou descer escadas e atravessar plataformas · clique para ir até um ponto · Esc abre esta janela.</p></section>'));
     }
     h += secaoLevarSave(emJogo);

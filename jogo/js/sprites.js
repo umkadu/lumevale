@@ -94,9 +94,13 @@
     const dw = w * sx, dh = h * sy;
     const dx = -dw / 2, dy = o.voa ? -dh / 2 + oy : -dh + oy;
     c.drawImage(im, dx, dy, dw, dh);
+    // camadas por cima, no mesmo quadro (v1.19: a capa sobre o corpo padrão do domador)
+    const cams = [];
+    if (o.camadas) for (const n of o.camadas) { const ci = spr.get(n); if (ci) { cams.push([n, ci]); c.drawImage(ci, dx, dy, dw, dh); } }
     if (o.flash > 0.02) {
       c.globalAlpha *= Math.min(1, o.flash);
       c.drawImage(branco(nome, im), dx, dy, dw, dh);
+      for (const [n, ci] of cams) c.drawImage(branco(n, ci), dx, dy, dw, dh);
     }
     if (o.depois) { c.globalAlpha = o.alpha != null ? o.alpha : 1; o.depois(c, dx, dy, dw, dh); }
     c.restore();

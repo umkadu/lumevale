@@ -379,7 +379,8 @@
     document.addEventListener('contextmenu', (e) => { if (LV.movel && e.target.closest && e.target.closest('#stage')) e.preventDefault(); });
 
     /* clique esquerdo numa criatura: só o domador ataca. Clique direito: domador e pets atacam juntos.
-       No toque: tocar = só o domador; segurar o dedo ~0,45 s = todos. Clique no cenário: andar até lá. */
+       No toque: tocar = só o domador; segurar o dedo ~0,45 s = todos. Clique no cenário: andar até lá.
+       Clique direito / dedo segurado num lugar sem criaturas: as Centelhas andam até lá (v1.18.4). */
     const noMundo = (e) => {
       const r = cv.getBoundingClientRect();
       return {
@@ -406,17 +407,20 @@
       const alvo = game.inimigoEm(x, y, dedo ? 58 : 34);
       if (e.button === 2) {
         e.preventDefault();
-        if (alvo && game.atacarAlvo(alvo, true)) LV.audio && LV.audio.tocar('clique');
+        if (alvo ? game.atacarAlvo(alvo, true) : game.moverPets(x, y)) LV.audio && LV.audio.tocar('clique');
         return;
       }
       if (e.button !== 0) return;
-      if (alvo && dedo) {
+      if (dedo) {
+        // no cenário, o domador só sai andando quando o dedo sobe: segurar é a ordem para as Centelhas
         cancelarToque();
-        toque = { alvo, id: e.pointerId, cx: e.clientX, cy: e.clientY, feito: false };
+        toque = { alvo, x, y, id: e.pointerId, cx: e.clientX, cy: e.clientY, feito: false };
         toque.timer = setTimeout(() => {
           if (!toque) return;
           toque.feito = true;
-          if (game.atacarAlvo(toque.alvo, true)) { if (navigator.vibrate) try { navigator.vibrate(25); } catch (err) { /* sem vibração */ } }
+          const ok = toque.alvo ? game.atacarAlvo(toque.alvo, true) : game.moverPets(toque.x, toque.y);
+          if (ok && navigator.vibrate) try { navigator.vibrate(25); } catch (err) { /* sem vibração */ }
+          if (!ok && !toque.alvo) game.irPara(toque.x, toque.y);          // sem Centelhas em campo: só anda
         }, 450);
         return;
       }
@@ -426,12 +430,17 @@
     cv.addEventListener('pointerup', (e) => {
       if (!toque || toque.id !== e.pointerId) return;
       const t = toque; cancelarToque();
-      if (!t.feito) game.atacarAlvo(t.alvo, false);
+      if (t.feito) return;
+      if (t.alvo) game.atacarAlvo(t.alvo, false);
+      else game.irPara(t.x, t.y);
     });
     cv.addEventListener('pointercancel', cancelarToque);
     cv.addEventListener('pointermove', (e) => {
       if (!game.W) return;
-      if (toque && toque.id === e.pointerId && Math.hypot(e.clientX - toque.cx, e.clientY - toque.cy) > 18) cancelarToque();
+      if (toque && toque.id === e.pointerId && Math.hypot(e.clientX - toque.cx, e.clientY - toque.cy) > 18) {
+        const t = toque; cancelarToque();
+        if (!t.feito && !t.alvo) game.irPara(t.x, t.y);       // arrastou no cenário: anda até onde tocou, como antes
+      }
       if (e.pointerType !== 'mouse') return;
       const { x, y } = noMundo(e);
       if (game.captura && game.captura.fase === 'mira') {
@@ -449,7 +458,7 @@
   let iniciado = false;
   /* celular/tablet: tela de toque sem mouse (ou o app Android, que sempre é) */
   LV.plataforma = window.LV_PLATAFORMA || 'web';
-  LV.movel = LV.plataforma === 'android' || /[?&]movel=1\b/.test(location.search) ||
+  LV.movel = LV.plataforma === 'android' || LV.plataforma === 'switch' || /[?&]movel=1\b/.test(location.search) ||
     (!!window.matchMedia && matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches);
   document.documentElement.classList.toggle('movel', LV.movel);
 
@@ -511,8 +520,13 @@
   }
 
   const hot = window.claude && window.claude.hot;
-  try {
-    if (hot && typeof hot.ready === 'function') { hot.ready(start); setTimeout(() => start({}), 2500); }
-    else start((hot && hot.data) || {});
-  } catch (e) { start({}); }
+  const iniciar = () => {
+    try {
+      if (hot && typeof hot.ready === 'function') { hot.ready(start); setTimeout(() => start({}), 2500); }
+      else start((hot && hot.data) || {});
+    } catch (e) { start({}); }
+  };
+  // no Switch, o jogo espera os saves do cartão SD chegarem (js/switch.js)
+  if (window.LV_ESPERA && typeof window.LV_ESPERA.then === 'function') window.LV_ESPERA.then(iniciar, iniciar);
+  else iniciar();
 })();

@@ -443,6 +443,9 @@
     "raizes":{"parado":[0.5794,0.26,0.2071,0.9523,0.2667,0.0905,0.8286],"andando":[0.6319,0.2727,0.2024,0.9567,0.2849,0.0881,0.95],"pulando":[0.6051,0.2972,0.2048,0.9493,0.3098,0.0929,0.9095],"lanterna":[0.4632,0.2416,0.2048,0.8504,0.2536,0.1024,0.9619]},
     "real":{"parado":[0.5419,0.3022,0.2405,0.9464,0.3132,0.0929,0.8929],"andando":[0.5921,0.3113,0.2452,0.9515,0.3239,0.0976,1.0167],"pulando":[0.5865,0.3388,0.2476,0.9468,0.3371,0.1024,1.0238],"lanterna":[0.4357,0.3138,0.2429,0.8414,0.3175,0.1119,1.0357]}};
   /* HEROI_MED:FIM */
+  /* HEROI_CORPO:INICIO (gerado por ferramentas/capa_camada.js) — domador em camadas: altura de cada pose (× LV.HEROI.alt) e medidas do corpo (máscara fx, fy, largura; lanterna lx, ly, altura; proporção) */
+  LV.HEROI_CORPO = {"alt":{"parado":1.3564,"andando":1.3512,"pulando":1.3217,"lanterna":1.3581},"med":{"parado":[0.4669,0.4609,0.1963,0.8175,0.4859,0.0826,0.8946],"andando":[0.5039,0.4664,0.1971,0.8262,0.4953,0.083,0.9751],"pulando":[0.4993,0.4765,0.2013,0.8118,0.4979,0.0869,1.0763],"lanterna":[0.459,0.4813,0.1979,0.854,0.4987,0.0825,0.9216]}};
+  /* HEROI_CORPO:FIM */
 
   /* =========================================================
      ATAQUES ESPECIAIS DAS CENTELHAS (v1.12) — cada espécie tem 5; até 2 ficam equipados.
@@ -632,7 +635,7 @@
     for (const id in LV.SPECIES) for (let e = 0; e < 3; e++) l.push(LV.imgPet(id, e));
     for (const id in LV.HOSTIS) l.push(LV.HOSTIS[id].img);
     LV.MAPS.forEach((m) => l.push(m.chefe.img));
-    ['parado', 'andando', 'pulando', 'lanterna'].forEach((k) => l.push(LV.HEROI[k]));
+    ['parado', 'andando', 'pulando', 'lanterna'].forEach((k) => { l.push('heroi/corpo/' + k); l.push('heroi/capas/padrao/' + k); });
     for (const k in LV.PECAS) l.push('pecas/' + k);
     l.push('pecas/escada_mao');
     for (const k in LV.KITS || {}) ['pe', 'pm', 'pd', 'ct', 'cm', 'cb'].forEach((p) => l.push('kits/' + k + '/' + p));
@@ -663,7 +666,31 @@
     portao: { nome: LV.t('Campo de Treino'), papel: LV.t('Teste o dano das Centelhas'), estrutura: true, ir: true, cor: '#ffd27a' },
     portal: { nome: LV.t('Vila de Alvorada'), papel: LV.t('Voltar à vila'), estrutura: true, ir: true, cor: '#ffc46b' },
     saida: { nome: LV.t('Saída'), papel: LV.t('Raízes Murmurantes'), estrutura: true, ir: true, cor: '#b9e68f' },
+    roleta: { nome: LV.t('Roleta da Sorte'), papel: LV.t('Um giro grátis por dia'), estrutura: true, cor: '#ffd36b' },
   };
+  /* =========================================================
+     ROLETA DA SORTE (v1.19), na Vila de Alvorada: 1 giro grátis por dia e mais 3 pagando Lumes (o dia vira à meia-noite
+     do aparelho). 12 fatias, todas com a mesma chance. Os Lumes crescem com o nível do domador: cada prêmio vale o que
+     N criaturas do nível atual rendem. O bônus de XP (porcentagem e duração sorteadas a cada giro) só corre durante a
+     caçada, nos mapas. A Radiante vem no nível 1, sem evolução, de uma espécie qualquer.
+     ========================================================= */
+  LV.ROLETA = {
+    gratis: 1, pagos: 3,
+    fatias: [
+      { tipo: 'lumes', n: 0 }, { tipo: 'nada' }, { tipo: 'xp' }, { tipo: 'lanternas' },
+      { tipo: 'nada' }, { tipo: 'lumes', n: 1 }, { tipo: 'radiante' }, { tipo: 'nada' },
+      { tipo: 'xp' }, { tipo: 'lanternas' }, { tipo: 'nada' }, { tipo: 'lumes', n: 2 },
+    ],
+    abatesLumes: [40, 100, 250],     // prêmios de Lumes, em criaturas do nível atual
+    abatesPreco: 40,                  // preço de um giro pago, idem
+    xpPct: [20, 100, 5],              // bônus de XP: de 20% a 100%, de 5 em 5
+    xpMin: [10, 60, 5],               // duração: de 10 a 60 min de caçada, de 5 em 5
+    xpMaxSeg: 4 * 3600,               // bônus acumulado no máximo (o maior % fica, os tempos somam)
+    lanternas: [3, 10],
+  };
+  const bonito = (v) => { if (v < 100) return Math.max(1, Math.round(v)); const p = Math.pow(10, Math.floor(Math.log10(v)) - 1); return Math.round(v / p) * p; };
+  LV.roletaLumes = (nivel, n) => bonito(LV.F.ini(nivel).lumes * LV.ROLETA.abatesLumes[n]);
+  LV.roletaPreco = (nivel) => bonito(LV.F.ini(nivel).lumes * LV.ROLETA.abatesPreco);
   /* trocas do Velho Escambo: só entre materiais vizinhos (mapa a mapa).
      Descer (para o material do mapa seguinte) custa 5 por 1; subir (para o do mapa anterior) rende 2 por 1. */
   LV.TROCA = { ordem: ['musgo', 'esporo', 'escama', 'cristal', 'brasa'], sobe: 5, desce: 2 };
@@ -805,7 +832,9 @@
   LV.ITEM_CHEFE = [{ tipo: 'capa', id: 'raizes' }, { tipo: 'lanterna', id: 'candeia' }, { tipo: 'capa', id: 'brasao' }, { tipo: 'lanterna', id: 'cantante' }, { tipo: 'capa', id: 'coracao' }];
   LV.itemDef = (it) => (it.tipo === 'capa' ? LV.capa(it.id) : LV.lanternaEq(it.id));
   LV.imgItem = (it) => (it.tipo === 'capa' ? LV.imgCapa(it.id) : LV.imgLanterna(it.id));
-  LV.imgCapa = (id, pose) => (id && id !== 'padrao' ? 'heroi/capas/' + id + '/' : 'heroi/') + (pose || 'parado');
+  /* v1.19: o domador é um corpo padrão (heroi/corpo/<pose>) com a capa por cima (heroi/capas/<id>/<pose>, só a capa);
+     sem pose, a prévia do corpo vestido para a interface */
+  LV.imgCapa = (id, pose) => 'heroi/capas/' + (id || 'padrao') + '/' + (pose || 'previa');
   /* capas das conquistas entram na recompensa delas */
   LV.CAPAS.forEach((k) => { if (k.conq) { const c = C.find((x) => x.id === k.conq); if (c) c.rec = Object.assign({}, c.rec, { capa: k.id }); } });
   /* lanternas das conquistas novas */

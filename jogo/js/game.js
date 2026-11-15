@@ -22,7 +22,7 @@
     return {
       ecos: 0, ecosTotal: 0, renasc: 0, recorde: 1, up: Object.fromEntries(LV.META.map((u) => [u.id, 0])),
       best: {},                                  // bestiário: id -> { v: vista, k: derrotadas, c: capturadas }
-      tot: { kills: 0, capt: 0, evo: 0, brasa: 0, breus: 0, radCapt: 0 },   // totais de todas as jornadas (brasa: criaturas de brasa; breus: hostis; radCapt: Radiantes capturadas)
+      tot: { kills: 0, capt: 0, evo: 0, brasa: 0, breus: 0, radCapt: 0, radRoleta: 0 },   // totais de todas as jornadas (brasa: criaturas de brasa; breus: hostis; radCapt: Radiantes capturadas)
       conq: {},                                  // conquistas: 1 = pronta para resgatar, 2 = resgatada
       autoAttr: [],                              // atributos que recebem os pontos sozinhos ao subir de nível (fixos)
       autoVagas: 0,                              // vagas de automação já pagas (continuam após redefinir)
@@ -32,6 +32,7 @@
       equip: { capa: 'padrao', lanterna: 'simples' },   // capa e lanterna escolhidas (se o item sumir, volta ao padrão)
       compras: [],                               // itens visuais comprados na Loja (ficam para sempre)
       titulo: null,                              // título equipado (v1.17); sem título, aparece a patente do nível
+      roleta: { dia: '', gratis: 0, pagos: 0, giros: 0, xp: null },   // Roleta da Sorte (v1.19): giros do dia e bônus de XP ativo
     };
   }
   function novoEstado() {
@@ -89,14 +90,17 @@
     const sb = sm.best && typeof sm.best === 'object' ? sm.best : {};
     LV.CHAVES_BEST.forEach((id) => {
       const x = sb[id];
-      if (x) o.meta.best[id] = { v: !!x.v, k: intOr(x.k, 0, 0, 1e12), c: intOr(x.c, 0, 0, 1e9) };
+      if (x) o.meta.best[id] = { v: !!x.v, k: intOr(x.k, 0, 0, 1e12), c: intOr(x.c, 0, 0, 1e9), r: intOr(x.r, 0, 0, 1e9) };
     });
     // saves de antes das formas no bestiário: espécie já vista = forma inicial vista
     for (const sp in LV.SPECIES) { const b = o.meta.best[sp]; if (b && b.v && !o.meta.best[sp + '_0']) o.meta.best[sp + '_0'] = { v: true, k: 0, c: 0 }; }
     const st0 = s.st || {}, tt = sm.tot || {};
     // saves de antes do bestiário: os totais começam pelos números desta jornada
     o.meta.tot = { kills: intOr(tt.kills, intOr(st0.kills, 0, 0, 1e12), 0, 1e12), capt: intOr(tt.capt, intOr(st0.capturas, 0, 0, 1e9), 0, 1e9), evo: intOr(tt.evo, intOr(st0.evolucoes, 0, 0, 1e9), 0, 1e9),
-      brasa: intOr(tt.brasa, 0, 0, 1e12), breus: intOr(tt.breus, 0, 0, 1e12), radCapt: intOr(tt.radCapt, 0, 0, 1e9) };
+      brasa: intOr(tt.brasa, 0, 0, 1e12), breus: intOr(tt.breus, 0, 0, 1e12), radCapt: intOr(tt.radCapt, 0, 0, 1e9), radRoleta: intOr(tt.radRoleta, 0, 0, 1e9) };
+    const rl = sm.roleta && typeof sm.roleta === 'object' ? sm.roleta : {}, rx = rl.xp && typeof rl.xp === 'object' ? rl.xp : null;
+    o.meta.roleta = { dia: typeof rl.dia === 'string' ? rl.dia.slice(0, 10) : '', gratis: intOr(rl.gratis, 0, 0, 99), pagos: intOr(rl.pagos, 0, 0, 99), giros: intOr(rl.giros, 0, 0, 1e9),
+      xp: rx && numOr(rx.seg, 0, 0, 86400) > 0 ? { pct: intOr(rx.pct, 0, 0, 500), seg: numOr(rx.seg, 0, 0, 86400) } : null };
     const sq = sm.conq && typeof sm.conq === 'object' ? sm.conq : {};
     LV.CONQUISTAS.forEach((c) => { const v = intOr(sq[c.id], 0, 0, 2); if (v) o.meta.conq[c.id] = v; });
     const ids = LV.ATTR.map((a) => a.id);
@@ -110,7 +114,7 @@
       if (!uid || vistos.has(uid)) uid = 0; else vistos.add(uid);
       mx = Math.max(mx, uid);
       const b = p.bonus && LV.TALENTOS[p.bonus.t] ? { t: p.bonus.t, v: numOr(p.bonus.v, 0.1, 0.01, 0.5) } : null;
-      return { uid, sp: p.sp, nivel: intOr(p.nivel, 1, 1, 999), xp: numOr(p.xp, 0, 0, 1e300), est: intOr(p.est, 0, 0, 2), hab: intOr(p.hab, 1, 1, LV.HAB_MAX || 10), atqs: Array.isArray(p.atqs) ? [...new Set(p.atqs.filter((id) => (LV.ATQ_SP[p.sp] || []).includes(id)))].slice(0, 2) : null, atqN: p.atqN == null ? null : intOr(p.atqN, 1, 0, 5), atqV: Array.isArray(p.atqV) ? p.atqV.filter((id) => (LV.ATQ_SP[p.sp] || []).includes(id)) : null, bonus: b, especial: !!p.especial, radCapt: !!(p.especial && p.radCapt), apelido: typeof p.apelido === 'string' && p.apelido.trim() ? p.apelido.trim().slice(0, 20) : null };
+      return { uid, sp: p.sp, nivel: intOr(p.nivel, 1, 1, 999), xp: numOr(p.xp, 0, 0, 1e300), est: intOr(p.est, 0, 0, 2), hab: intOr(p.hab, 1, 1, LV.HAB_MAX || 10), atqs: Array.isArray(p.atqs) ? [...new Set(p.atqs.filter((id) => (LV.ATQ_SP[p.sp] || []).includes(id)))].slice(0, 2) : null, atqN: p.atqN == null ? null : intOr(p.atqN, 1, 0, 5), atqV: Array.isArray(p.atqV) ? p.atqV.filter((id) => (LV.ATQ_SP[p.sp] || []).includes(id)) : null, bonus: b, especial: !!p.especial, radCapt: !!(p.especial && p.radCapt), radRoleta: !!(p.especial && p.radRoleta), apelido: typeof p.apelido === 'string' && p.apelido.trim() ? p.apelido.trim().slice(0, 20) : null };
     });
     o.pets.forEach((p) => { if (!p.uid) p.uid = ++mx; conferirAtaques(p, false); });
     o.prox = Math.max(intOr(s.prox, 1, 1, 1e9), mx + 1);
@@ -203,8 +207,9 @@
       alc: b.alc + p.est * 10, estilo: b.estilo,
     };
   }
-  function domStats() {
-    const a = S.dom.attr, L = S.dom.nivel, mestre = 1 + 0.1 * MU('mestre');
+  const roletaXP = () => { const x = S.meta.roleta && S.meta.roleta.xp; return x && x.seg > 0 ? 1 + x.pct / 100 : 1; };
+  function domStats(semRoleta) {
+    const a = S.dom.attr, L = S.dom.nivel, mestre = 1 + 0.1 * MU('mestre'), rl = semRoleta ? 1 : roletaXP();
     return {
       hp: Math.round((100 + L * 14) * (1 + 0.04 * a.vigor) * (1 + (bonusCapa().vida || 0))),
       atk: Math.round((6 + L * 2.4) * (1 + 0.03 * a.forca) * (1 + 0.05 * S.up.garras) * (1 + (bonusCapa().dano || 0)) * (LV.lanternaEq(lanternaAtual()).mult || 1)),
@@ -212,8 +217,8 @@
       sorteCap: a.sorte * 0.015 + 0.08 * MU('lanterneiro'),
       coleta: (1 + 0.08 * S.up.faro) * (1 + 0.02 * a.sorte) * (1 + tit('coleta')),
       lumesMult: 1 + 0.06 * MU('heranca'),
-      xp: (1 + 0.08 * S.up.sabedoria) * mestre * (1 + tit('xp')),
-      xpPet: (1 + 0.08 * S.up.sabedoria) * (1 + 0.03 * a.vinculo) * mestre * (1 + tit('xpPet')),
+      xp: (1 + 0.08 * S.up.sabedoria) * mestre * (1 + tit('xp')) * rl,
+      xpPet: (1 + 0.08 * S.up.sabedoria) * (1 + 0.03 * a.vinculo) * mestre * (1 + tit('xpPet')) * rl,
       ima: 150 + 35 * S.up.ima,
       offlineH: 2 + S.up.descanso,
       moedasMult: 1 + 0.25 * MU('fortuna'),
@@ -618,7 +623,7 @@
     Object.assign(T, { hp: T.hpMax, x: 200, y: G, sup: 0, esc: null, vy: 0, caido: 0, alvoX: null });
     W.ini = []; W.proj = []; W.lant = []; W.areas = []; W.cam = 0;
     W.zonas.forEach((z) => { z.recarga = LV.rand(1, 3); });
-    W.pets.forEach((p) => { p.desm = 0; p.hp = p.hpMax; p.x = 160; p.y = p.voa ? G - 64 : G; p.sup = p.voa ? -1 : 0; p.salto = null; p.alvo = null; p.escudo = 0; });
+    W.pets.forEach((p) => { p.desm = 0; p.hp = p.hpMax; p.x = 160; p.y = p.voa ? G - 64 : G; p.sup = p.voa ? -1 : 0; p.salto = null; p.alvo = null; p.ordem = null; p.escudo = 0; });
     W.spawn = 2;
   }
 
@@ -1280,7 +1285,7 @@
   };
   function capturar(e, talento) {
     const pet = { uid: S.prox++, sp: e.sp, nivel: Math.max(1, Math.min(e.lv, F.capPet(S.dom.nivel))), xp: 0, est: e.est, apelido: null, hab: 1, bonus: talento || null };
-    if (!e.tutorial && Math.random() < LV.CHANCE_RADIANTE + tit('radiante')) { pet.especial = true; pet.radCapt = true; S.meta.tot.radCapt = (S.meta.tot.radCapt || 0) + 1; }
+    if (!e.tutorial && Math.random() < LV.CHANCE_RADIANTE + tit('radiante')) { pet.especial = true; pet.radCapt = true; S.meta.tot.radCapt = (S.meta.tot.radCapt || 0) + 1; contar(e.sp, 'r'); contar(formaDe(e), 'r'); }
     conferirAtaques(pet, false);
     S.pets.push(pet); S.st.capturas++; contar(e.sp, 'c'); contar(formaDe(e), 'c'); S.meta.tot.capt++;
     e.capturado = true; e.hp = 0;
@@ -1537,6 +1542,59 @@
     p.salto = { x0: p.x, y0: p.y, x1: tx, y1: s.y, t: 0, dur: LV.clamp(d / 520, 0.35, 0.8), sup, arco: 40 + Math.max(0, p.y - s.y) * 0.5 };
     p.sup = -1; p.saltoCd = 0.6;
   }
+  /* ordem de andar (v1.18.4): clique direito ou toque longo num lugar sem criaturas. As Centelhas correm até o ponto,
+     esperam ORDEM_ESPERA s lá (atacando só quem já estiver ao alcance) e voltam ao normal. Serve para tirá-las dos
+     ataques em área dos Guardiões. Desiste depois de ORDEM_MAX s se não conseguir chegar. */
+  const ORDEM_ESPERA = 3, ORDEM_MAX = 8, ORDEM_VEL = 280;
+  function seguirOrdem(p, o, alvos, foco, dt) {
+    const L = W.L;
+    const noAlcance = (e) => {
+      const raio = e.h * 0.35, dx = Math.abs(e.x - p.x), dy = Math.abs(alvoY(e) - alvoY(p));
+      return p.estilo === 'investida' ? dx <= p.alc + raio + 12 && dy < 70 : Math.hypot(dx, dy) <= p.alc + raio + 30;
+    };
+    const perto = alvos.filter(noAlcance);
+    const e = foco && perto.includes(foco) ? foco : maisProximo(p, perto, Infinity, (x) => dist2(x, p));
+    p.alvo = e || null;
+    if (e) {
+      p.cd -= dt;
+      if (p.cd <= 0) { atacarPet(p, e); p.cd = 1 / (p.spd * (1 + (p.bVel > 0 ? p.bVelK || 0 : 0)) * (1 + sk('ritmo'))); }
+    }
+    if (p.preso > 0) { p.mov = 0; if (p.sup < 0 && !p.voa) N().mover(L, p, 0, dt); return; }   // preso: não sai do lugar
+    const olhar = (dx) => virar(p, Math.abs(dx) > 20 ? Math.sign(dx) : e ? Math.sign(e.x - p.x) || p.face : p.face, dt, 0.15);
+    if (p.voa) {
+      const dx = o.x - p.x, dy = o.y - p.y, d = Math.hypot(dx, dy);
+      if (d > 3) { const k = Math.min(1, (ORDEM_VEL * dt) / d); p.x += dx * k; p.y += dy * k; }
+      p.mov = d > 6 ? 1 : 0;
+      olhar(dx);
+      return;
+    }
+    if (p.sup < 0) { N().mover(L, p, 0, dt); return; }
+    if (o.sup !== p.sup) { if (p.saltoCd <= 0) saltar(p, o.sup, o.x); return; }
+    const s = L.sup[p.sup], dx = LV.clamp(o.x, s.x0 + 10, s.x1 - 10) - p.x;
+    const v = Math.abs(dx) > 3 ? Math.sign(dx) * Math.min(ORDEM_VEL, Math.abs(dx) * 6) : 0;
+    N().mover(L, p, v, dt);
+    if (p.sup >= 0) p.x = LV.clamp(p.x, s.x0 + 6, s.x1 - 6);
+    p.mov = LV.lerp(p.mov, Math.abs(v) > 20 ? 1 : 0, Math.min(1, dt * 10));
+    olhar(v);
+  }
+  game.moverPets = function (x, y) {
+    if (!W || !W.pets || !isFinite(x) || !isFinite(y)) return false;
+    const vivos = W.pets.filter((p) => p.desm <= 0);
+    if (!vivos.length) return false;
+    x = LV.clamp(x, 30, W.w - 30);
+    // a plataforma onde o clique "pousa" (até 30 px acima dela); abaixo de tudo, o chão
+    let s = N().sobre(W.L, x, y - 30);
+    if (!s) for (const q of W.L.sup) if (x >= q.x0 && x <= q.x1 && (!s || q.y > s.y)) s = q;
+    if (!s) s = W.L.sup[0];
+    W.foco = null; W.focoAuto = false;
+    W.ordem = { x, y: s.y, t: 0 };
+    vivos.forEach((p, k) => {
+      const px = LV.clamp(x + (k - (vivos.length - 1) / 2) * 26, s.x0 + 12, s.x1 - 12);   // lado a lado, sem amontoar
+      p.ordem = { x: px, sup: s.id, y: LV.clamp(y, s.y - 170, s.y - 40), t: 0, espera: 0 };
+      p.alvo = null;
+    });
+    return true;
+  };
   function updPets(dt) {
     const T = W.tam, L = W.L, ini = W.ini.filter(alvoValido);
     const tSup = T.esc ? -1 : T.sup;
@@ -1559,7 +1617,7 @@
       }
       const hyVoo = T.y - 66 - p.est * 6 + Math.sin(W.t * 2.2 + i) * 6;
       if (p.desm > 0) {
-        p.desm -= dt;
+        p.desm -= dt; p.ordem = null;
         if (p.voa) { p.x += (T.x - T.face * (30 + i * 16) - p.x) * Math.min(1, dt * 2); p.y += (T.y - 24 - p.y) * Math.min(1, dt * 3); }
         else if (tSup >= 0 && p.sup !== tSup && p.saltoCd <= 0) saltar(p, tSup, T.x - T.face * (30 + i * 16));
         else if (p.sup >= 0) N().mover(L, p, Math.sign(T.x - T.face * (30 + i * 16) - p.x) * 60, dt);
@@ -1577,7 +1635,16 @@
         const at = LV.ATQ[id], tot = LV.recargaAtq(at, habNivel(p));
         if (p.cds[id] == null) p.cds[id] = tot * 0.5;
         p.cds[id] -= dt * (1 + sk('ritmo', 'v2'));
+        if (p.ordem && at.tipo === 'investida') continue;      // andando por ordem: não atravessa o alvo (voltaria para o perigo)
         if (p.cds[id] <= 0 && p.gcd <= 0) { if (tentarAtaque(p, at, alvosHab)) { p.cds[id] = tot; p.gcd = 1; } else p.cds[id] = 0; }
+      }
+      if (p.ordem) {
+        const o = p.ordem;
+        o.t += dt;
+        const chegou = p.voa ? Math.hypot(o.x - p.x, o.y - p.y) < 12 : p.sup === o.sup && Math.abs(o.x - p.x) < 10;
+        if (chegou) o.espera += dt;
+        if (o.espera >= ORDEM_ESPERA || o.t >= ORDEM_MAX) p.ordem = null;
+        else { seguirOrdem(p, o, alvosHab, foco, dt); return; }
       }
       if (foco) p.alvo = foco;
       else if (p.alvo && (!alvoValido(p.alvo) || dist2(p.alvo, T) > raioPet() + 40 || !permitidos.includes(p.alvo))) p.alvo = null;
@@ -2129,6 +2196,8 @@
   game.step = function (dt) {
     if (!W || !S) return;
     W.t += dt; S.st.tempo += dt;
+    const rxp = !W.lugar && S.meta.roleta && S.meta.roleta.xp;
+    if (rxp) { rxp.seg -= dt; if (rxp.seg <= 0) { S.meta.roleta.xp = null; emit('toast', { t: LV.t('O bônus de XP da Roleta da Sorte acabou.'), tipo: 'info' }); } }
     for (const id in SK) { const x = SK[id]; if (x.t > 0) x.t = Math.max(0, x.t - dt); if (x.cd > 0) x.cd = Math.max(0, x.cd - dt); }
     const ds = domStats();
     statusAliados(dt);
@@ -2229,7 +2298,7 @@
     const T = W.tam;
     T.foco = e; T.alvoX = null; T.destino = null; T.manual = Math.max(T.manual, 2);
     if (T.esc) sentidoNaEscada(T, e.x, alvoY(e), supDe(e));
-    if (todos) { W.foco = e; W.focoAuto = false; W.pets.forEach((p) => { if (p.desm <= 0) p.alvo = e; }); }
+    if (todos) { W.foco = e; W.focoAuto = false; W.ordem = null; W.pets.forEach((p) => { p.ordem = null; if (p.desm <= 0) p.alvo = e; }); }
     else if (W.foco && W.foco !== e) W.foco = null;
     W.marca = { e, todos: !!todos, t: 0 };
     if (T.cd > 0.35) T.cd = 0.35;
@@ -2303,15 +2372,28 @@
     const ok = SPR().desenhar(c, e.img, Object.assign({ x: e.x, y: e.y, h: e.h, face: e.face, voa: e.voa, flip: e.flip }, o));
     if (!ok) art.drawCreature(c, Object.assign({ x: e.x, y: e.y, corpo: e.corpo, pal: e.pal, est: e.est, s: e.tipo === 'chefe' ? e.s : 1, face: e.face, boss: e.tipo === 'chefe' }, o));
   }
-  /* sprite do domador com a capa equipada: a capa é desenhada com a máscara do mesmo tamanho e no mesmo lugar
-     da capa padrão (medidas em LV.HEROI_MED), e a lanterna fica onde ela aparece em cada desenho */
+  /* sprite do domador com a capa equipada (medidas em LV.HEROI_MED). v1.19: todas as capas deixam o domador da
+     altura da capa padrão — a distância dos pés até o centro da máscara é a mesma, sem distorcer o desenho (antes a
+     escala vinha da largura da máscara e, como cada desenho tem proporções próprias, algumas capas ficavam até 33%
+     mais altas). Só o que fica acima da cabeça (chapéu de cogumelo, crista, coroa) passa um pouco. A máscara fica
+     no mesmo lugar e a lanterna onde ela aparece em cada desenho. */
   function poseHeroi(T, pose, capa) {
+    // v1.19: corpo padrão + capa por cima, no mesmo quadro: todas as capas com exatamente o mesmo corpo
+    const C = LV.HEROI_CORPO, nc = 'heroi/corpo/' + pose;
+    if (C && C.med[pose] && SPR().garantir(nc)) {
+      const M = C.med[pose], h = T.h * C.alt[pose], w = M[6] * h, ic = LV.imgCapa(capa || 'padrao', pose);
+      const r = { nome: nc, camadas: SPR().garantir(ic) ? [ic] : [], h, w, M, dx: (0.5 - M[0]) * w };
+      r.lx = (r.dx + (M[3] - 0.5) * w) * T.face;
+      r.ly = -(1 - M[4]) * h;
+      return r;
+    }
+    // desenhos antigos (um por capa), só se o corpo padrão não carregar
     const MB = LV.HEROI_MED && LV.HEROI_MED.base[pose];
     const r = { nome: LV.HEROI[pose], h: T.h, dx: 0, M: MB, w: MB ? MB[6] * T.h : T.h };
     if (capa && capa !== 'padrao') {
-      const nc = LV.imgCapa(capa, pose), MC = LV.HEROI_MED && LV.HEROI_MED[capa] && LV.HEROI_MED[capa][pose];
+      const nc = 'heroi/capas/' + capa + '/' + pose, MC = LV.HEROI_MED && LV.HEROI_MED[capa] && LV.HEROI_MED[capa][pose];
       if (MC && MB && SPR().garantir(nc)) {
-        const hc = T.h * MB[2] / MC[2], wc = MC[6] * hc;
+        const hc = T.h * (1 - MB[1]) / (1 - MC[1]), wc = MC[6] * hc;
         r.nome = nc; r.h = hc; r.w = wc; r.M = MC;
         r.dx = (MB[0] - 0.5) * MB[6] * T.h - (MC[0] - 0.5) * wc;   // alinha o centro da máscara
       }
@@ -2322,6 +2404,20 @@
     return r;
   }
   game.poseHeroi = poseHeroi;
+  /* Roleta da Sorte: zera os giros quando o dia do aparelho muda */
+  function roletaHoje() {
+    const r = S.meta.roleta || (S.meta.roleta = { dia: '', gratis: 0, pagos: 0, giros: 0, xp: null });
+    const d = new Date(), hoje = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    if (r.dia !== hoje) { r.dia = hoje; r.gratis = 0; r.pagos = 0; }
+    return r;
+  }
+  game.roleta = function () {
+    if (!S) return null;
+    const r = roletaHoje(), R = LV.ROLETA, nv = S.dom.nivel;
+    return { gratis: Math.max(0, R.gratis - r.gratis), pagos: Math.max(0, R.pagos - r.pagos), preco: LV.roletaPreco(nv), lumes: [0, 1, 2].map((n) => LV.roletaLumes(nv, n)), xp: r.xp && r.xp.seg > 0 ? r.xp : null, giros: r.giros };
+  };
+  /* Lumes ao libertar uma Centelha */
+  game.valorLibertar = (p) => Math.round(10 * p.nivel * (1 + p.est));
   function desenharHeroi(c, T) {
     const rank = LV.rankIdx(S.dom.nivel), R = LV.RANKS[rank], t = W.t;
     let pose = 'parado';
@@ -2330,7 +2426,7 @@
     else if (T.mov > 0.3) pose = Math.floor(t * 6.5) % 2 ? 'andando' : 'parado';
     const P = poseHeroi(T, pose, capaAtual());
     const caido = T.caido > 0;
-    const o = { x: T.x + P.dx * T.face, y: T.y, h: P.h, face: T.face, t, mov: T.sup < 0 && !T.esc ? 0 : T.mov, flash: caido ? 0.5 : T.flash * 0.8, alpha: caido ? Math.max(0, (T.caido - 1.2) / 2) : 1 };
+    const o = { x: T.x + P.dx * T.face, y: T.y, h: P.h, face: T.face, t, mov: T.sup < 0 && !T.esc ? 0 : T.mov, flash: caido ? 0.5 : T.flash * 0.8, alpha: caido ? Math.max(0, (T.caido - 1.2) / 2) : 1, camadas: P.camadas };
     const Lk = LV.lanternaEq(lanternaAtual());
     if (Lk.id !== 'simples' && SPR().get(LV.imgLanterna(Lk.id)) && P.M) {
       // a lanterna equipada cobre a do desenho, no centro do vidro, acompanhando a animação do corpo
@@ -2426,6 +2522,20 @@
       c.restore();
     }
     if (W.marca) { W.marca.t += 1 / 60; if (W.marca.t > 2) W.marca = null; }
+    // ordem de andar das Centelhas: anel azul no chão e setinha enquanto alguma ainda segue a ordem
+    if (W.ordem && !W.pets.some((p) => p.ordem)) W.ordem = null;
+    if (W.ordem) {
+      const o = W.ordem, ent = Math.max(0, 1 - o.t * 3);
+      o.t += 1 / 60;
+      c.save();
+      c.strokeStyle = '#8fd8ff'; c.lineWidth = 2; c.globalAlpha = 0.7 + 0.3 * Math.sin(t * 6);
+      c.setLineDash([6, 5]); c.lineDashOffset = t * 20;
+      c.beginPath(); c.ellipse(o.x, o.y + 2, 30 * (1 + ent), 7 * (1 + ent), 0, 0, TAU); c.stroke();
+      c.setLineDash([]); c.globalAlpha = 0.9; c.fillStyle = '#8fd8ff';
+      const ty = o.y - 26 + Math.sin(t * 5) * 3;
+      c.beginPath(); c.moveTo(o.x - 6, ty - 8); c.lineTo(o.x + 6, ty - 8); c.lineTo(o.x, ty); c.closePath(); c.fill();
+      c.restore();
+    }
     // tutorial: seta grande e pulsante sobre a criatura enquanto é ela que o jogador precisa tocar
     const tu = game.tutorial;
     if (tu && (tu.passo === 'atacar' || tu.passo === 'mirar') && tu.alvo.hp > 0 && !tu.alvo.capt) {
@@ -3154,7 +3264,7 @@
   };
   game.calcOffline = function (seg) {
     if (!S || !S.inicial || !S.ativos.length) return null;
-    const ds = domStats(), cap = ds.offlineH * 3600, s = Math.min(seg, cap);
+    const ds = domStats(true), cap = ds.offlineH * 3600, s = Math.min(seg, cap);
     // na vila e no Campo de Treino não há caçada: nada a ganhar (S.noLugar = salvo lá, para quem fechou o jogo)
     const lugar = (W && W.lugar) || S.noLugar;
     if (lugar) return { lugar, seg: s, segReal: seg, kills: 0 };
@@ -3292,6 +3402,7 @@
       if (n.estr) {
         const ex = n.x + (n.ex || 0);
         if (SPR().garantir(n.estr)) { const im = SPR().get(n.estr), w = (im.naturalWidth / im.naturalHeight) * n.eh; c.drawImage(im, ex - w / 2, n.y - n.eh + 6, w, n.eh); }
+        else if (n.id === 'roleta') rodaVila(c, n, t);
         else { c.fillStyle = 'rgba(30,20,12,0.85)'; c.fillRect(n.x - 60, n.y - n.eh * 0.8, 120, n.eh * 0.8); c.fillStyle = D.cor || '#ffc46b'; c.fillRect(n.x - 68, n.y - n.eh * 0.8 - 14, 136, 16); }
         art.glow(c, n.x, n.y - n.eh * 0.55, n.eh * 0.55, D.cor || '#ffc46b', 0.16 + 0.05 * Math.sin(t * 2 + n.t0));
         if (n.id === 'iris') brilhoAltar(c, n, t);
@@ -3309,6 +3420,35 @@
       }
     }
     if (festa) lumeSubindo(c, cam, vw, t, vis);
+  }
+  /* ---- Roleta da Sorte na vila (v1.19): roda de madeira num poste, girando devagar, com lampadinhas no aro ---- */
+  const COR_FATIA = { lumes: '#c98a2a', nada: '#3a3442', xp: '#2f8fb0', lanternas: '#b8562a', radiante: '#e8c44e' };
+  function rodaVila(c, n, t) {
+    const x = n.x, chao = n.y + 4, r = 46, cy = chao - n.eh + r + 8, fat = LV.ROLETA.fatias, ang = (Math.PI * 2) / fat.length;
+    c.save();
+    // poste e base
+    c.fillStyle = '#2a1a10'; c.strokeStyle = '#120a06'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(x - 7, cy); c.lineTo(x + 7, cy); c.lineTo(x + 10, chao - 10); c.lineTo(x - 10, chao - 10); c.closePath(); c.fill(); c.stroke();
+    c.beginPath(); c.ellipse(x, chao - 8, 30, 8, 0, 0, Math.PI * 2); c.fillStyle = '#3a2614'; c.fill(); c.stroke();
+    // roda
+    const rot = t * 0.35;
+    for (let i = 0; i < fat.length; i++) {
+      const a0 = rot + i * ang - Math.PI / 2 - ang / 2;
+      c.beginPath(); c.moveTo(x, cy); c.arc(x, cy, r, a0, a0 + ang); c.closePath();
+      c.fillStyle = COR_FATIA[fat[i].tipo]; c.globalAlpha = 0.95; c.fill(); c.globalAlpha = 1;
+      c.strokeStyle = 'rgba(20,12,6,0.85)'; c.lineWidth = 1.2; c.stroke();
+    }
+    c.beginPath(); c.arc(x, cy, r, 0, Math.PI * 2); c.strokeStyle = '#d9a845'; c.lineWidth = 5; c.stroke();
+    c.strokeStyle = '#120a06'; c.lineWidth = 1.5; c.beginPath(); c.arc(x, cy, r + 3, 0, Math.PI * 2); c.stroke();
+    for (let k = 0; k < 12; k++) {      // lampadinhas no aro, acendendo em sequência
+      const a = k * ang + t * 0.2, on = (Math.floor(t * 4) + k) % 3 === 0;
+      c.beginPath(); c.arc(x + Math.cos(a) * r, cy + Math.sin(a) * r, 2.6, 0, Math.PI * 2); c.fillStyle = on ? '#fff3c4' : '#9b7a34'; c.fill();
+    }
+    c.beginPath(); c.arc(x, cy, 9, 0, Math.PI * 2); c.fillStyle = '#2a1a10'; c.fill(); c.strokeStyle = '#d9a845'; c.lineWidth = 2.5; c.stroke();
+    // ponteiro
+    c.beginPath(); c.moveTo(x - 8, cy - r - 12); c.lineTo(x + 8, cy - r - 12); c.lineTo(x, cy - r + 4); c.closePath(); c.fillStyle = '#ffe3a3'; c.fill(); c.strokeStyle = '#120a06'; c.lineWidth = 1.5; c.stroke();
+    c.restore();
+    art.glow(c, x, cy, r * 1.6, '#ffd36b', 0.18 + 0.06 * Math.sin(t * 3));
   }
   /* ---- vila depois do Coração (v1.17.7): o grande lampião com uma coluna de luz, varais de luzinhas,
      chão aquecido e gotas de Lume subindo, como no final ("o Lume volta a subir") ---- */
@@ -3412,7 +3552,7 @@
     c.save();
     c.lineCap = 'round'; c.lineJoin = 'round';
     for (let i = 0; i < 3; i++) {
-      const x = n.x - 108 + i * 24, y = n.y - 16, a = 0.25 + 0.75 * Math.max(0, Math.sin(t * 3 - i * 0.9));
+      const x = n.x - 86 + i * 20, y = n.y - 16, a = 0.25 + 0.75 * Math.max(0, Math.sin(t * 3 - i * 0.9));
       c.globalAlpha = a;
       c.strokeStyle = 'rgba(20,12,6,0.7)'; c.lineWidth = 7;
       c.beginPath(); c.moveTo(x - 6, y - 9); c.lineTo(x + 4, y); c.lineTo(x - 6, y + 9); c.stroke();
@@ -3420,7 +3560,7 @@
       c.beginPath(); c.moveTo(x - 6, y - 9); c.lineTo(x + 4, y); c.lineTo(x - 6, y + 9); c.stroke();
     }
     c.restore();
-    art.glow(c, n.x - 84, n.y - 16, 46, cor || '#b9e68f', 0.12 + 0.06 * Math.sin(t * 3));
+    art.glow(c, n.x - 66, n.y - 16, 42, cor || '#b9e68f', 0.12 + 0.06 * Math.sin(t * 3));
   }
   /* nome e ofício sobre cada morador; o mais perto do domador ganha destaque */
   function rotulosNpc(c, cam, vw, t) {
@@ -3742,9 +3882,58 @@
       if (!p) return 'nao';
       if (S.pets.length <= 1) return 'ultimo';
       if (S.ativos.includes(uid) && S.ativos.length <= 1) return 'ultimo';
-      const valor = Math.round(10 * p.nivel * (1 + p.est));
+      const valor = game.valorLibertar(p);
       S.pets = S.pets.filter((q) => q !== p);
       S.ativos = S.ativos.filter((u) => u !== uid);
+      S.lumes += valor;
+      montarPets(); emit('equipe');
+      return valor;
+    },
+    /* Roleta da Sorte (v1.19): o prêmio já vale ao girar (a animação da janela só mostra onde parou) */
+    girarRoleta(pago) {
+      if (!W || W.lugar !== 'vila') return { erro: 'lugar' };
+      const r = roletaHoje(), R = LV.ROLETA, nv = S.dom.nivel;
+      if (!pago) { if (r.gratis >= R.gratis) return { erro: 'gratis' }; r.gratis++; }
+      else {
+        if (r.gratis < R.gratis) return { erro: 'temGratis' };
+        if (r.pagos >= R.pagos) return { erro: 'limite' };
+        const preco = LV.roletaPreco(nv);
+        if (S.lumes < preco) return { erro: 'lumes' };
+        S.lumes -= preco; r.pagos++;
+      }
+      r.giros++;
+      const idx = Math.floor(Math.random() * R.fatias.length), f = R.fatias[idx], res = { idx, tipo: f.tipo };
+      const passo = (q) => q[0] + q[2] * Math.floor(Math.random() * ((q[1] - q[0]) / q[2] + 1));
+      if (f.tipo === 'lumes') { res.v = LV.roletaLumes(nv, f.n); S.lumes += res.v; }
+      else if (f.tipo === 'lanternas') { res.v = LV.randi(R.lanternas[0], R.lanternas[1]); S.lanternas += res.v; }
+      else if (f.tipo === 'xp') {
+        res.pct = passo(R.xpPct); res.min = passo(R.xpMin);
+        const a = r.xp && r.xp.seg > 0 ? r.xp : null;
+        r.xp = a ? { pct: Math.max(a.pct, res.pct), seg: Math.min(R.xpMaxSeg, a.seg + res.min * 60) } : { pct: res.pct, seg: res.min * 60 };
+      } else if (f.tipo === 'radiante') {
+        if (S.pets.length >= 80) { res.cheio = true; res.v = LV.roletaLumes(nv, 2); S.lumes += res.v; }
+        else {
+          const ids = Object.keys(LV.SPECIES), sp = ids[Math.floor(Math.random() * ids.length)];
+          const pet = { uid: S.prox++, sp, nivel: 1, xp: 0, est: 0, apelido: null, hab: 1, bonus: null, especial: true, radCapt: true, radRoleta: true };
+          conferirAtaques(pet, false);
+          S.pets.push(pet);
+          S.meta.tot.radRoleta = (S.meta.tot.radRoleta || 0) + 1; contar(sp, 'r'); contar(sp + '_0', 'r');
+          if (S.ativos.length < slots()) { S.ativos.push(pet.uid); montarPets(); }
+          res.pet = pet;
+          emit('equipe');
+        }
+      }
+      return res;
+    },
+    /* v1.19: várias de uma vez (seleção na coleção). Pelo menos uma fica na coleção e uma em campo. */
+    libertarVarias(uids) {
+      const sel = S.pets.filter((q) => uids.includes(q.uid));
+      if (!sel.length) return 'nada';
+      if (sel.length >= S.pets.length) return 'ultimo';
+      if (S.ativos.length && S.ativos.every((u) => uids.includes(u))) return 'campo';
+      const valor = sel.reduce((t, p) => t + game.valorLibertar(p), 0);
+      S.pets = S.pets.filter((q) => !sel.includes(q));
+      S.ativos = S.ativos.filter((u) => !uids.includes(u));
       S.lumes += valor;
       montarPets(); emit('equipe');
       return valor;

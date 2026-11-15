@@ -721,6 +721,20 @@
   .tile.ativo .tag-tal { left: 14px; }
   .tile.especial { border-color: rgba(240, 207, 134, 0.55); background: radial-gradient(circle at 50% 35%, rgba(255, 211, 107, 0.16), transparent 70%); }
   .tile.especial img { filter: drop-shadow(0 0 6px rgba(255, 211, 107, 0.8)); }
+  /* Libertar (v1.19): botão pequeno e vermelho no topo da coleção; seleção com marca no canto */
+  .sec-h:has(.lib-acoes) { justify-content: flex-start; flex-wrap: wrap; }
+  .lib-acoes { display: inline-flex; gap: 6px; margin-left: auto; align-self: center; }
+  .btn.lib { border-color: var(--ruim); color: #ffd9d2; background: color-mix(in srgb, var(--ruim) 24%, transparent); }
+  .btn.lib:hover:not(:disabled) { border-color: var(--ruim); color: #fff; background: color-mix(in srgb, var(--ruim) 42%, transparent); }
+  .btn.lib.cinza:disabled { opacity: 1; border-color: var(--linha2); color: var(--apagado); background: rgba(255, 255, 255, 0.04); }
+  .lib-nota { margin: 6px 0 8px; }
+  .tile .tag-lib { position: absolute; top: 3px; right: 3px; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 50%; border: 1.5px solid var(--linha2); background: rgba(0, 0, 0, 0.35); color: transparent; }
+  .tile .tag-lib svg { width: 11px; height: 11px; }
+  .tile.marcada { border-color: var(--ruim); background: color-mix(in srgb, var(--ruim) 12%, transparent); }
+  .tile.marcada .tag-lib { background: var(--ruim); border-color: var(--ruim); color: #fff; }
+  .lib-fotos { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 10px 0 4px; }
+  .lib-fotos img { width: 40px; height: 40px; object-fit: contain; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--linha); }
+  .lumes-txt { color: #f2d38a; white-space: nowrap; }
   .opt.travado { opacity: 0.6; cursor: not-allowed; }
   .auto-attr { display: grid; gap: 4px; }
   .auto-novo select { background: #04060a; color: var(--tinta); border: 1px solid var(--linha2); padding: 7px 8px; font: 14px var(--f-corpo); }
@@ -786,6 +800,38 @@
   .bcard span { font-size: 11.5px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bcard small { font-size: 10.5px; color: var(--apagado); }
   .bcard.oculta img { filter: brightness(0) drop-shadow(0 0 1px rgba(200, 210, 230, 0.55)); opacity: 0.75; }
+  /* controle por joystick (v1.19): destaque do botão escolhido nos menus */
+  .foco-pad { outline: 2px solid #ffd36b !important; outline-offset: 2px; box-shadow: 0 0 0 5px rgba(255, 211, 107, 0.22); }
+  /* Roleta da Sorte (v1.19) */
+  .roleta-m { max-width: 430px; }
+  .rl-palco { position: relative; width: min(320px, 76vw); aspect-ratio: 1; margin: 18px auto 6px; }
+  .rl-palco::before { content: ''; position: absolute; inset: 4%; border-radius: 50%; box-shadow: 0 0 34px rgba(255, 196, 92, 0.35); animation: rlBrilho 2.4s ease-in-out infinite; pointer-events: none; }
+  @keyframes rlBrilho { 50% { box-shadow: 0 0 46px rgba(255, 196, 92, 0.6); } }
+  .rl-roda { position: relative; width: 100%; height: 100%; transition: transform 4.6s cubic-bezier(0.12, 0.7, 0.1, 1); filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55)); }
+  .rl-roda svg { width: 100%; height: 100%; display: block; }
+  .rl-tinta { mix-blend-mode: multiply; opacity: 0.9; }
+  .rl-ponteiro { position: absolute; left: 50%; top: -14px; width: 30px; height: 40px; transform: translateX(-50%); z-index: 2; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.7)); }
+  .rl-ponteiro svg { width: 100%; height: 100%; display: block; }
+  .rl-t1, .rl-t2 { paint-order: stroke; stroke: #140c06; stroke-linejoin: round; }
+  .rl-t1 { font: 700 11.5px var(--f-corpo); stroke-width: 3px; }
+  .rl-t2 { font: 700 8px var(--f-corpo); letter-spacing: 0.05em; text-transform: uppercase; stroke-width: 2.4px; }
+  .rl-res { min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 10px; text-align: center; font-size: 15px; }
+  .rl-res img { object-fit: contain; filter: drop-shadow(0 0 8px rgba(255, 211, 107, 0.8)); }
+  .rl-res.nada { color: var(--apagado); }
+  .rl-res.lumes { color: #f2d38a; }
+  .rl-res.xp { color: #8fe0ff; }
+  .rl-res.lanternas { color: #ffb070; }
+  .rl-res.radiante { color: #ffe27a; text-shadow: 0 0 10px rgba(255, 211, 107, 0.6); }
+  .rl-info { display: flex; justify-content: center; gap: 16px; font-size: 12.5px; color: var(--apagado); }
+  .rl-info b { color: var(--tinta); }
+  .rl-xp { text-align: center; font-size: 12.5px; color: #8fe0ff; margin: 6px 0 0; }
+  .rl-acoes { margin-top: 10px; justify-content: center; }
+  .pill.xpb { color: #8fe0ff; }
+  /* Radiantes no Bestiário (v1.19) */
+  .bcard .br { position: absolute; top: 3px; left: 4px; font: 700 10px var(--f-corpo); font-style: normal; color: #ffd36b; text-shadow: 0 0 6px rgba(255, 211, 107, 0.7); }
+  .rad-cont { margin: 4px 0 0; font-size: 13px; color: #ffe3a3; }
+  .rad-cont b { color: #ffd36b; text-shadow: 0 0 8px rgba(255, 211, 107, 0.55); }
+  .rad-dd { color: #ffd36b; }
   .bcard.oculta span { color: var(--fraco); }
   .bcard:hover, .bcard.sel { border-color: color-mix(in srgb, var(--acc) 55%, transparent); }
   .bcard.sel { background: color-mix(in srgb, var(--acc) 7%, transparent); }
@@ -1083,6 +1129,7 @@
             <div class="bar xp thin" title="Experiência"><i id="h-xp"></i></div>
             <div class="recursos">
               <span class="pill" title="Lumes"><svg class="ic" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .8 10.4 6 6 11.2 1.6 6Z" fill="#f2d38a" stroke="#05060a" stroke-width="1"/></svg><span id="h-lumes">0</span></span>
+              <span class="pill xpb" id="h-xpb" title="Bônus de XP da Roleta da Sorte (corre durante a caçada)" hidden></span>
               <span class="pill" title="Lanternas de captura"><svg class="ic" viewBox="0 0 12 14" aria-hidden="true"><path d="M3 5h6l1 7H2Z" fill="#ffe7b0" stroke="#05060a"/><path d="M2.4 5 6 1.6 9.6 5Z" fill="#05060a"/></svg><span id="h-lant">5</span></span>
             </div>
           </div>
@@ -1179,6 +1226,7 @@
   </div>
 </div>
 
+<script src="js/switch.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/lang_en.js"></script>
 <script src="js/data.js"></script>
@@ -1192,4 +1240,5 @@
 <script src="js/admin.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
+<script src="js/controle.js"></script>
 </body></html>

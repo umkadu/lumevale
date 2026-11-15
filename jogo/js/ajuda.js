@@ -27,13 +27,13 @@
       ]],
       ['Controls', movel ? [
         '<b>◀ ▶</b> walk · <b>▲</b> jump or climb stairs · <b>▼</b> go down stairs or drop through a platform.',
-        'Tap the scenery to walk there. <b>Tap a creature</b>: only the tamer attacks. <b>Hold your finger</b> on it: the tamer and the Glimmers attack together.',
+        'Tap the scenery to walk there. <b>Tap a creature</b>: only the tamer attacks. <b>Hold your finger</b> on it: the tamer and the Glimmers attack together. <b>Hold your finger on an empty spot</b>: the Glimmers run there, wait 3 s and go back to fighting.',
         'Stairs: jump and land on a staircase to climb it. Walking sideways or dropping down, you pass through it.',
         'Lantern (bottom right): capture. Book: Journal. Eye: Bestiary. Trophy: Achievements. Gear: Settings.',
         'The button next to the Glimmers switches their mode.',
       ] : [
         '<b>A/D</b> or arrows: walk · <b>Space</b>: jump · <b>W/S</b>: stairs and dropping through platforms.',
-        'Click the scenery to walk there. <b>Left-click</b> a creature: only the tamer attacks. <b>Right-click</b>: the tamer and the Glimmers attack together.',
+        'Click the scenery to walk there. <b>Left-click</b> a creature: only the tamer attacks. <b>Right-click</b>: the tamer and the Glimmers attack together. <b>Right-click an empty spot</b>: the Glimmers run there, wait 3 s and go back to fighting.',
         'Stairs: jump and land on a staircase to climb it. Walking sideways or dropping down, you pass through it.',
         '<b>Q</b>: lantern (capture) · <b>1, 2, 3</b>: Glimmer mode · <b>4 to 8</b>: tamer skills · <b>O</b>: Bestiary · <b>C</b>: Achievements · <b>Esc</b>: Settings.',
         'Journal tabs: <b>E</b> Team · <b>T</b> Tamer · <b>M</b> Maps · <b>R</b> Sanctuary · <b>B</b> Satchel · <b>H</b> Help. Press the same key again to close.',
@@ -88,11 +88,19 @@
         'Through the village gate (or the Maps tab) you reach the <b>Training Ground</b>: three dummies that never fall and a <b>damage per second</b> meter at the top of the screen, split by tamer and Glimmer. The portal on the left takes you back to the village.',
         'Glimmers follow the command mode: <b>Aggressive</b> attacks the dummies, <b>Defender</b> only the dummy you hit, <b>Passive</b> doesn’t attack. Use it to compare attacks, specialties, skills and lanterns. Nothing is earned or lost there.',
       ]],
+      ['Controller', [
+        'Works with Joy-Con, the Pro Controller and PC controllers.',
+        '<b>Left stick or D-pad</b>: walk · <b>▲</b> climb stairs · <b>▼</b> go down · <b>A</b>: jump · <b>B</b>: attack the nearest creature or talk to whoever is near.',
+        '<b>X</b>: lantern (while aiming, ◀ ▶ pick the creature and A throws) · <b>Y</b>: auto hunt · <b>ZR</b>: challenge the Guardian · <b>ZL</b>: Glimmer mode.',
+        '<b>R</b>: open the Diary · <b>L</b>: Bestiary · <b>+</b>: Settings · <b>−</b>: Achievements.',
+        'In menus and windows: the D-pad moves the highlight, <b>A</b> presses, <b>B</b> goes back and <b>L</b>/<b>R</b> switch Diary tabs. Touch keeps working too.',
+      ]],
       ['Guardians and maps', [
         'Defeat creatures on the map until the goal (' + metas + ') and tap <b>Challenge Guardian</b>.',
         'The fight lasts 60 s and ends if every Glimmer faints. During the challenge the tamer and the Glimmers attack the Guardian on their own (Glimmers in <b>Passive</b> mode stay out unless you order them with a right-click or long press).',
         'The goal never changes. Past the goal, 10% of kills are saved for the next summon.',
         'Each Guardian has a basic attack and two specials from its theme: roots, poison gas, anchor and water, light, chains and fire. Specials are announced first: circles and stripes on the ground show where they will hit. Some poison, root or stun the Glimmers.',
+        'To get the Glimmers out of an area attack, ' + (movel ? 'hold your finger' : 'right-click') + ' on a safe spot: they run there and go back to attacking the Guardian after 3 s.',
         'The first victory opens the next map, gives you a new Glimmer and a themed item (cloak or lantern). In the Maps tab, tap a map to preview it and travel (the game pauses while the preview is open).',
       ]],
       ['Auto-hunt', [
@@ -128,13 +136,13 @@
       ]],
       ['Controles', movel ? [
         '<b>◀ ▶</b> andar · <b>▲</b> pular ou subir escada · <b>▼</b> descer escada ou atravessar plataforma.',
-        'Toque no cenário para ir até lá. <b>Toque numa criatura</b>: só o domador ataca. <b>Segure o dedo</b> nela: o domador e as Centelhas atacam juntos.',
+        'Toque no cenário para ir até lá. <b>Toque numa criatura</b>: só o domador ataca. <b>Segure o dedo</b> nela: o domador e as Centelhas atacam juntos. <b>Segure o dedo num lugar vazio</b>: as Centelhas correm até lá, esperam 3 s e voltam a lutar.',
         'Escadas: pule e caia em cima de uma escada para subir por ela. Andando de lado ou descendo, você passa direto.',
         'Lanterna (canto de baixo): captura. Livro: Diário. Olho: Bestiário. Troféu: Conquistas. Engrenagem: Configurações.',
         'O botão ao lado das Centelhas troca o modo delas.',
       ] : [
         '<b>A/D</b> ou setas: andar · <b>Espaço</b>: pular · <b>W/S</b>: escadas e atravessar plataformas.',
-        'Clique no cenário para ir até lá. <b>Clique esquerdo</b> numa criatura: só o domador ataca. <b>Clique direito</b>: o domador e as Centelhas atacam juntos.',
+        'Clique no cenário para ir até lá. <b>Clique esquerdo</b> numa criatura: só o domador ataca. <b>Clique direito</b>: o domador e as Centelhas atacam juntos. <b>Clique direito num lugar vazio</b>: as Centelhas correm até lá, esperam 3 s e voltam a lutar.',
         'Escadas: pule e caia em cima de uma escada para subir por ela. Andando de lado ou descendo, você passa direto.',
         '<b>Q</b>: lanterna (captura) · <b>1, 2, 3</b>: modo das Centelhas · <b>4 a 8</b>: skills do domador · <b>O</b>: Bestiário · <b>C</b>: Conquistas · <b>Esc</b>: Configurações.',
         'Abas do Diário: <b>E</b> Equipe · <b>T</b> Domador · <b>M</b> Mapas · <b>R</b> Santuário · <b>B</b> Bolsa · <b>H</b> Ajuda. Apertar a mesma tecla de novo fecha.',
@@ -189,11 +197,19 @@
         'Pelo portão da vila (ou pela aba Mapas) você chega ao <b>Campo de Treino</b>: três bonecos que nunca caem e um medidor de <b>dano por segundo</b> no alto da tela, separado por domador e Centelha. O portal à esquerda leva de volta à vila.',
         'As Centelhas seguem o modo de comando: <b>Agressivo</b> ataca os bonecos, <b>Defensor</b> só o boneco que você bater, <b>Passivo</b> não ataca. Use para comparar ataques, especialidades, skills e lanternas. Lá não se ganha nem se perde nada.',
       ]],
+      ['Controle (joystick)', [
+        'Funciona com Joy-Con, Pro Controller e controles de PC.',
+        '<b>Analógico esquerdo ou direcional</b>: andar · <b>▲</b> subir escada · <b>▼</b> descer · <b>A</b>: pular · <b>B</b>: atacar a criatura mais perto ou falar com quem está perto.',
+        '<b>X</b>: lanterna (na mira, ◀ ▶ escolhem a criatura e A lança) · <b>Y</b>: caçada automática · <b>ZR</b>: desafiar o Guardião · <b>ZL</b>: modo das Centelhas.',
+        '<b>R</b>: abre o Diário · <b>L</b>: Bestiário · <b>+</b>: Configurações · <b>−</b>: Conquistas.',
+        'Nos menus e janelas: o direcional move o destaque, <b>A</b> aperta, <b>B</b> volta e <b>L</b>/<b>R</b> trocam a aba do Diário. O toque na tela continua funcionando.',
+      ]],
       ['Guardiões e mapas', [
         'Derrote criaturas do mapa até a meta (' + metas + ') e toque em <b>Desafiar Guardião</b>.',
         'A luta dura 60 s e acaba se todas as Centelhas desmaiarem. Durante o desafio, o domador e as Centelhas atacam o Guardião sozinhos (Centelhas no modo <b>Passivo</b> ficam de fora, a não ser que você mande com o clique direito ou o toque longo).',
         'A meta é sempre a mesma. Depois dela, 10% dos abates ficam guardados para a próxima invocação.',
         'Cada Guardião tem um ataque básico e dois especiais do seu tema: raízes, gás venenoso, âncora e água, luz, correntes e fogo. Os especiais são avisados antes: círculos e faixas no chão mostram onde vão cair. Alguns envenenam, prendem ou atordoam as Centelhas.',
+        'Para tirar as Centelhas de um ataque em área, ' + (movel ? 'segure o dedo' : 'clique com o botão direito') + ' num lugar seguro: elas correm até lá e voltam a atacar o Guardião depois de 3 s.',
         'A primeira vitória abre o próximo mapa, dá uma Centelha nova e um item temático (capa ou lanterna). Na aba Mapas, toque num mapa para ver a prévia e viajar (o jogo pausa enquanto a prévia está aberta).',
       ]],
       ['Caçada automática', [
