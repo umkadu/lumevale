@@ -807,7 +807,10 @@
   .rl-palco { position: relative; width: min(320px, 76vw); aspect-ratio: 1; margin: 18px auto 6px; }
   .rl-palco::before { content: ''; position: absolute; inset: 4%; border-radius: 50%; box-shadow: 0 0 34px rgba(255, 196, 92, 0.35); animation: rlBrilho 2.4s ease-in-out infinite; pointer-events: none; }
   @keyframes rlBrilho { 50% { box-shadow: 0 0 46px rgba(255, 196, 92, 0.6); } }
-  .rl-roda { position: relative; width: 100%; height: 100%; transition: transform 4.6s cubic-bezier(0.12, 0.7, 0.1, 1); filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55)); }
+  /* a roda gira dentro de uma moldura que corta os cantos (transparentes) do quadrado girado: sem isso a janela
+     ganha barras de rolagem e pula durante o giro */
+  .rl-janela { position: relative; width: 100%; height: 100%; overflow: hidden; filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55)); }
+  .rl-roda { position: relative; width: 100%; height: 100%; transition: transform 4.6s cubic-bezier(0.12, 0.7, 0.1, 1); will-change: transform; }
   .rl-roda svg { width: 100%; height: 100%; display: block; }
   .rl-tinta { mix-blend-mode: multiply; opacity: 0.9; }
   .rl-ponteiro { position: absolute; left: 50%; top: -14px; width: 30px; height: 40px; transform: translateX(-50%); z-index: 2; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.7)); }

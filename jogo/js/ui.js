@@ -26,7 +26,7 @@
     if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
   const som = (k) => { if (LV.audio) LV.audio.tocar(k); };
-  const VERSAO = '1.19.1';
+  const VERSAO = '1.19.2';
   ui.VERSAO = VERSAO;
   let el = {};
 
@@ -1189,7 +1189,7 @@
     else botao = '<button class="btn" disabled>' + LV.t('Volte amanhã') + '</button>';
     return '<div class="cabec"><div><div class="eyebrow">' + LV.t('Vila de Alvorada') + '</div><h2>' + LV.t('Roleta da Sorte') + '</h2>' +
       '<p class="muted small">' + LV.t('1 giro grátis por dia e mais 3 pagando Lumes. Todas as fatias têm a mesma chance.') + '</p></div><button class="btn" data-m="fechar">' + LV.t('Fechar') + '</button></div>' +
-      '<div class="rl-palco"><div class="rl-ponteiro">' + ponteiro + '</div><div class="rl-roda" style="transform:rotate(' + ui.roletaRot + 'deg)">' + roda + '</div></div>' +
+      '<div class="rl-palco"><div class="rl-ponteiro">' + ponteiro + '</div><div class="rl-janela"><div class="rl-roda" style="transform:rotate(' + ui.roletaRot + 'deg)">' + roda + '</div></div></div>' +
       '<div class="rl-res" aria-live="polite"></div>' +
       '<div class="rl-info"><span>' + LV.t('Grátis hoje: ') + '<b>' + R.gratis + '</b>/' + LV.ROLETA.gratis + '</span><span>' + LV.t('Pagos hoje: ') + '<b>' + R.pagos + '</b>/' + LV.ROLETA.pagos + '</span></div>' + xp +
       '<div class="row center rl-acoes">' + botao + '</div>';
