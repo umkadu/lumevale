@@ -314,6 +314,19 @@
     evoNivel: [22, 45],
     capPet: (nivelDom) => nivelDom + 6,
   };
+  /* vida mínima das criaturas dos mapas (v1.18.3). O domador passa bem do nível dos primeiros mapas enquanto treina para o
+     Guardião (Raízes até o nível ~25, Cripta até ~40), e as criaturas de lá param no nível do mapa: a lanterna matava com
+     um golpe e não dava para baixar a vida e capturar. Agora cada criatura aguenta pelo menos VIDA_PISO_GOLPES golpes da
+     lanterna de um domador do nível atual (40% dos pontos em Força, sem lanterna, capa nem Bigorna). Na prática só pesa
+     nas Raízes e na Cripta; nos outros mapas a vida normal já é bem maior que isso.
+     Tempo de jogo (medido no simulador): na primeira descida as Centelhas ainda são fracas e cada criatura reforçada
+     demora mais para cair, então ela rende um pouco mais de XP e Lumes; depois de alguns renascimentos as Centelhas
+     matam mais rápido do que os ninhos repõem, a vida extra não atrasa mais nada e o bônus some. */
+  LV.VIDA_PISO_GOLPES = 5;
+  LV.VIDA_PISO_PREMIO = 0.1;    // fração da vida extra que volta em XP e Lumes na primeira jornada
+  LV.VIDA_PISO_JORNADAS = 4;    // esse bônus diminui a cada renascimento e some no 4º
+  LV.F.vidaPiso = (nivelDom) => LV.VIDA_PISO_GOLPES * (6 + 2.4 * nivelDom) * (1 + 0.036 * nivelDom);
+  LV.F.premioPiso = (renasc) => LV.VIDA_PISO_PREMIO * Math.max(0, 1 - renasc / LV.VIDA_PISO_JORNADAS);
 
   LV.evoReq = function (spId, est) {
     const sp = LV.SPECIES[spId];

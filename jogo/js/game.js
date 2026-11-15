@@ -376,11 +376,13 @@
     const altVoo = LV.rand(45, 150);                                  // voadores em alturas diferentes
     e.h *= 1 + LV.rand(-0.05, 0.05);                                  // cada criatura com um tamanho um pouco diferente (até 5%)
     const dif = LV.DIFICULDADE[W.idx] || LV.DIFICULDADE[0], premio = 1 + (dif.hp - 1) * 0.5;
-    const hp = Math.round(base.hp * e.hpMul * (1 + 0.25 * e.est) * dif.hp);
+    // vida mínima (alguns golpes da lanterna); nas primeiras jornadas a criatura reforçada rende um pouco mais de XP e Lumes
+    const reforco = Math.max(1, F.vidaPiso(S.dom.nivel) / (base.hp * dif.hp)), ganho = 1 + (reforco - 1) * F.premioPiso(S.meta.renasc);
+    const hp = Math.round(base.hp * dif.hp * reforco * e.hpMul * (1 + 0.25 * e.est));
     Object.assign(e, {
       id: W.seq++, lv, x, y: e.voa ? sup.y - altVoo : sup.y, altVoo, sup: e.voa ? -1 : sup.id, casa: sup.id, zona: z.id, hp, hpMax: hp,
       atk: Math.round(base.atk * e.atkMul * (1 + 0.15 * e.est) * dif.atk), cd: 1 + Math.random(), face: -1, mov: 0, flash: 0, atkA: 0,
-      nasc: 0.6, vx: 0, wander: 0, s: 1, t0: Math.random() * 10, xp: base.xp * (1 + 0.2 * e.est) * premio, lumes: base.lumes * premio, tentou: false,
+      nasc: 0.6, vx: 0, wander: 0, s: 1, t0: Math.random() * 10, xp: base.xp * (1 + 0.2 * e.est) * premio * ganho, lumes: base.lumes * premio * ganho, tentou: false,
     });
     W.ini.push(e);
     return e;
@@ -3143,11 +3145,12 @@
     const dif = LV.DIFICULDADE[idx] || LV.DIFICULDADE[0], premio = 1 + (dif.hp - 1) * 0.5;
     const lo = def.lv[0], lv = LV.clamp(Math.round((def.lv[0] + def.lv[1]) / 2), lo, Math.max(lo, Math.min(def.lv[1], S.dom.nivel + 2)));
     const b = F.ini(lv), est = lv >= 46 ? 0.72 : lv >= 24 ? 0.25 : 0;
-    const hp = b.hp * 1.05 * (1 + 0.25 * est) * dif.hp;
+    const reforco = Math.max(1, F.vidaPiso(S.dom.nivel) / (b.hp * dif.hp)), ganho = 1 + (reforco - 1) * F.premioPiso(S.meta.renasc);
+    const hp = b.hp * dif.hp * reforco * 1.05 * (1 + 0.25 * est);
     let dps = 0;
     S.ativos.forEach((uid) => { const p = S.pets.find((q) => q.uid === uid); if (p) { const st = petStats(p); dps += st.atk * st.spd; } });
     const abatesSeg = Math.min(OFF_MAX, (dps / hp) * OFF_EFIC);
-    return { lv, hp, dps, abatesSeg, xp: b.xp * (1 + 0.2 * est) * premio, lumes: b.lumes * premio };
+    return { lv, hp, dps, abatesSeg, xp: b.xp * (1 + 0.2 * est) * premio * ganho, lumes: b.lumes * premio * ganho };
   };
   game.calcOffline = function (seg) {
     if (!S || !S.inicial || !S.ativos.length) return null;
