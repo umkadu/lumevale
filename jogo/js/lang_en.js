@@ -859,7 +859,7 @@
     " menos dano recebido": " less damage taken",
     " menos dano por ": " less damage for ",
     "Vila de Alvorada": "Daybreak Village",
-    "A última vila ainda acesa: lojas, trocas e o Santuário dos Ecos.": "The last village still lit: shops, trades and the Sanctuary of Echoes.",
+    "A última vila ainda acesa: lojas, a Roleta da Sorte e o Santuário dos Ecos.": "The last village still lit: shops, the Wheel of Fortune and the Sanctuary of Echoes.",
     "Campo de Treino": "Training Ground",
     "Bonecos que nunca caem: teste as suas Centelhas e veja o dano por segundo.": "Dummies that never fall: test your Glimmers and see their damage per second.",
     "Mestre Pavio": "Master Wick",

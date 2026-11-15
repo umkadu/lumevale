@@ -81,7 +81,7 @@
       ]],
       ['Daybreak Village', [
         'Your adventure starts in <b>Daybreak Village</b>; come back any time from the <b>Maps</b> tab (the Daybreak section, at the top). The <b>exit sign</b> at the far right of the village leads down to the Whispering Roots. Click a villager to walk over and talk. Only the tamer and the Glimmer in the first slot go to the village.',
-        '<b>Master Wick</b> sells capture and special lanterns · <b>Madam Needle</b> sells cloaks · <b>Master Anvil</b> sells upgrades for Lumes plus Guardian coins (each Guardian drops its own) · <b>Old Barter</b> trades materials between neighboring depths (5 for 1 going deeper, 1 for 2 going up) · <b>Keeper Iris</b> brings back achievement Radiants you lost when reborn (50,000 Lumes each) · the <b>Sanctuary of Echoes</b> sells permanent upgrades and is where you are reborn.',
+        '<b>Master Wick</b> sells capture and special lanterns · <b>Madam Needle</b> sells cloaks · <b>Master Anvil</b> sells upgrades for Lumes plus Guardian coins (each Guardian drops its own) · the <b>Wheel of Fortune</b> gives one free spin a day and 3 more for Lumes · <b>Keeper Iris</b> brings back achievement Radiants you lost when reborn (50,000 Lumes each) · the <b>Sanctuary of Echoes</b> sells permanent upgrades and is where you are reborn.',
         'Upgrades and lanterns bought in the village are lost when you are reborn.',
       ]],
       ['Training Ground', [
@@ -190,7 +190,7 @@
       ]],
       ['Vila de Alvorada', [
         'A aventura começa na <b>Vila de Alvorada</b>; volte quando quiser pela aba <b>Mapas</b> (seção Alvorada, no topo). A <b>placa de saída</b>, na ponta direita da vila, leva às Raízes Murmurantes. Clique num morador para ir até ele e conversar. Na vila só vão o domador e a Centelha da primeira vaga.',
-        '<b>Mestre Pavio</b> vende lanternas de captura e especiais · <b>Dona Agulha</b> vende capas · <b>Mestre Bigorna</b> vende melhorias por Lumes e moedas dos Guardiões (cada Guardião solta a sua) · <b>Velho Escambo</b> troca materiais de profundezas vizinhas (5 por 1 para baixo, 1 por 2 para cima) · <b>Zeladora Íris</b> traz de volta os Radiantes das conquistas que você perdeu ao renascer (50.000 Lumes cada) · o <b>Santuário dos Ecos</b> vende as melhorias permanentes e é onde você renasce.',
+        '<b>Mestre Pavio</b> vende lanternas de captura e especiais · <b>Dona Agulha</b> vende capas · <b>Mestre Bigorna</b> vende melhorias por Lumes e moedas dos Guardiões (cada Guardião solta a sua) · a <b>Roleta da Sorte</b> dá 1 giro grátis por dia e mais 3 pagando Lumes · <b>Zeladora Íris</b> traz de volta os Radiantes das conquistas que você perdeu ao renascer (50.000 Lumes cada) · o <b>Santuário dos Ecos</b> vende as melhorias permanentes e é onde você renasce.',
         'As melhorias e as lanternas compradas na vila se perdem ao renascer.',
       ]],
       ['Campo de Treino', [

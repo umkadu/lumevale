@@ -650,7 +650,7 @@
      base = mapa que empresta paleta, música e peças desenhadas à mão quando falta arte própria.
      ========================================================= */
   LV.LUGARES = {
-    vila: { id: 'vila', nome: LV.t('Vila de Alvorada'), sub: LV.t('A última vila ainda acesa: lojas, trocas e o Santuário dos Ecos.'), tema: 'vila', base: 1, seed: 91,
+    vila: { id: 'vila', nome: LV.t('Vila de Alvorada'), sub: LV.t('A última vila ainda acesa: lojas, a Roleta da Sorte e o Santuário dos Ecos.'), tema: 'vila', base: 1, seed: 91,
       pal: { luz: '#ffe2a8', acento: '#ffc46b', nevoa: '#a8805a' } },
     treino: { id: 'treino', nome: LV.t('Campo de Treino'), sub: LV.t('Bonecos que nunca caem: teste as suas Centelhas e veja o dano por segundo.'), tema: 'treino', base: 0, seed: 97,
       pal: { luz: '#ffe9b8', acento: '#ffcf7a' } },

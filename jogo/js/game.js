@@ -3487,8 +3487,8 @@
       [598, G - 172, A.x0 + 2, A.y + 6, 22],            // outro braço do lampião → ponta da plataforma (topo da escada)
       [A.x0 + 6, A.y + 24, meio, A.y + 24, 16], [meio, A.y + 24, A.x1 - 6, A.y + 24, 16],   // frente da plataforma
       [C.x0 + 6, C.y + 24, C.x1 - 6, C.y + 24, 14],     // frente da plataforma de cima
-      [A.x1 - 4, A.y + 24, 1639, G - 95, 20],           // ponta da plataforma → viga da carroça do Escambo
-      [1750, G - 95, 1905, G - 87, 18],                 // outra ponta da viga → tábua da placa de saída
+      [A.x1 - 4, A.y + 24, 1637, G - 132, 20],          // ponta da plataforma → viga da Roleta da Sorte
+      [1742, G - 132, 1905, G - 87, 18],                // outra ponta da viga → tábua da placa de saída
     ];
     V.forEach((v, k) => { if (vis(v[0], 40) || vis(v[2], 40) || (v[0] < cam && v[2] > cam + vw)) varal(c, v[0], v[1], v[2], v[3], v[4], t, k); });
   }
@@ -3552,7 +3552,7 @@
     c.save();
     c.lineCap = 'round'; c.lineJoin = 'round';
     for (let i = 0; i < 3; i++) {
-      const x = n.x - 86 + i * 20, y = n.y - 16, a = 0.25 + 0.75 * Math.max(0, Math.sin(t * 3 - i * 0.9));
+      const x = n.x - 108 + i * 24, y = n.y - 16, a = 0.25 + 0.75 * Math.max(0, Math.sin(t * 3 - i * 0.9));
       c.globalAlpha = a;
       c.strokeStyle = 'rgba(20,12,6,0.7)'; c.lineWidth = 7;
       c.beginPath(); c.moveTo(x - 6, y - 9); c.lineTo(x + 4, y); c.lineTo(x - 6, y + 9); c.stroke();
@@ -3560,7 +3560,7 @@
       c.beginPath(); c.moveTo(x - 6, y - 9); c.lineTo(x + 4, y); c.lineTo(x - 6, y + 9); c.stroke();
     }
     c.restore();
-    art.glow(c, n.x - 66, n.y - 16, 42, cor || '#b9e68f', 0.12 + 0.06 * Math.sin(t * 3));
+    art.glow(c, n.x - 84, n.y - 16, 46, cor || '#b9e68f', 0.12 + 0.06 * Math.sin(t * 3));
   }
   /* nome e ofício sobre cada morador; o mais perto do domador ganha destaque */
   function rotulosNpc(c, cam, vw, t) {
