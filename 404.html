@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06080c">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://lumevale.com.br/">
+<title>Lumevale · lumevale.com.br</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; min-height: 100%; background: #06080c; color: #f3ead6; }
+  body { display: grid; place-items: center; min-height: 100vh; padding: 24px; box-sizing: border-box;
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; text-align: center;
+         background: radial-gradient(ellipse at 50% 40%, #1d3530 0%, #06080c 70%); }
+  main { max-width: 420px; }
+  h1 { margin: 0 0 12px; font-size: 34px; letter-spacing: .02em; color: #ffd58a; }
+  p { margin: 0 0 18px; }
+  .small { font-size: 14px; color: #c9bfa8; }
+  a { display: inline-block; padding: 12px 22px; border-radius: 12px; background: #d0902c; color: #1a1006;
+      font-weight: 700; text-decoration: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Lumevale</h1>
+  <p id="msg">O Lumevale agora mora em lumevale.com.br.</p>
+  <p><a id="ir" href="https://lumevale.com.br/">Ir para lumevale.com.br</a></p>
+  <p id="app" class="small"></p>
+</main>
+<script>(function encaminhar(NOVO) {
+  var ls = null;
+  try { ls = window.localStorage; } catch (e) { /* sem armazenamento */ }
+  var cfg = {};
+  try { cfg = JSON.parse(ls.getItem('lumevale.config') || '{}') || {}; } catch (e) { /* ok */ }
+  var en = (cfg.idioma || ((navigator.language || 'pt').toLowerCase().indexOf('pt') === 0 ? 'pt' : 'en')) === 'en';
+  var app = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
+  var jogo = !app && /\/jogo(\/|$)/.test(location.pathname);   // app instalado vai para a página de instalação
+  var dados = {}, tem = false, jaFoi = false;
+  try {
+    jaFoi = !!ls.getItem('lumevale.migrado');
+    for (var i = 0; i < ls.length; i++) {
+      var k = ls.key(i);
+      if (!/^lumevale\./.test(k) || k === 'lumevale.retomar' || k === 'lumevale.migrado') continue;
+      dados[k] = ls.getItem(k);
+      if (/^lumevale\.(slot\.\d+|save\.v1)$/.test(k)) tem = true;
+    }
+  } catch (e) { /* sem armazenamento */ }
+  var levar = tem && !jaFoi;   // os saves vão uma vez só (depois, quem joga no endereço novo não recebe saves velhos de novo)
+  var T = en
+    ? { mudou: 'Lumevale has moved to lumevale.com.br. Taking you there…', levando: 'Lumevale has moved to lumevale.com.br. Taking you there with your saves…',
+        app: 'You are using the installed app: install it again from the new address. Then you can delete this old app.', ir: 'Go to lumevale.com.br' }
+    : { mudou: 'O Lumevale agora mora em lumevale.com.br. Levando você para lá…', levando: 'O Lumevale agora mora em lumevale.com.br. Levando você para lá com os seus saves…',
+        app: 'Você está no app instalado: instale de novo pelo endereço novo. Depois, pode apagar este app antigo.', ir: 'Ir para lumevale.com.br' };
+  document.documentElement.lang = en ? 'en' : 'pt-BR';
+  document.getElementById('msg').textContent = levar ? T.levando : T.mudou;
+  if (app) document.getElementById('app').textContent = T.app;
+  var link = document.getElementById('ir'), simples = NOVO + (jogo ? 'jogo/' : '');
+  link.textContent = T.ir;
+  link.href = simples;
+  function b64url(bytes) {
+    var t = '';
+    for (var i = 0; i < bytes.length; i += 0x8000) t += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(t).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function montar() {
+    if (!levar) return Promise.resolve(simples);
+    var json = JSON.stringify(dados), cauda = jogo ? '&ir=jogo' : '';
+    var semZip = function () { return NOVO + '#migrar=0.' + b64url(new TextEncoder().encode(json)) + cauda; };
+    if (!window.CompressionStream || !window.DecompressionStream) return Promise.resolve(semZip());
+    return new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()
+      .then(function (buf) { return NOVO + '#migrar=1.' + b64url(new Uint8Array(buf)) + cauda; }, semZip);
+  }
+  montar().then(function (url) {
+    var foi = false;
+    var ir = function () {
+      if (foi) return;
+      foi = true;
+      if (levar) { try { ls.setItem('lumevale.migrado', String(Date.now())); } catch (e) { /* ok */ } }
+      location.replace(url);
+    };
+    link.href = url;
+    link.addEventListener('click', function (e) { e.preventDefault(); ir(); });
+    setTimeout(ir, levar || app ? 2500 : 300);
+  });
+})("https://lumevale.com.br/")</script>
+</body>
+</html>
